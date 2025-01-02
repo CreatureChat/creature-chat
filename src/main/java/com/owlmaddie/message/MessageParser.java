@@ -17,47 +17,45 @@ import java.util.regex.Pattern;
 public class MessageParser {
     private static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
 
-    // Regex capturing all text in (group1), and trailing emojis in (group2).
-    // Only these exact emojis are recognized, optionally with spaces before/after.
-    private static final Pattern TRAILING_BEHAVIORS = Pattern.compile("^(.*?)((?:\\s*(?:🚫|👣|🏃|🛡️|⚔️|🐕|❤️|💔))+)(.*)$");
-
-    // Regex to find each recognized emoji in the trailing chunk.
+    // We only match our "recognized" emojis anywhere in the text:
+    // (Short versions shown here, but adjust to whatever codepoints you actually use.)
     private static final Pattern RECOGNIZED_EMOJI = Pattern.compile("🚫|👣|🏃(?:‍[♂♀️])?|🛡(?:️)?|⚔(?:️)?|🐕|❤(?:️)?|💔");
+    private static final Pattern ZWJ_OR_VARIATION = Pattern.compile("[\u200D\uFE0E\uFE0F]");
+
+    private static String normalizeEmoji(String raw) {
+        // remove zero-width joiners, variation selectors, etc.
+        return ZWJ_OR_VARIATION.matcher(raw).replaceAll("");
+    }
 
     public static ParsedMessage parseMessage(String input) {
         LOGGER.debug("Parsing message: {}", input);
 
         String updated = parseLegacyBehaviors(input);
 
-        // Separate trailing emojis from main text
-        Matcher m = TRAILING_BEHAVIORS.matcher(updated.stripTrailing());
-        String mainText = updated;
-        String trailing = "";
-        if (m.matches()) {
-            mainText = m.group(1).stripTrailing();
-            trailing = m.group(2).strip();
-        }
-
-        LOGGER.debug("Emoji sequence found: {}", trailing);
-
+        // List of extracted behaviors
         List<Behavior> behaviors = new ArrayList<>();
         AtomicInteger friendshipScore = new AtomicInteger(0);
         AtomicBoolean hasFriendship = new AtomicBoolean(false);
 
-        // Find all individual emojis from the trailing chunk
-        Matcher emojiMatcher = RECOGNIZED_EMOJI.matcher(trailing);
-        while (emojiMatcher.find()) {
-            String emoji = emojiMatcher.group();
-            LOGGER.debug("Processing emoji: {}", emoji);
+        // We'll remove recognized emojis from the entire message,
+        // building a 'cleaned' version as we go
+        Matcher emojiMatcher = RECOGNIZED_EMOJI.matcher(updated);
+        StringBuffer cleanedBuffer = new StringBuffer();
 
-            switch (emoji) {
-                case "🚫" -> behaviors.add(new Behavior("STOP", null));
-                case "👣" -> behaviors.add(new Behavior("FOLLOW", null));
+        while (emojiMatcher.find()) {
+            String rawEmoji = emojiMatcher.group();
+            String normalized = normalizeEmoji(rawEmoji);  // remove extra codepoints
+            LOGGER.debug("Processing raw emoji: {}, normalized: {}", rawEmoji, normalized);
+
+            // Handle only the base "normalized" emoji
+            switch (normalized) {
                 case "🏃" -> behaviors.add(new Behavior("FLEE", null));
-                case "🛡️" -> behaviors.add(new Behavior("PROTECT", null));
-                case "⚔️" -> behaviors.add(new Behavior("ATTACK", null));
+                case "👣" -> behaviors.add(new Behavior("FOLLOW", null));
+                case "🛡" -> behaviors.add(new Behavior("PROTECT", null));
+                case "⚔" -> behaviors.add(new Behavior("ATTACK", null));
                 case "🐕" -> behaviors.add(new Behavior("LEAD", null));
-                case "❤️" -> {
+                case "🚫" -> behaviors.add(new Behavior("STOP", null));
+                case "❤" -> {
                     friendshipScore.incrementAndGet();
                     hasFriendship.set(true);
                 }
@@ -66,16 +64,26 @@ public class MessageParser {
                     hasFriendship.set(true);
                 }
             }
-        }
 
+            // Replace recognized emoji with nothing in the cleaned text
+            emojiMatcher.appendReplacement(cleanedBuffer, "");
+        }
+        // Append any remaining text after the last match
+        emojiMatcher.appendTail(cleanedBuffer);
+
+        // If friendship changed, add that as a separate behavior
         if (hasFriendship.get()) {
             behaviors.add(new Behavior("FRIENDSHIP", friendshipScore.get()));
         }
 
-        LOGGER.debug("Cleaned message: {}", mainText);
+        // Now 'cleanedBuffer' has the text with recognized emojis removed
+        String cleanedMessage = cleanedBuffer.toString().stripTrailing();
+
+        LOGGER.debug("Cleaned message: {}", cleanedMessage);
         LOGGER.debug("Extracted behaviors: {}", behaviors);
 
-        return new ParsedMessage(mainText, updated.trim(), behaviors);
+        // Return the result
+        return new ParsedMessage(cleanedMessage, updated.trim(), behaviors);
     }
 
     private static String parseLegacyBehaviors(String input) {
