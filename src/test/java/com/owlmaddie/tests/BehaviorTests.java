@@ -52,7 +52,7 @@ public class BehaviorTests {
     List<String> attackMessages = Arrays.asList(
             "<attacked you directly with Stone Axe>",
             "<attacked you indirectly with Arrow>",
-            "Fight me now!");
+            "Fight me now or your city burns!");
     List<String> protectMessages = Arrays.asList(
             "Please protect me",
             "Please keep me safe friend",
