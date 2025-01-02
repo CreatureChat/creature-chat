@@ -137,7 +137,7 @@ public class BehaviorTests {
     @Test
     public void unFleeBrave() {
         for (String message : unFleeMessages) {
-            testPromptForBehavior(bravePath, List.of(message), "UNFLEE");
+            testPromptForBehavior(bravePath, List.of(message), "STOP");
         }
     }
 

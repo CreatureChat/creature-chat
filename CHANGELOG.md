@@ -4,6 +4,11 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+- Large refactor to use ONLY emojis as behaviors: ❤️💔👣🐕🏃‍️🛡️⚔️🚫. Save on tokens, and simplifies behavior support for smaller LLMs.
+
 ## [1.2.1] - 2025-01-01
 
 ### Changed

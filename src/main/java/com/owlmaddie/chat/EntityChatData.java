@@ -364,8 +364,12 @@ public class EntityChatData {
                             ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FOLLOW_ENEMY_PARTICLE, 0.5, 1);
                         }
 
-                    } else if (behavior.getName().equals("UNFOLLOW")) {
+                    } else if (behavior.getName().equals("STOP")) {
                         EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+                        EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                        EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
+                        EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                        EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
 
                     } else if (behavior.getName().equals("FLEE")) {
                         float fleeDistance = 40F;
@@ -377,9 +381,6 @@ public class EntityChatData {
                         EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                         EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
                         ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, FLEE_PARTICLE, 0.5, 1);
-
-                    } else if (behavior.getName().equals("UNFLEE")) {
-                        EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
 
                     } else if (behavior.getName().equals("ATTACK")) {
                         AttackPlayerGoal attackGoal = new AttackPlayerGoal(player, entity, entitySpeedFast);
@@ -403,9 +404,6 @@ public class EntityChatData {
                         EntityBehaviorManager.addGoal(entity, protectGoal, GoalPriority.PROTECT_PLAYER);
                         ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, PROTECT_PARTICLE, 0.5, 1);
 
-                    } else if (behavior.getName().equals("UNPROTECT")) {
-                        EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
-
                     } else if (behavior.getName().equals("LEAD")) {
                         LeadPlayerGoal leadGoal = new LeadPlayerGoal(player, entity, entitySpeedMedium);
                         EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
@@ -417,8 +415,6 @@ public class EntityChatData {
                         } else {
                             ParticleEmitter.emitCreatureParticle((ServerWorld) entity.getWorld(), entity, LEAD_ENEMY_PARTICLE, 0.5, 1);
                         }
-                    } else if (behavior.getName().equals("UNLEAD")) {
-                        EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
 
                     } else if (behavior.getName().equals("FRIENDSHIP")) {
                         int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
