@@ -19,10 +19,10 @@ public class MessageParser {
 
     // Regex capturing all text in (group1), and trailing emojis in (group2).
     // Only these exact emojis are recognized, optionally with spaces before/after.
-    private static final Pattern TRAILING_BEHAVIORS = Pattern.compile("^(.*?)((?:\\s*(?:🚫|👣|🏃‍|🛡️|⚔️|🐕|❤️|💔))+\\s*)$");
+    private static final Pattern TRAILING_BEHAVIORS = Pattern.compile("^(.*?)((?:\\s*(?:🚫|👣|🏃|🛡️|⚔️|🐕|❤️|💔))+)(.*)$");
 
     // Regex to find each recognized emoji in the trailing chunk.
-    private static final Pattern RECOGNIZED_EMOJI = Pattern.compile("🚫|👣|🏃‍|🛡️|⚔️|🐕|❤️|💔");
+    private static final Pattern RECOGNIZED_EMOJI = Pattern.compile("🚫|👣|🏃(?:‍[♂♀️])?|🛡(?:️)?|⚔(?:️)?|🐕|❤(?:️)?|💔");
 
     public static ParsedMessage parseMessage(String input) {
         LOGGER.debug("Parsing message: {}", input);
@@ -53,7 +53,7 @@ public class MessageParser {
             switch (emoji) {
                 case "🚫" -> behaviors.add(new Behavior("STOP", null));
                 case "👣" -> behaviors.add(new Behavior("FOLLOW", null));
-                case "🏃‍♂️" -> behaviors.add(new Behavior("FLEE", null));
+                case "🏃" -> behaviors.add(new Behavior("FLEE", null));
                 case "🛡️" -> behaviors.add(new Behavior("PROTECT", null));
                 case "⚔️" -> behaviors.add(new Behavior("ATTACK", null));
                 case "🐕" -> behaviors.add(new Behavior("LEAD", null));
