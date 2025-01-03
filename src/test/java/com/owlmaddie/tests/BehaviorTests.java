@@ -8,6 +8,7 @@ import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
 import com.owlmaddie.utils.EntityTestData;
+import com.owlmaddie.utils.RateLimiter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -37,6 +38,9 @@ public class BehaviorTests {
     static String API_URL = "";
     static String API_MODEL = "";
     String NO_API_KEY = "No API_KEY environment variable has been set.";
+
+    // Requests per second limit
+    private static final RateLimiter rateLimiter = new RateLimiter(1);
 
     ConfigurationHandler.Config config = null;
     String systemChatContents = null;
@@ -193,47 +197,55 @@ public class BehaviorTests {
         LOGGER.info("Testing '" + chatDataPath.getFileName() + "' with '" + messages.toString() + "' and expecting behavior: " + behavior);
 
         try {
-            // Load entity chat data
-            String chatDataPathContents = readFileContents(chatDataPath);
-            EntityTestData entityTestData = gson.fromJson(chatDataPathContents, EntityTestData.class);
-
-            // Load context
-            Map<String, String> contextData = entityTestData.getPlayerContext(worldPath, playerPath, entityPigPath);
-            assertNotNull(contextData);
-
-            // Add test message
-            for (String message : messages) {
-                entityTestData.addMessage(message, ChatDataManager.ChatSender.USER, "TestPlayer1");
-            }
-
-            // Get prompt
-            Path promptPath = Paths.get(PROMPT_PATH, "system-chat");
-            String promptText = Files.readString(promptPath);
-            assertNotNull(promptText);
-
-            // fetch HTTP response from ChatGPT
-            CompletableFuture<String> future = ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, entityTestData.previousMessages, false);
+            // Enforce rate limit
+            rateLimiter.acquire();
 
             try {
-                String outputMessage = future.get(60 * 60, TimeUnit.SECONDS);
-                assertNotNull(outputMessage);
+                // Load entity chat data
+                String chatDataPathContents = readFileContents(chatDataPath);
+                EntityTestData entityTestData = gson.fromJson(chatDataPathContents, EntityTestData.class);
 
-                // Chat Message: Check for behavior
-                ParsedMessage result = MessageParser.parseMessage(outputMessage.replace("\n", " "));
-                assertTrue(result.getBehaviors().stream().anyMatch(b -> behavior.equals(b.getName())));
-                return result;
+                // Load context
+                Map<String, String> contextData = entityTestData.getPlayerContext(worldPath, playerPath, entityPigPath);
+                assertNotNull(contextData);
 
-            } catch (TimeoutException e) {
-                fail("The asynchronous operation timed out.");
-            } catch (Exception e) {
-                fail("The asynchronous operation failed: " + e.getMessage());
+                // Add test message
+                for (String message : messages) {
+                    entityTestData.addMessage(message, ChatDataManager.ChatSender.USER, "TestPlayer1");
+                }
+
+                // Get prompt
+                Path promptPath = Paths.get(PROMPT_PATH, "system-chat");
+                String promptText = Files.readString(promptPath);
+                assertNotNull(promptText);
+
+                // fetch HTTP response from ChatGPT
+                CompletableFuture<String> future = ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, entityTestData.previousMessages, false);
+
+                try {
+                    String outputMessage = future.get(60 * 60, TimeUnit.SECONDS);
+                    assertNotNull(outputMessage);
+
+                    // Chat Message: Check for behavior
+                    ParsedMessage result = MessageParser.parseMessage(outputMessage.replace("\n", " "));
+                    assertTrue(result.getBehaviors().stream().anyMatch(b -> behavior.equals(b.getName())));
+                    return result;
+
+                } catch (TimeoutException e) {
+                    fail("The asynchronous operation timed out.");
+                } catch (Exception e) {
+                    fail("The asynchronous operation failed: " + e.getMessage());
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                fail("Failed to read the file: " + e.getMessage());
             }
+            LOGGER.info("");
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Failed to read the file: " + e.getMessage());
+        } catch (InterruptedException e) {
+            LOGGER.warn("Rate limit enforcement interrupted: " + e.getMessage());
         }
-        LOGGER.info("");
         return null;
     }
 
