@@ -48,7 +48,7 @@ public class BehaviorTests {
     List<String> followMessages = Arrays.asList(
             "Please follow me",
             "Come with me please",
-            "Quickly, please come this way");
+            "Quickly, please join me on an adventure");
     List<String> leadMessages = Arrays.asList(
             "Take me to a secret forrest",
             "Where is the strong hold?",
@@ -113,88 +113,89 @@ public class BehaviorTests {
     @Test
     public void followBrave() {
         for (String message : followMessages) {
-            testPromptForBehavior(bravePath, List.of(message), "FOLLOW");
+            testPromptForBehavior(bravePath, List.of(message), "FOLLOW", "LEAD");
         }
     }
 
     @Test
     public void followNervous() {
         for (String message : followMessages) {
-            testPromptForBehavior(nervousPath, List.of(message), "FOLLOW");
+            testPromptForBehavior(nervousPath, List.of(message), "FOLLOW", "LEAD");
         }
     }
 
     @Test
     public void leadBrave() {
         for (String message : leadMessages) {
-            testPromptForBehavior(bravePath, List.of(message), "LEAD");
+            testPromptForBehavior(bravePath, List.of(message), "LEAD", "FOLLOW");
         }
     }
 
     @Test
     public void leadNervous() {
         for (String message : leadMessages) {
-            testPromptForBehavior(nervousPath, List.of(message), "LEAD");
+            testPromptForBehavior(nervousPath, List.of(message), "LEAD", "FOLLOW");
         }
     }
 
     @Test
     public void unFleeBrave() {
         for (String message : unFleeMessages) {
-            testPromptForBehavior(bravePath, List.of(message), "STOP");
+            testPromptForBehavior(bravePath, List.of(message), "STOP", "FOLLOW");
         }
     }
 
     @Test
     public void protectBrave() {
         for (String message : protectMessages) {
-            testPromptForBehavior(bravePath, List.of(message), "PROTECT");
+            testPromptForBehavior(bravePath, List.of(message), "PROTECT", "ATTACK");
         }
     }
 
     @Test
     public void protectNervous() {
         for (String message : protectMessages) {
-            testPromptForBehavior(nervousPath, List.of(message), "PROTECT");
+            testPromptForBehavior(nervousPath, List.of(message), "PROTECT", "ATTACK");
         }
     }
 
     @Test
     public void attackBrave() {
         for (String message : attackMessages) {
-            testPromptForBehavior(bravePath, List.of(message), "ATTACK");
+            testPromptForBehavior(bravePath, List.of(message), "ATTACK", "FLEE");
         }
     }
 
     @Test
     public void attackNervous() {
         for (String message : attackMessages) {
-            testPromptForBehavior(nervousPath, List.of(message), "FLEE");
+            testPromptForBehavior(nervousPath, List.of(message), "FLEE", "ATTACK");
         }
     }
 
     @Test
     public void friendshipUpNervous() {
-        ParsedMessage result = testPromptForBehavior(nervousPath, friendshipUpMessages, "FRIENDSHIP");
+        ParsedMessage result = testPromptForBehavior(nervousPath, friendshipUpMessages, "FRIENDSHIP", "");
         assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() > 0));
     }
 
     @Test
     public void friendshipUpBrave() {
-        ParsedMessage result = testPromptForBehavior(bravePath, friendshipUpMessages, "FRIENDSHIP");
+        ParsedMessage result = testPromptForBehavior(bravePath, friendshipUpMessages, "FRIENDSHIP", "");
         assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() > 0));
     }
 
     @Test
     public void friendshipDownNervous() {
         for (String message : friendshipDownMessages) {
-            ParsedMessage result = testPromptForBehavior(nervousPath, List.of(message), "FRIENDSHIP");
+            ParsedMessage result = testPromptForBehavior(nervousPath, List.of(message), "FRIENDSHIP", "");
             assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() < 0));
         }
     }
 
-    public ParsedMessage testPromptForBehavior(Path chatDataPath, List<String> messages, String behavior) {
-        LOGGER.info("Testing '" + chatDataPath.getFileName() + "' with '" + messages.toString() + "' and expecting behavior: " + behavior);
+    public ParsedMessage testPromptForBehavior(Path chatDataPath, List<String> messages, String goodBehavior, String badBehavior) {
+        LOGGER.info("Testing '" + chatDataPath.getFileName() + "' with '" + messages.toString() +
+                "' expecting behavior: " + goodBehavior + " and avoid: " + badBehavior);
 
         try {
             // Enforce rate limit
@@ -219,16 +220,25 @@ public class BehaviorTests {
                 String promptText = Files.readString(promptPath);
                 assertNotNull(promptText);
 
-                // fetch HTTP response from ChatGPT
-                CompletableFuture<String> future = ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, entityTestData.previousMessages, false);
+                // Fetch HTTP response from ChatGPT
+                CompletableFuture<String> future = ChatGPTRequest.fetchMessageFromChatGPT(
+                        config, promptText, contextData, entityTestData.previousMessages, false);
 
                 try {
                     String outputMessage = future.get(60 * 60, TimeUnit.SECONDS);
                     assertNotNull(outputMessage);
 
-                    // Chat Message: Check for behavior
+                    // Chat Message: Check for behaviors
                     ParsedMessage result = MessageParser.parseMessage(outputMessage.replace("\n", " "));
-                    assertTrue(result.getBehaviors().stream().anyMatch(b -> behavior.equals(b.getName())));
+
+                    // Check for the presence of good behavior
+                    assertTrue(result.getBehaviors().stream().anyMatch(b -> goodBehavior.equals(b.getName())));
+
+                    // Check for the absence of bad behavior if badBehavior is not empty
+                    if (!badBehavior.isEmpty()) {
+                        assertTrue(result.getBehaviors().stream().noneMatch(b -> badBehavior.equals(b.getName())));
+                    }
+
                     return result;
 
                 } catch (TimeoutException e) {

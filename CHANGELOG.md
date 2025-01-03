@@ -10,6 +10,7 @@ All notable changes to **CreatureChat** are documented in this file. The format 
 - Large refactor to use ONLY emojis as behaviors: ❤️💔👣🐕🏃‍️🛡️⚔️🚫. Save on tokens, and simplifies behavior support for smaller LLMs.
 - Added Rate Limits to LLM unit tests (so we can test APIs with lower rate limits, such as Groq)
 - Improvements to system-chat prompt to improve LLM unit tests across many different models (gpt-3.5-turbo, gpt-4o-mini, llama-3.3-70b-versatile)
+- Improved LLM unit tests to check for a negative behavior as well as a positive behavior (i.e. FOLLOW should be output, but not LEAD)
 
 ## [1.2.1] - 2025-01-01
 
