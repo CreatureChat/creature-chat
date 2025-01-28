@@ -6,6 +6,7 @@ import com.owlmaddie.particle.CreatureParticleFactory;
 import com.owlmaddie.particle.LeadParticleFactory;
 import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.ui.ClickHandler;
+import com.owlmaddie.ui.ModScreenHandlers;
 import com.owlmaddie.ui.PlayerMessageManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -37,6 +38,9 @@ public class ClientInit implements ClientModInitializer {
         ParticleFactoryRegistry.getInstance().register(LEAD_FRIEND_PARTICLE, CreatureParticleFactory::new);
         ParticleFactoryRegistry.getInstance().register(LEAD_ENEMY_PARTICLE, CreatureParticleFactory::new);
         ParticleFactoryRegistry.getInstance().register(LEAD_PARTICLE, LeadParticleFactory::new);
+
+        // Register Creature Tag Editor
+        ModScreenHandlers.register();
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             tickCounter++;
