@@ -39,6 +39,8 @@ import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 import static com.owlmaddie.network.ServerPackets.*;
 
@@ -310,8 +312,22 @@ public class EntityChatData {
                 // Log the exception for debugging
                 LOGGER.error("Error processing LLM response", e);
 
-                // Error / No Chat Message (Failure)
-                String randomErrorMessage = Randomizer.getRandomMessage(Randomizer.RandomType.ERROR);
+                Randomizer.ErrorType type = Randomizer.ErrorType.GENERAL;
+                int code = ChatGPTRequest.lastErrorCode;
+                if (code == -1) {
+                    type = Randomizer.ErrorType.CONNECTION;
+                } else if (code == 401 || (config.getApiKey() == null || config.getApiKey().isEmpty())) {
+                    type = Randomizer.ErrorType.CODE401;
+                } else if (code == 403) {
+                    type = Randomizer.ErrorType.CODE403;
+                } else if (code == 429) {
+                    type = Randomizer.ErrorType.CODE429;
+                } else if (code == 500) {
+                    type = Randomizer.ErrorType.CODE500;
+                } else if (code == 503) {
+                    type = Randomizer.ErrorType.CODE503;
+                }
+                String randomErrorMessage = Randomizer.getRandomErrorMessage(type);
                 this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
 
                 // Remove the error message from history to prevent it from affecting future ChatGPT requests
@@ -319,13 +335,19 @@ public class EntityChatData {
                     previousMessages.remove(previousMessages.size() - 1);
                 }
 
-                // Send clickable error message
                 String errorMessage = "Error: ";
                 if (e.getMessage() != null && !e.getMessage().isEmpty()) {
-                    errorMessage += truncateString(e.getMessage(), 55) + "\n";
+                    String clean = e.getMessage().replace(config.getApiKey(), "**********");
+                    errorMessage += truncateString(clean, 55);
                 }
-                errorMessage += "Help is available at discord.creaturechat.com";
-                ServerPackets.SendClickableError(player, errorMessage, "http://discord.creaturechat.com");
+                player.displayClientMessage(Component.literal(errorMessage).withStyle(ChatFormatting.RED), false);
+
+                String solution = getSolutionMessage(code);
+                if (solution != null) {
+                    player.displayClientMessage(Component.literal(solution).withStyle(ChatFormatting.BLUE), false);
+                }
+
+                ServerPackets.SendClickableError(player, "Help is available at discord.creaturechat.com", "http://discord.creaturechat.com");
             }
         });
     }
@@ -592,27 +614,57 @@ public class EntityChatData {
                 // Log the exception for debugging
                 LOGGER.error("Error processing LLM response", e);
 
-                // Error / No Chat Message (Failure)
-                String randomErrorMessage = Randomizer.getRandomMessage(Randomizer.RandomType.ERROR);
+                Randomizer.ErrorType type = Randomizer.ErrorType.GENERAL;
+                int code = ChatGPTRequest.lastErrorCode;
+                if (code == -1) {
+                    type = Randomizer.ErrorType.CONNECTION;
+                } else if (code == 401 || (config.getApiKey() == null || config.getApiKey().isEmpty())) {
+                    type = Randomizer.ErrorType.CODE401;
+                } else if (code == 403) {
+                    type = Randomizer.ErrorType.CODE403;
+                } else if (code == 429) {
+                    type = Randomizer.ErrorType.CODE429;
+                } else if (code == 500) {
+                    type = Randomizer.ErrorType.CODE500;
+                } else if (code == 503) {
+                    type = Randomizer.ErrorType.CODE503;
+                }
+                String randomErrorMessage = Randomizer.getRandomErrorMessage(type);
                 this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
 
                 // Remove the error message from history to prevent it from affecting future ChatGPT requests
                 if (!previousMessages.isEmpty()) {
                     previousMessages.remove(previousMessages.size() - 1);
                 }
-                // Send clickable error message
                 String errorMessage = "Error: ";
                 if (e.getMessage() != null && !e.getMessage().isEmpty()) {
-                    errorMessage += truncateString(e.getMessage(), 55) + "\n";
+                    String clean = e.getMessage().replace(config.getApiKey(), "**********");
+                    errorMessage += truncateString(clean, 55);
                 }
-                errorMessage += "Help is available at discord.creaturechat.com";
-                ServerPackets.SendClickableError(player, errorMessage, "http://discord.creaturechat.com");
+                player.displayClientMessage(Component.literal(errorMessage).withStyle(ChatFormatting.RED), false);
+
+                String solution = getSolutionMessage(code);
+                if (solution != null) {
+                    player.displayClientMessage(Component.literal(solution).withStyle(ChatFormatting.BLUE), false);
+                }
+
+                ServerPackets.SendClickableError(player, "Help is available at discord.creaturechat.com", "http://discord.creaturechat.com");
             }
         });
     }
 
     public static String truncateString(String input, int maxLength) {
         return input.length() > maxLength ? input.substring(0, maxLength - 3) + "..." : input;
+    }
+
+    private static String getSolutionMessage(int code) {
+        return switch (code) {
+            case 401 -> "Solution: Add a valid API key";
+            case 403 -> "Solution: Check region or permissions";
+            case 429 -> "Solution: Add funds to your account";
+            case 503 -> "Solution: Try again later";
+            default -> null;
+        };
     }
 
     // Add a message to the history and update the current message
