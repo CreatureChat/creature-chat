@@ -14,6 +14,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
@@ -260,7 +261,7 @@ public class ChatGPTRequest {
                         lastErrorMessage = "Failed to parse response";
                         return null;
                     }
-                } catch (SocketException ce) {
+                } catch (SocketException | SocketTimeoutException ce) {
                     LOGGER.warn("Connection failed", ce);
                     lastErrorMessage = "No Internet or Blocked Request: " + ce.getMessage();
                     lastErrorCode = -1;

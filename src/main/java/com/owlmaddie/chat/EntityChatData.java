@@ -657,11 +657,14 @@ public class EntityChatData {
         return input.length() > maxLength ? input.substring(0, maxLength - 3) + "..." : input;
     }
 
-    private static String getSolutionMessage(int code) {
+    public static String getSolutionMessage(int code) {
         return switch (code) {
+            case -1 -> "Solution: Check internet connection or firewall";
+            case 0 -> "Solution: Verify the API URL";
             case 401 -> "Solution: Add a valid API key";
-            case 403 -> "Solution: Check region or permissions";
+            case 403 -> "Solution: Check region or VPN";
             case 429 -> "Solution: Add funds to your account";
+            case 500 -> "Solution: Server error, try again later";
             case 503 -> "Solution: Try again later";
             default -> null;
         };

@@ -9,6 +9,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ### Added
 - Solutions to common errors are now displayed on screen (i.e. more helpful)
 - New keep alive and accept HTTP headers
+- Unit tests for all LLM request failure scenarios + solutions
 
 ### Changed
 - Adding specific error messages for specific LLM request status codes (i.e. more helpful)
