@@ -12,11 +12,14 @@ import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.ui.ClickHandler;
 import com.owlmaddie.ui.PlayerMessageManager;
 import com.owlmaddie.utils.TickDelta;
+import com.owlmaddie.inventory.ModMenus;
+import com.owlmaddie.inventory.MobInventoryScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.minecraft.client.gui.screens.MenuScreens;
 
 /**
  * The {@code ClientInit} class initializes this mod in the client and defines all hooks into the
@@ -49,6 +52,7 @@ public class ClientInit implements ClientModInitializer {
         // Register events
         ClickHandler.register();
         ClientPackets.register();
+        MenuScreens.register(ModMenus.MOB_INVENTORY, MobInventoryScreen::new);
 
         // Register an event callback to render text bubbles
         WorldRenderEvents.BEFORE_DEBUG_RENDER.register(ctx -> {

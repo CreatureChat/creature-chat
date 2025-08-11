@@ -7,6 +7,16 @@ import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.ChatDataSaverScheduler;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
+import com.owlmaddie.inventory.ChatInventory;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.goals.GoalPriority;
@@ -26,9 +36,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
@@ -319,6 +327,33 @@ public class ServerPackets {
 
         // Generate new character
         chatData.generateCharacter(userLanguage, player, userMessageBuilder.toString(), false);
+
+        // Populate inventory with villager chest loot if empty
+        if (entity instanceof ChatInventory chatInv) {
+            Container inv = chatInv.creaturechat$getInventory();
+            boolean empty = true;
+            for (int i = 0; i < inv.getContainerSize(); i++) {
+                if (!inv.getItem(i).isEmpty()) {
+                    empty = false;
+                    break;
+                }
+            }
+            if (empty) {
+                ServerLevel level = (ServerLevel) player.level();
+                LootTable table = level.getServer().reloadableRegistries().getLootTable(BuiltInLootTables.VILL);
+                LootParams params = new LootParams.Builder(level)
+                        .withParameter(LootContextParams.ORIGIN, entity.position())
+                        .create(LootContextParamSets.CHEST);
+                int slot = 0;
+                for (ItemStack stack : table.getRandomItems(params)) {
+                    if (slot < inv.getContainerSize()) {
+                        inv.setItem(slot++, stack);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     public static void generate_chat(String userLanguage, EntityChatData chatData, ServerPlayer player, Mob entity, String message, boolean is_auto_message) {

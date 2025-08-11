@@ -4,6 +4,14 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- Inventories for all entities with chat data (Shift+Right Click)
+  - Random items added to inventory on character creation
+  - You can borrow items from friends, or steel items from enemies
+  - Entities will react to changes in inventory
+
 ## [2.5.0] - 2025-07-07
 
 ### Added

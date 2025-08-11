@@ -6,13 +6,22 @@ package com.owlmaddie.mixin;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
+import com.owlmaddie.inventory.ChatInventory;
+import com.owlmaddie.inventory.MobInventoryMenu;
 import com.owlmaddie.network.ServerPackets;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleContainer;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -26,7 +35,67 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * The {@code MixinMobEntity} mixin class exposes the goalSelector field from the MobEntity class.
  */
 @Mixin(Mob.class)
-public class MixinMobEntity {
+public class MixinMobEntity implements ChatInventory {
+
+    private final SimpleContainer creaturechat$inventory = new SimpleContainer(15);
+
+    @Override
+    public SimpleContainer creaturechat$getInventory() {
+        return creaturechat$inventory;
+    }
+
+    @Inject(method = "interact", at = @At("HEAD"), cancellable = true)
+    private void creaturechat$openInventory(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
+        if (player.level().isClientSide()) {
+            return;
+        }
+
+        if (hand != InteractionHand.MAIN_HAND) {
+            return;
+        }
+
+        if (!player.isSecondaryUseActive()) {
+            return;
+        }
+
+        Mob thisEntity = (Mob) (Object) this;
+
+        if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal) {
+            return;
+        }
+
+        if (player instanceof ServerPlayer serverPlayer) {
+            ExtendedScreenHandlerFactory<Integer> provider = new ExtendedScreenHandlerFactory<>() {
+                @Override
+                public Integer getScreenOpeningData(ServerPlayer p) {
+                    return thisEntity.getId();
+                }
+
+                @Override
+                public Component getDisplayName() {
+                    return thisEntity.getDisplayName();
+                }
+
+                @Override
+                public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player p) {
+                    return new MobInventoryMenu(syncId, playerInventory, creaturechat$inventory, thisEntity, serverPlayer);
+                }
+            };
+            serverPlayer.openMenu(provider);
+            cir.setReturnValue(InteractionResult.SUCCESS);
+        }
+    }
+
+    @Inject(method = "addAdditionalSaveData", at = @At("RETURN"))
+    private void creaturechat$saveInventory(ValueOutput tag, CallbackInfo ci) {
+        creaturechat$inventory.storeAsItemList(tag.list("CreatureChatInventory", ItemStack.CODEC));
+    }
+
+    @Inject(method = "readAdditionalSaveData", at = @At("RETURN"))
+    private void creaturechat$loadInventory(ValueInput tag, CallbackInfo ci) {
+        tag.list("CreatureChatInventory", ItemStack.CODEC)
+            .ifPresent(typedList -> creaturechat$inventory.fromItemList(typedList));
+    }
 
     @Inject(method = "interact", at = @At(value = "RETURN"))
     private void onItemGiven(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
