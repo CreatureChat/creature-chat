@@ -101,12 +101,10 @@ public class MixinLivingEntity {
     }
 
     @Inject(
-            method = "getDamageAfterArmorAbsorb(Lnet/minecraft/world/damagesource/DamageSource;F)F",
-            at     = @At("RETURN")
+            method = "die(Lnet/minecraft/world/damagesource/DamageSource;)V",
+            at = @At("HEAD")
     )
-    private void afterArmor(DamageSource source,
-                            float rawDamage,
-                            CallbackInfoReturnable<Float> cir) {
+    private void onDeath(DamageSource source, CallbackInfo ci) {
         LivingEntity entity = (LivingEntity) (Object) this;
         Level world = entity.level();
 
