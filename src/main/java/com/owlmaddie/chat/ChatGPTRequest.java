@@ -207,7 +207,17 @@ public class ChatGPTRequest {
                         lastErrorCode = statusCode;
                         InputStream errStream = connection.getErrorStream();
                         if (errStream == null) {
-                            errStream = connection.getInputStream();
+                            try {
+                                errStream = connection.getInputStream();
+                            } catch (Exception ex) {
+                                LOGGER.error("Failed to obtain error stream", ex);
+                                String msg = connection.getResponseMessage();
+                                if (msg == null) {
+                                    msg = "HTTP error " + statusCode;
+                                }
+                                lastErrorMessage = sanitizeApiKey(msg + ": " + ex.getMessage(), apiKey);
+                                return null;
+                            }
                         }
                         if ("gzip".equalsIgnoreCase(connection.getContentEncoding())) {
                             errStream = new GZIPInputStream(errStream);
