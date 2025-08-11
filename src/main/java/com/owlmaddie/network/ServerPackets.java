@@ -12,11 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.storage.loot.BuiltInLootTables;
-import net.minecraft.world.level.storage.loot.LootParams;
-import net.minecraft.world.level.storage.loot.LootTable;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.goals.GoalPriority;
@@ -339,19 +334,7 @@ public class ServerPackets {
                 }
             }
             if (empty) {
-                ServerLevel level = (ServerLevel) player.level();
-                LootTable table = level.getServer().reloadableRegistries().getLootTable(BuiltInLootTables.VILL);
-                LootParams params = new LootParams.Builder(level)
-                        .withParameter(LootContextParams.ORIGIN, entity.position())
-                        .create(LootContextParamSets.CHEST);
-                int slot = 0;
-                for (ItemStack stack : table.getRandomItems(params)) {
-                    if (slot < inv.getContainerSize()) {
-                        inv.setItem(slot++, stack);
-                    } else {
-                        break;
-                    }
-                }
+                // 1.20: skip populating inventory with villager loot
             }
         }
     }
