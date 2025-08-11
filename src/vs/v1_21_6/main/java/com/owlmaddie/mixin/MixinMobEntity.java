@@ -16,9 +16,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.npc.Villager;
@@ -88,36 +87,14 @@ public class MixinMobEntity implements ChatInventory {
     }
 
     @Inject(method = "addAdditionalSaveData", at = @At("RETURN"))
-    private void creaturechat$saveInventory(CompoundTag tag, CallbackInfo ci) {
-        ListTag listTag = new ListTag();
-        HolderLookup.Provider provider = ((Mob) (Object) this).registryAccess();
-
-        for (int i = 0; i < creaturechat$inventory.getContainerSize(); i++) {
-            ItemStack stack = creaturechat$inventory.getItem(i);
-            if (!stack.isEmpty()) {
-                CompoundTag itemTag = new CompoundTag();
-                itemTag.putByte("Slot", (byte) i);
-                stack.save(provider, itemTag);
-                listTag.add(itemTag);
-            }
-        }
-
-        tag.put("CreatureChatInventory", listTag);
+    private void creaturechat$saveInventory(ValueOutput tag, CallbackInfo ci) {
+        creaturechat$inventory.storeAsItemList(tag.list("CreatureChatInventory", ItemStack.CODEC));
     }
 
     @Inject(method = "readAdditionalSaveData", at = @At("RETURN"))
-    private void creaturechat$loadInventory(CompoundTag tag, CallbackInfo ci) {
-        ListTag listTag = tag.getList("CreatureChatInventory", 10);
-        HolderLookup.Provider provider = ((Mob) (Object) this).registryAccess();
-
-        for (int i = 0; i < listTag.size(); ++i) {
-            CompoundTag itemTag = listTag.getCompound(i);
-            int slot = itemTag.getByte("Slot") & 255;
-            if (slot >= 0 && slot < creaturechat$inventory.getContainerSize()) {
-                ItemStack parsed = ItemStack.parse(provider, itemTag).orElse(ItemStack.EMPTY);
-                creaturechat$inventory.setItem(slot, parsed);
-            }
-        }
+    private void creaturechat$loadInventory(ValueInput tag, CallbackInfo ci) {
+        tag.list("CreatureChatInventory", ItemStack.CODEC)
+            .ifPresent(typedList -> creaturechat$inventory.fromItemList(typedList));
     }
 
     @Inject(method = "interact", at = @At(value = "RETURN"))
