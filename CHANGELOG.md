@@ -12,6 +12,9 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - You can borrow items from friends, or steel items from enemies
   - Entities will react to changes in inventory
 
+### Fixed
+- Fixed constant death messages which appeared on each attack (for Minecraft 1.21.2+)
+
 ## [2.5.0] - 2025-07-07
 
 ### Added
