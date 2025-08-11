@@ -7,20 +7,15 @@ import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.ChatDataSaverScheduler;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
-import com.owlmaddie.inventory.ChatInventory;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.Container;
-import net.minecraft.world.item.ItemStack;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.goals.GoalPriority;
 import com.owlmaddie.goals.TalkPlayerGoal;
+import com.owlmaddie.inventory.ChatInventory;
 import com.owlmaddie.particle.Particles;
 import com.owlmaddie.utils.Compression;
 import com.owlmaddie.utils.Randomizer;
 import com.owlmaddie.utils.ServerEntityFinder;
-import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -31,11 +26,18 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -323,7 +325,7 @@ public class ServerPackets {
         // Generate new character
         chatData.generateCharacter(userLanguage, player, userMessageBuilder.toString(), false);
 
-        // Populate inventory with villager chest loot if empty
+        // Populate inventory with some simple starter items if empty
         if (entity instanceof ChatInventory chatInv) {
             Container inv = chatInv.creaturechat$getInventory();
             boolean empty = true;
@@ -334,7 +336,19 @@ public class ServerPackets {
                 }
             }
             if (empty) {
-                // 1.20: skip populating inventory with villager loot
+                RandomSource random = entity.getRandom();
+                Item[] items = new Item[] {
+                        Items.STICK,
+                        Items.OAK_PLANKS,
+                        Items.ROTTEN_FLESH,
+                        Items.WHEAT_SEEDS,
+                        Items.APPLE
+                };
+                for (int slot = 0; slot < Math.min(3, inv.getContainerSize()); slot++) {
+                    Item item = items[random.nextInt(items.length)];
+                    int count = 1 + random.nextInt(3);
+                    inv.setItem(slot, new ItemStack(item, count));
+                }
             }
         }
     }
