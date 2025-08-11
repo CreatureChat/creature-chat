@@ -137,7 +137,7 @@ public class Randomizer {
             "I can't talk until we slow down. Try {LINK}",
             "Rate limited by the server. Info at {LINK}",
             "Token meter flashing red. Head over to {LINK}",
-            "The API is tired of us. Let it rest (or buy more tokens) {LINK}",
+            "The API is tired of us. Let it rest (or buy more tokens) {LINK}"
     );
     private static List<String> errors500 = Arrays.asList(
             "The server's brain melted. Let's retry later. See {LINK}",
