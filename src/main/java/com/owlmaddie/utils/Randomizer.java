@@ -40,7 +40,20 @@ public class Randomizer {
             "<peers over your shoulder>",
             "<fakes a smile>",
             "<mutters under breath>",
-            "<counts imaginary stars>"
+            "<counts imaginary stars>",
+            "<shakes head>",
+            "<squints>",
+            "<tilts head>",
+            "<checks compass>",
+            "<studies map>",
+            "<kicks dirt>",
+            "<rolls eyes>",
+            "<waves awkwardly>",
+            "<looks at the sky>",
+            "<counts to three>",
+            "<checks inventory>",
+            "<sips water>",
+            "<stares at the ground>"
     );
     private static List<String> errorsGeneral = Arrays.asList(
             "Seems like my words got lost in the End. Check out {LINK} for clues!",

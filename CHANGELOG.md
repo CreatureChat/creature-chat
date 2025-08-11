@@ -13,6 +13,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ### Changed
 - Adding specific error messages for specific LLM request status codes (i.e. more helpful)
 - Leaving HTTP connection open (better connection pooling)
+- Expanded 'no response' messages
 
 ## [2.5.0] - 2025-07-07
 
