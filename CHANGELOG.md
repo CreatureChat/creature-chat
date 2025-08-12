@@ -8,6 +8,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ### Added
 - New mixin validation on build script (to validate all injection entry points)
+- Validation of mixin targets (on build script)
 
 ### Fixed
 - Fixed constant death messages which appeared on each attack (for Minecraft 1.21.2+)
