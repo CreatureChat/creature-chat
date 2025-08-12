@@ -62,6 +62,7 @@ EOD
   sed -i "s/\"minecraft\": \".*\"/\"minecraft\": \"~$mc_version\"/" \
     src/main/resources/fabric.mod.json
 
+  echo "Running mixin target validation"
   ./gradlew build -x test -x validateAccessWidener --build-cache --parallel
   find build/libs -name '*sources*.jar' -delete
   mv build/libs/creaturechat-*.jar .
