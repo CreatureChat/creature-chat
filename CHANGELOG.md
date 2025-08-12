@@ -11,8 +11,15 @@ All notable changes to **CreatureChat™** are documented in this file. The form
     - Random items added to inventory on character creation
     - You can borrow items from friends, or steel items from enemies
     - Entities will react to changes in inventory
-- New mixin validation on build script (to validate all injection entry points)
 - Validation of mixin targets (on build script)
+- Solutions to common errors are now displayed on screen (i.e. more helpful)
+- New keep alive and accept HTTP headers
+- Unit tests for all LLM request failure scenarios + solutions
+
+### Changed
+- Adding specific error messages for specific LLM request status codes (i.e. more helpful)
+- Leaving HTTP connection open (better connection pooling)
+- Expanded 'no response' messages
 
 ### Fixed
 - Fixed constant death messages which appeared on each attack (for Minecraft 1.21.2+)
