@@ -429,7 +429,7 @@ public class ServerPackets {
     // Send a chat message to a player which is clickable (for error messages with a link for help)
     public static void SendClickableError(Player player, String message, String url) {
         MutableComponent text = Component.literal(message)
-                .withStyle(ChatFormatting.RED)
+                .withStyle(ChatFormatting.BLUE)
                 .withStyle(style -> style
                         .withClickEvent(ClickEventHelper.openUrl(url))
                         .withUnderlined(true));
