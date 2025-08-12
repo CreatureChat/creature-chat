@@ -35,7 +35,7 @@ public class MobInventoryScreen extends AbstractContainerScreen<MobInventoryMenu
         guiGraphics.blit(RenderType::guiTextured, INVENTORY_TEXTURE, k, l, 0.0F, 0.0F, this.imageWidth, this.imageHeight, 256, 256);
         Mob mob = this.menu.getMob();
         if (mob != null) {
-            InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, k, l + 10, k + 78, l + 70, 20, 0.25F, this.xMouse, this.yMouse, mob);
+            InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, k, l, k + 78, l + 70, 20, 0.25F, this.xMouse, this.yMouse, mob);
         }
     }
 

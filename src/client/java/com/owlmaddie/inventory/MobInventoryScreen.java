@@ -6,8 +6,10 @@ package com.owlmaddie.inventory;
 import com.owlmaddie.utils.TextureLoader;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
@@ -30,6 +32,12 @@ public class MobInventoryScreen extends AbstractContainerScreen<MobInventoryMenu
         int k = (this.width - this.imageWidth) / 2;
         int l = (this.height - this.imageHeight) / 2;
         guiGraphics.blit(INVENTORY_TEXTURE, k, l, 0, 0, this.imageWidth, this.imageHeight);
+        Mob mob = this.menu.getMob();
+        if (mob != null) {
+            float relX = (float)(k + 78) - this.xMouse;
+            float relY = (float)(l + 70) - this.yMouse;
+            InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, k + 78, l + 70, 20, relX, relY, mob);
+        }
     }
 
     @Override
