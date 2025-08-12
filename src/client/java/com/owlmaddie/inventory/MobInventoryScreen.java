@@ -3,6 +3,7 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.inventory;
 
+import com.owlmaddie.utils.TextureLoader;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -13,7 +14,8 @@ import net.minecraft.world.entity.player.Inventory;
  * Client screen for mob inventories.
  */
 public class MobInventoryScreen extends AbstractContainerScreen<MobInventoryMenu> {
-    private static final ResourceLocation HORSE_INVENTORY_LOCATION = new ResourceLocation("minecraft", "textures/gui/container/horse.png");
+    private static final TextureLoader textures = new TextureLoader();
+    private static final ResourceLocation INVENTORY_TEXTURE = textures.GetUI("inventory");
     private float xMouse;
     private float yMouse;
 
@@ -27,7 +29,7 @@ public class MobInventoryScreen extends AbstractContainerScreen<MobInventoryMenu
     protected void renderBg(GuiGraphics guiGraphics, float f, int i, int j) {
         int k = (this.width - this.imageWidth) / 2;
         int l = (this.height - this.imageHeight) / 2;
-        guiGraphics.blit(HORSE_INVENTORY_LOCATION, k, l, 0, 0, this.imageWidth, this.imageHeight);
+        guiGraphics.blit(INVENTORY_TEXTURE, k, l, 0, 0, this.imageWidth, this.imageHeight);
     }
 
     @Override

@@ -3,6 +3,7 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.inventory;
 
+import com.owlmaddie.utils.TextureLoader;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
@@ -11,13 +12,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 
 /**
  * Client screen for mob inventories.
  */
 public class MobInventoryScreen extends AbstractContainerScreen<MobInventoryMenu> {
-    private static final ResourceLocation CHEST_SLOTS_SPRITE = ResourceLocation.withDefaultNamespace("container/horse/chest_slots");
-    private static final ResourceLocation HORSE_INVENTORY_LOCATION = ResourceLocation.withDefaultNamespace("textures/gui/container/horse.png");
+    private static final TextureLoader textures = new TextureLoader();
+    private static final ResourceLocation INVENTORY_TEXTURE = textures.GetUI("inventory");
     private float xMouse;
     private float yMouse;
 
@@ -31,11 +33,10 @@ public class MobInventoryScreen extends AbstractContainerScreen<MobInventoryMenu
     protected void renderBg(GuiGraphics guiGraphics, float f, int i, int j) {
         int k = (this.width - this.imageWidth) / 2;
         int l = (this.height - this.imageHeight) / 2;
-        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, HORSE_INVENTORY_LOCATION, k, l, 0.0F, 0.0F, this.imageWidth, this.imageHeight, 256, 256);
-        guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, CHEST_SLOTS_SPRITE, 90, 54, 0, 0, k + 79, l + 17, 90, 54);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, INVENTORY_TEXTURE, k, l, 0.0F, 0.0F, this.imageWidth, this.imageHeight, 256, 256);
         Mob mob = this.menu.getMob();
         if (mob != null) {
-            InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, k + 26, l + 18, k + 78, l + 70, 17, 0.25F, this.xMouse, this.yMouse, mob);
+            InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, k , l, k + 78, l + 70, 20, 0.25F, this.xMouse, this.yMouse, mob);
         }
     }
 

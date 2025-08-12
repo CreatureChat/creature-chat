@@ -54,11 +54,11 @@ public class MobInventoryMenu extends AbstractContainerMenu {
         for (int row = 0; row < rows; ++row) {
             for (int col = 0; col < 5 && slot < mobInvSize; ++col) {
                 // shift the mob inventory grid two columns to the right so it no longer overlaps the entity preview
-                this.addSlot(new Slot(inventory, slot++, 80 + col * 18, 18 + row * 18));
+                this.addSlot(new Slot(inventory, slot++, 75 + col * 18, 18 + row * 18));
             }
         }
 
-        int startY = 18 + rows * 18 + 14;
+        int startY = 18 + rows * 18 + 14 - 2;
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
                 this.addSlot(new Slot(playerInventory, col + row * 9 + 9, 8 + col * 18, startY + row * 18));
