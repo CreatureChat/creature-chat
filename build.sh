@@ -62,7 +62,12 @@ EOD
   sed -i "s/\"minecraft\": \".*\"/\"minecraft\": \"~$mc_version\"/" \
     src/main/resources/fabric.mod.json
 
+  echo "Running mixin target validation"
   ./gradlew build -x test -x validateAccessWidener --build-cache --parallel
+  if ! compgen -G "build/classes/java/main/*refmap.json" > /dev/null; then
+    echo "Error: mixin refmap missing; target validation did not run" >&2
+    exit 1
+  fi
   find build/libs -name '*sources*.jar' -delete
   mv build/libs/creaturechat-*.jar .
 
