@@ -7,10 +7,10 @@ This fabric mod allows players to chat with any mob in Java Minecraft! All creat
 Use `build.sh` to build the mod:
 
 ```bash
-./build.sh                        # Build all versions
-ONLY_VERSION=1.20.1 ./build.sh    # Build a specific version
-DRY_RUN=1 ./build.sh              # Preview build steps, commands, and dependencies (no changes)
-ONLY_VERSION=1.20.1 DRY_RUN=1 ./build.sh  # Preview a specific version
+./build.sh                        # Build ALL versions
+ONLY_VERSION=1.20.1 ./build.sh    # Build a SPECIFIC version
+DRY_RUN=1 ./build.sh              # PREVIEW build details, commands, and dependencies (no changes)
+ONLY_VERSION=1.20.1 DRY_RUN=1 ./build.sh  # PREVIEW a SPECIFIC version
 ```
 
 > ⚠️ This script may temporarily modify `gradle.properties` and `fabric.mod.json`. Run it only when you're ready to test builds.
@@ -19,10 +19,10 @@ ONLY_VERSION=1.20.1 DRY_RUN=1 ./build.sh  # Preview a specific version
 
 ## 🧭 Coding Guidelines
 
-- **Target Minecraft versions**: `1.20` to `1.21.7`.
+- **Target Minecraft versions**: `1.20` to `1.21.7`. If `./build.sh` succeeds, then all versions are successfully built. 
 - **Mappings**: Uses **official Mojang mappings** (not Yarn).
 - **Simple & Precise**: Use surgical precision when editing (avoid unnecessary changes, keep things simple and clean).
-- **Version-Specific**: If you there are API changes causing issues, use /vs/ folder to override specific versions.
+- **Version-Specific**: If you there are API changes causing issues, use /vs/ folder to override specific versions. If this results in large files being duplicated, try and refactor out the broken functionality into a helper class, and then use /vs/ versions for your helper class.
 
 ---
 
@@ -37,4 +37,7 @@ ONLY_VERSION=1.20.1 DRY_RUN=1 ./build.sh  # Preview a specific version
 
 Not all Minecraft versions require a `src/vs/` folder. These folders contain targeted overrides applied **in order**, 
 from oldest to newest, where the folder version is `<=` the Minecraft version being built. 
-Later folders override files from earlier ones.
+Later folders override files from earlier ones. 
+
+NOTE: Try not to duplicate large files, and instead create helper classes 
+which can be easily made version-specific.
