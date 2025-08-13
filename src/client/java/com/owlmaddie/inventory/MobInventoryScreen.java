@@ -36,7 +36,7 @@ public class MobInventoryScreen extends AbstractContainerScreen<MobInventoryMenu
         if (mob != null) {
             float relX = (float)(k + 78) - this.xMouse;
             float relY = (float)(l + 70) - this.yMouse;
-            InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, k + 78, l + 70, 20, relX, relY, mob);
+            InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, k + 40, l + 55, 20, relX, relY, mob);
         }
     }
 
