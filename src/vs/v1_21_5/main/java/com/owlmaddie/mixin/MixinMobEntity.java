@@ -128,9 +128,9 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
                 CompoundTag wrapper = new CompoundTag();
                 wrapper.putByte("Slot", (byte) i);
 
-                CompoundTag itemTag = new CompoundTag();
-                stack.save(provider, itemTag);
-                wrapper.put("Item", itemTag);
+                // ItemStack#save now returns the tag instead of mutating a provided instance.
+                // Write that returned tag directly so the item id is preserved.
+                wrapper.put("Item", stack.save(provider));
 
                 listTag.add(wrapper);
             }
