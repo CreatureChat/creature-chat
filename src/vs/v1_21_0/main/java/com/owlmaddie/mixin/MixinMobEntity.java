@@ -48,29 +48,31 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
     }
 
     @Override
-    public void openCustomInventoryScreen(ServerPlayer player) {
+    public void openCustomInventoryScreen(Player player) {
         Mob thisEntity = (Mob) (Object) this;
         if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal || thisEntity instanceof AbstractHorse) {
             return;
         }
 
-        ExtendedScreenHandlerFactory<Integer> provider = new ExtendedScreenHandlerFactory<>() {
-            @Override
-            public Integer getScreenOpeningData(ServerPlayer p) {
-                return thisEntity.getId();
-            }
+        if (player instanceof ServerPlayer serverPlayer) {
+            ExtendedScreenHandlerFactory<Integer> provider = new ExtendedScreenHandlerFactory<>() {
+                @Override
+                public Integer getScreenOpeningData(ServerPlayer p) {
+                    return thisEntity.getId();
+                }
 
-            @Override
-            public Component getDisplayName() {
-                return thisEntity.getDisplayName();
-            }
+                @Override
+                public Component getDisplayName() {
+                    return thisEntity.getDisplayName();
+                }
 
-            @Override
-            public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player p) {
-                return new MobInventoryMenu(syncId, playerInventory, creaturechat$inventory, thisEntity, player);
-            }
-        };
-        player.openMenu(provider);
+                @Override
+                public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player p) {
+                    return new MobInventoryMenu(syncId, playerInventory, creaturechat$inventory, thisEntity, serverPlayer);
+                }
+            };
+            serverPlayer.openMenu(provider);
+        }
     }
 
     @Inject(method = "interact", at = @At("HEAD"), cancellable = true)

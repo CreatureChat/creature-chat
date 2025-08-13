@@ -50,29 +50,31 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
     }
 
     @Override
-    public void openCustomInventoryScreen(ServerPlayer player) {
+    public void openCustomInventoryScreen(Player player) {
         Mob thisEntity = (Mob) (Object) this;
         if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal || thisEntity instanceof AbstractHorse) {
             return;
         }
 
-        ExtendedScreenHandlerFactory provider = new ExtendedScreenHandlerFactory() {
-            @Override
-            public void writeScreenOpeningData(ServerPlayer p, FriendlyByteBuf buf) {
-                buf.writeVarInt(thisEntity.getId());
-            }
+        if (player instanceof ServerPlayer serverPlayer) {
+            ExtendedScreenHandlerFactory provider = new ExtendedScreenHandlerFactory() {
+                @Override
+                public void writeScreenOpeningData(ServerPlayer p, FriendlyByteBuf buf) {
+                    buf.writeVarInt(thisEntity.getId());
+                }
 
-            @Override
-            public Component getDisplayName() {
-                return thisEntity.getDisplayName();
-            }
+                @Override
+                public Component getDisplayName() {
+                    return thisEntity.getDisplayName();
+                }
 
-            @Override
-            public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player p) {
-                return new MobInventoryMenu(syncId, playerInventory, creaturechat$inventory, thisEntity, player);
-            }
-        };
-        player.openMenu(provider);
+                @Override
+                public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player p) {
+                    return new MobInventoryMenu(syncId, playerInventory, creaturechat$inventory, thisEntity, serverPlayer);
+                }
+            };
+            serverPlayer.openMenu(provider);
+        }
     }
 
     @Inject(method = "interact", at = @At("HEAD"), cancellable = true)
