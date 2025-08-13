@@ -7,6 +7,14 @@ DRY_RUN=${DRY_RUN:-0}
 # Allow “pattern→empty” instead of “pattern→itself”
 shopt -s nullglob
 
+run_build() {
+  ./gradlew build -x test -x validateAccessWidener --build-cache --parallel && return 0
+  echo "Gradle failed; attempting to clear locks and retry..."
+  ./gradlew --stop >/dev/null 2>&1 || true
+  find .gradle ~/.gradle -type f -name '*.lock' -delete 2>/dev/null || true
+  ./gradlew build -x test -x validateAccessWidener --build-cache --parallel
+}
+
 # Format: minecraft_version  yarn_mappings       loader_version  loom_version      fabric_version
 VERSIONS=$(cat <<'EOF'
 1.20    1.20+build.1       0.17.2    1.11-SNAPSHOT   0.83.0+1.20
@@ -63,7 +71,7 @@ EOD
     src/main/resources/fabric.mod.json
 
   echo "Running mixin target validation"
-  ./gradlew build -x test -x validateAccessWidener --build-cache --parallel
+  run_build
   if ! compgen -G "build/classes/java/main/*refmap.json" > /dev/null; then
     echo "Error: mixin refmap missing; target validation did not run" >&2
     exit 1
