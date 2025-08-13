@@ -21,6 +21,7 @@ import net.minecraft.world.SimpleContainer;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.animal.horse.AbstractChestedHorse;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -62,6 +63,10 @@ public class MixinMobEntity implements ChatInventory {
         Mob thisEntity = (Mob) (Object) this;
 
         if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal) {
+            return;
+        }
+
+        if (thisEntity instanceof AbstractChestedHorse chested && chested.hasChest()) {
             return;
         }
 

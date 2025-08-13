@@ -11,6 +11,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
     - Random items added to inventory on character creation
     - You can borrow items from friends, or steel items from enemies
     - Entities will react to changes in inventory
+    - Incorporate existing inventories for Piglin, Pillager, Allay, and Villager
 - Validation of mixin targets (on build script)
 - Solutions to common errors are now displayed on screen (i.e. more helpful)
 - New keep alive and accept HTTP headers

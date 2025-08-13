@@ -14,6 +14,10 @@
 		"MixinVexEntity",
 		"MixinWanderingTrader",
 		"MixinVillagerEntity",
+		"MixinAbstractVillagerEntity",
+		"MixinPiglinEntity",
+		"MixinPillagerEntity",
+		"MixinAllayEntity",
 		"MixinOnChat"
 	],
 	"injectors": {
