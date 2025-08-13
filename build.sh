@@ -7,6 +7,14 @@ DRY_RUN=${DRY_RUN:-0}
 # Allow “pattern→empty” instead of “pattern→itself”
 shopt -s nullglob
 
+# Stop any running Gradle daemons and clear stale lock files
+cleanup() {
+  ./gradlew --stop >/dev/null 2>&1 || true
+  find .gradle ~/.gradle -type f -name '*.lock' -delete 2>/dev/null || true
+}
+cleanup
+trap cleanup EXIT
+
 # Format: minecraft_version  yarn_mappings       loader_version  loom_version      fabric_version
 VERSIONS=$(cat <<'EOF'
 1.20    1.20+build.1       0.17.2    1.11-SNAPSHOT   0.83.0+1.20
