@@ -18,6 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.HasCustomInventoryScreen;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
@@ -28,6 +29,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -37,13 +40,39 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * The {@code MixinMobEntity} mixin class exposes the goalSelector field from the MobEntity class.
  */
 @Mixin(Mob.class)
-public class MixinMobEntity implements ChatInventory {
+public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
 
     private final SimpleContainer creaturechat$inventory = new SimpleContainer(15);
 
     @Override
     public SimpleContainer creaturechat$getInventory() {
         return creaturechat$inventory;
+    }
+
+    @Override
+    public void openCustomInventoryScreen(ServerPlayer player) {
+        Mob thisEntity = (Mob) (Object) this;
+        if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal || thisEntity instanceof AbstractHorse) {
+            return;
+        }
+
+        ExtendedScreenHandlerFactory provider = new ExtendedScreenHandlerFactory() {
+            @Override
+            public void writeScreenOpeningData(ServerPlayer p, FriendlyByteBuf buf) {
+                buf.writeVarInt(thisEntity.getId());
+            }
+
+            @Override
+            public Component getDisplayName() {
+                return thisEntity.getDisplayName();
+            }
+
+            @Override
+            public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player p) {
+                return new MobInventoryMenu(syncId, playerInventory, creaturechat$inventory, thisEntity, player);
+            }
+        };
+        player.openMenu(provider);
     }
 
     @Inject(method = "interact", at = @At("HEAD"), cancellable = true)
@@ -62,7 +91,7 @@ public class MixinMobEntity implements ChatInventory {
 
         Mob thisEntity = (Mob) (Object) this;
 
-        if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal) {
+        if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal || thisEntity instanceof AbstractHorse) {
             return;
         }
 

@@ -10,6 +10,7 @@ import com.owlmaddie.particle.LeadParticleFactory;
 import com.owlmaddie.particle.Particles;
 import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.ui.ClickHandler;
+import com.owlmaddie.ui.InventoryKeyHandler;
 import com.owlmaddie.ui.PlayerMessageManager;
 import com.owlmaddie.utils.TickDelta;
 import com.owlmaddie.inventory.ModMenus;
@@ -51,6 +52,7 @@ public class ClientInit implements ClientModInitializer {
 
         // Register events
         ClickHandler.register();
+        InventoryKeyHandler.register();
         ClientPackets.register();
         MenuScreens.register(ModMenus.MOB_INVENTORY, MobInventoryScreen::new);
 

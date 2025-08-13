@@ -9,6 +9,7 @@ import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.inventory.ChatInventory;
 import com.owlmaddie.inventory.MobInventoryMenu;
 import com.owlmaddie.network.ServerPackets;
+import net.minecraft.world.entity.HasCustomInventoryScreen;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -20,6 +21,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -36,13 +38,39 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * The {@code MixinMobEntity} mixin class exposes the goalSelector field from the MobEntity class.
  */
 @Mixin(Mob.class)
-public class MixinMobEntity implements ChatInventory {
+public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
 
     private final SimpleContainer creaturechat$inventory = new SimpleContainer(15);
 
     @Override
     public SimpleContainer creaturechat$getInventory() {
         return creaturechat$inventory;
+    }
+
+    @Override
+    public void openCustomInventoryScreen(ServerPlayer player) {
+        Mob thisEntity = (Mob) (Object) this;
+        if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal || thisEntity instanceof AbstractHorse) {
+            return;
+        }
+
+        ExtendedScreenHandlerFactory<Integer> provider = new ExtendedScreenHandlerFactory<>() {
+            @Override
+            public Integer getScreenOpeningData(ServerPlayer p) {
+                return thisEntity.getId();
+            }
+
+            @Override
+            public Component getDisplayName() {
+                return thisEntity.getDisplayName();
+            }
+
+            @Override
+            public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player p) {
+                return new MobInventoryMenu(syncId, playerInventory, creaturechat$inventory, thisEntity, player);
+            }
+        };
+        player.openMenu(provider);
     }
 
     @Inject(method = "interact", at = @At("HEAD"), cancellable = true)

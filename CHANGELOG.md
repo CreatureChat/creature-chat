@@ -7,11 +7,13 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ## Unreleased
 
 ### Added
-- Inventories for all entities with chat data (Shift+Right Click)
+- Inventories for all entities with chat data (Shift+Right Click, or Press 'E' while riding)
     - Random items added to inventory on character creation
     - You can borrow items from friends, or steel items from enemies
     - Entities will react to changes in inventory
-    - Incorporate existing inventories for Piglin, Pillager, Allay, and Villager
+    - Integrates with existing inventories for Piglin, Pillager, Allay, and Villager
+    - Press 'E' while riding a mob with max friendship to show inventory
+    - Ignores chest-based mobs (horse with chest, donkey with chest, llama with chest)
 - Validation of mixin targets (on build script)
 - Solutions to common errors are now displayed on screen (i.e. more helpful)
 - New keep alive and accept HTTP headers
