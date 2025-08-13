@@ -125,10 +125,14 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
         for (int i = 0; i < creaturechat$inventory.getContainerSize(); i++) {
             ItemStack stack = creaturechat$inventory.getItem(i);
             if (!stack.isEmpty()) {
+                CompoundTag wrapper = new CompoundTag();
+                wrapper.putByte("Slot", (byte) i);
+
                 CompoundTag itemTag = new CompoundTag();
-                itemTag.putByte("Slot", (byte) i);
                 stack.save(provider, itemTag);
-                listTag.add(itemTag);
+                wrapper.put("Item", itemTag);
+
+                listTag.add(wrapper);
             }
         }
 
@@ -141,9 +145,16 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
         HolderLookup.Provider provider = ((Mob) (Object) this).registryAccess();
 
         for (int i = 0; i < listTag.size(); ++i) {
-            CompoundTag itemTag = listTag.getCompound(i);
-            int slot = itemTag.getByte("Slot") & 255;
+            CompoundTag wrapper = listTag.getCompound(i);
+            int slot = wrapper.getByte("Slot") & 255;
             if (slot >= 0 && slot < creaturechat$inventory.getContainerSize()) {
+                CompoundTag itemTag;
+                if (wrapper.contains("Item", 10)) {
+                    itemTag = wrapper.getCompound("Item");
+                } else {
+                    itemTag = wrapper.copy();
+                    itemTag.remove("Slot");
+                }
                 ItemStack parsed = ItemStack.parse(provider, itemTag).orElse(ItemStack.EMPTY);
                 creaturechat$inventory.setItem(slot, parsed);
             }

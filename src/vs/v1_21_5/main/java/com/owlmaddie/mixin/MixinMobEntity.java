@@ -125,10 +125,14 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
         for (int i = 0; i < creaturechat$inventory.getContainerSize(); i++) {
             ItemStack stack = creaturechat$inventory.getItem(i);
             if (!stack.isEmpty()) {
+                CompoundTag wrapper = new CompoundTag();
+                wrapper.putByte("Slot", (byte) i);
+
                 CompoundTag itemTag = new CompoundTag();
-                itemTag.putByte("Slot", (byte) i);
                 stack.save(provider, itemTag);
-                listTag.add(itemTag);
+                wrapper.put("Item", itemTag);
+
+                listTag.add(wrapper);
             }
         }
 
@@ -140,11 +144,18 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
         HolderLookup.Provider provider = ((Mob) (Object) this).registryAccess();
         tag.getList("CreatureChatInventory").ifPresent(listTag -> {
             for (int i = 0; i < listTag.size(); ++i) {
-                listTag.getCompound(i).ifPresent(itemTag -> {
-                    int slot = itemTag.getByte("Slot").orElse((byte) 0) & 255;
+                listTag.getCompound(i).ifPresent(wrapper -> {
+                    int slot = wrapper.getByte("Slot").orElse((byte) 0) & 255;
                     if (slot >= 0 && slot < creaturechat$inventory.getContainerSize()) {
-                        ItemStack parsed = ItemStack.parse(provider, itemTag).orElse(ItemStack.EMPTY);
-                        creaturechat$inventory.setItem(slot, parsed);
+                        wrapper.getCompound("Item").ifPresentOrElse(itemTag -> {
+                            ItemStack parsed = ItemStack.parse(provider, itemTag).orElse(ItemStack.EMPTY);
+                            creaturechat$inventory.setItem(slot, parsed);
+                        }, () -> {
+                            CompoundTag copy = wrapper.copy();
+                            copy.remove("Slot");
+                            ItemStack parsed = ItemStack.parse(provider, copy).orElse(ItemStack.EMPTY);
+                            creaturechat$inventory.setItem(slot, parsed);
+                        });
                     }
                 });
             }
