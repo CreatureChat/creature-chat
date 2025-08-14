@@ -123,8 +123,23 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
 
     @Inject(method = "readAdditionalSaveData", at = @At("RETURN"))
     private void creaturechat$loadInventory(ValueInput tag, CallbackInfo ci) {
-        tag.list("CreatureChatInventory", ItemStack.CODEC)
-            .ifPresent(typedList -> creaturechat$inventory.fromItemList(typedList));
+        tag.childrenList("CreatureChatInventory").ifPresent(list -> {
+            if (!list.isEmpty()) {
+                ValueInput first = list.stream().findFirst().orElse(null);
+                if (first != null && first.child("Item").isPresent()) {
+                    for (ValueInput wrapper : list) {
+                        int slot = wrapper.getByteOr("Slot", (byte) 0) & 255;
+                        if (slot >= 0 && slot < creaturechat$inventory.getContainerSize()) {
+                            wrapper.read("Item", ItemStack.CODEC)
+                                .ifPresent(stack -> creaturechat$inventory.setItem(slot, stack));
+                        }
+                    }
+                    return;
+                }
+            }
+            tag.list("CreatureChatInventory", ItemStack.CODEC)
+                .ifPresent(creaturechat$inventory::fromItemList);
+        });
     }
 
     @Inject(method = "interact", at = @At(value = "RETURN"))
