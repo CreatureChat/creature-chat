@@ -26,6 +26,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ### Fixed
 - Fixed constant death messages which appeared on each attack (for Minecraft 1.21.2+)
+- Support NBT format from 1.20 to 1.21.4 in newer versions (migrate CCUID)
 
 ## [2.5.0] - 2025-07-07
 
