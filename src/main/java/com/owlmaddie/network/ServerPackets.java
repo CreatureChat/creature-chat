@@ -12,6 +12,7 @@ import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.goals.GoalPriority;
 import com.owlmaddie.goals.TalkPlayerGoal;
 import com.owlmaddie.inventory.ChatInventory;
+import com.owlmaddie.inventory.LootTableHelper;
 import com.owlmaddie.particle.Particles;
 import com.owlmaddie.utils.Compression;
 import com.owlmaddie.utils.Randomizer;
@@ -38,6 +39,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -340,56 +345,40 @@ public class ServerPackets {
                 }
             }
 
-            if (empty) {
-                // Randomly add initial inventory items
-                RandomSource random = entity.getRandom();
-                final Item[] COMMON_ITEMS = new Item[] {
-                        Items.STICK, Items.OAK_PLANKS, Items.ROTTEN_FLESH, Items.WHEAT_SEEDS,
-                        Items.APPLE, Items.COBBLESTONE, Items.DIRT, Items.FLINT,
-                        Items.STRING, Items.FEATHER, Items.BONE, Items.LEATHER,
-                        Items.EGG, Items.PAPER, Items.SUGAR, Items.COAL,
-                        Items.CHARCOAL, Items.TORCH, Items.BREAD, Items.CARROT,
-                        Items.POTATO, Items.BEETROOT, Items.BEETROOT_SEEDS, Items.PUMPKIN_SEEDS,
-                        Items.MELON_SEEDS, Items.MELON_SLICE, Items.PUMPKIN, Items.BROWN_MUSHROOM,
-                        Items.RED_MUSHROOM, Items.MUSHROOM_STEW, Items.COD, Items.SALMON,
-                        Items.KELP, Items.DRIED_KELP, Items.CLAY_BALL, Items.BRICK,
-                        Items.SAND, Items.GRAVEL, Items.STONE, Items.OAK_SAPLING
-                };
-                final Item[] RARE_ITEMS = new Item[] {
-                        Items.DIAMOND, Items.ENCHANTED_GOLDEN_APPLE, Items.NETHERITE_SCRAP, Items.EMERALD
-                };
-
-                // Decide how many items to add: 1..3 (capped by container size)
-                int maxPicks = Math.min(3, inv.getContainerSize());
-                int picks = 1 + random.nextInt(maxPicks); // 1..maxPicks
-
-                // Make random slot order (Fisher-Yates)
-                int size = inv.getContainerSize();
-                int[] slots = new int[size];
-                for (int i = 0; i < size; i++) slots[i] = i;
-                for (int i = size - 1; i > 0; i--) {
-                    int j = random.nextInt(i + 1);
-                    int tmp = slots[i]; slots[i] = slots[j]; slots[j] = tmp;
-                }
-
-                // Aim for ~5% chance of at least one rare TOTAL
-                // per-slot p computed so that 1 - (1 - p)^picks = 0.05
-                final float targetAnyRare = 0.05f;
-                final float perSlotRare = 1.0f - (float)Math.pow(1.0 - targetAnyRare, 1.0 / picks);
-                boolean rareGiven = false;
-                for (int n = 0; n < picks; n++) {
-                    boolean pickRare = !rareGiven && (random.nextFloat() < perSlotRare);
-                    Item chosen = pickRare
-                            ? RARE_ITEMS[random.nextInt(RARE_ITEMS.length)]
-                            : COMMON_ITEMS[random.nextInt(COMMON_ITEMS.length)];
-
-                    // Clamp stack size to item’s max (handles unstackables like stews = 1)
-                    int maxStack = chosen.getDefaultMaxStackSize(); // Mojmap 1.20+
-                    int baseMax = Math.min(3, Math.max(1, maxStack));
-                    int count = pickRare ? 1 : (1 + random.nextInt(baseMax));
-
-                    inv.setItem(slots[n], new ItemStack(chosen, count));
-                    if (pickRare) rareGiven = true;
+            if (empty && entity.level() instanceof ServerLevel level) {
+                ResourceLocation tableId = new ResourceLocation("creaturechat", "chat_inventory");
+                LootTable table = LootTableHelper.get(level, tableId);
+                LootParams params = new LootParams.Builder(level)
+                        .withParameter(LootContextParams.ORIGIN, entity.position())
+                        .create(LootContextParamSets.COMMAND);
+                List<ItemStack> stacks = table.getRandomItems(params);
+                if (stacks.isEmpty()) {
+                    LOGGER.info("No loot matched for {} - using fallback", tableId);
+                    RandomSource random = entity.getRandom();
+                    Item[] items = new Item[] {
+                            Items.STICK, Items.OAK_PLANKS, Items.ROTTEN_FLESH, Items.WHEAT_SEEDS,
+                            Items.APPLE, Items.COBBLESTONE, Items.DIRT, Items.FLINT,
+                            Items.STRING, Items.FEATHER, Items.BONE, Items.LEATHER,
+                            Items.EGG, Items.PAPER, Items.SUGAR, Items.COAL,
+                            Items.CHARCOAL, Items.TORCH, Items.BREAD, Items.CARROT,
+                            Items.POTATO, Items.BEETROOT, Items.BEETROOT_SEEDS, Items.PUMPKIN_SEEDS,
+                            Items.MELON_SEEDS, Items.MELON_SLICE, Items.PUMPKIN, Items.BROWN_MUSHROOM,
+                            Items.RED_MUSHROOM, Items.MUSHROOM_STEW, Items.COD, Items.SALMON,
+                            Items.KELP, Items.DRIED_KELP, Items.CLAY_BALL, Items.BRICK,
+                            Items.SAND, Items.GRAVEL, Items.STONE, Items.OAK_SAPLING,
+                            Items.DIAMOND
+                    };
+                    int limit = Math.min(3, inv.getContainerSize());
+                    for (int slot = 0; slot < limit; slot++) {
+                        Item item = items[random.nextInt(items.length)];
+                        int count = 1 + random.nextInt(3);
+                        inv.setItem(slot, new ItemStack(item, count));
+                    }
+                } else {
+                    int limit = Math.min(3, Math.min(inv.getContainerSize(), stacks.size()));
+                    for (int slot = 0; slot < limit; slot++) {
+                        inv.setItem(slot, stacks.get(slot));
+                    }
                 }
             }
         }
