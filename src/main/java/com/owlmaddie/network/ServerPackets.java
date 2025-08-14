@@ -325,9 +325,13 @@ public class ServerPackets {
         // Generate new character
         chatData.generateCharacter(userLanguage, player, userMessageBuilder.toString(), false);
 
-        // Populate inventory with some simple starter items if empty
+// Populate inventory with some simple starter items if empty
         if (entity instanceof ChatInventory chatInv) {
             Container inv = chatInv.creaturechat$getInventory();
+
+            // Server-side only to avoid client duplicates
+            if (entity.level().isClientSide) return;
+
             boolean empty = true;
             for (int i = 0; i < inv.getContainerSize(); i++) {
                 if (!inv.getItem(i).isEmpty()) {
@@ -335,19 +339,57 @@ public class ServerPackets {
                     break;
                 }
             }
+
             if (empty) {
+                // Randomly add initial inventory items
                 RandomSource random = entity.getRandom();
-                Item[] items = new Item[] {
-                        Items.STICK,
-                        Items.OAK_PLANKS,
-                        Items.ROTTEN_FLESH,
-                        Items.WHEAT_SEEDS,
-                        Items.APPLE
+                final Item[] COMMON_ITEMS = new Item[] {
+                        Items.STICK, Items.OAK_PLANKS, Items.ROTTEN_FLESH, Items.WHEAT_SEEDS,
+                        Items.APPLE, Items.COBBLESTONE, Items.DIRT, Items.FLINT,
+                        Items.STRING, Items.FEATHER, Items.BONE, Items.LEATHER,
+                        Items.EGG, Items.PAPER, Items.SUGAR, Items.COAL,
+                        Items.CHARCOAL, Items.TORCH, Items.BREAD, Items.CARROT,
+                        Items.POTATO, Items.BEETROOT, Items.BEETROOT_SEEDS, Items.PUMPKIN_SEEDS,
+                        Items.MELON_SEEDS, Items.MELON_SLICE, Items.PUMPKIN, Items.BROWN_MUSHROOM,
+                        Items.RED_MUSHROOM, Items.MUSHROOM_STEW, Items.COD, Items.SALMON,
+                        Items.KELP, Items.DRIED_KELP, Items.CLAY_BALL, Items.BRICK,
+                        Items.SAND, Items.GRAVEL, Items.STONE, Items.OAK_SAPLING
                 };
-                for (int slot = 0; slot < Math.min(3, inv.getContainerSize()); slot++) {
-                    Item item = items[random.nextInt(items.length)];
-                    int count = 1 + random.nextInt(3);
-                    inv.setItem(slot, new ItemStack(item, count));
+                final Item[] RARE_ITEMS = new Item[] {
+                        Items.DIAMOND, Items.ENCHANTED_GOLDEN_APPLE, Items.NETHERITE_SCRAP, Items.EMERALD
+                };
+
+                // Decide how many items to add: 1..3 (capped by container size)
+                int maxPicks = Math.min(3, inv.getContainerSize());
+                int picks = 1 + random.nextInt(maxPicks); // 1..maxPicks
+
+                // Make random slot order (Fisher-Yates)
+                int size = inv.getContainerSize();
+                int[] slots = new int[size];
+                for (int i = 0; i < size; i++) slots[i] = i;
+                for (int i = size - 1; i > 0; i--) {
+                    int j = random.nextInt(i + 1);
+                    int tmp = slots[i]; slots[i] = slots[j]; slots[j] = tmp;
+                }
+
+                // Aim for ~5% chance of at least one rare TOTAL
+                // per-slot p computed so that 1 - (1 - p)^picks = 0.05
+                final float targetAnyRare = 0.05f;
+                final float perSlotRare = 1.0f - (float)Math.pow(1.0 - targetAnyRare, 1.0 / picks);
+                boolean rareGiven = false;
+                for (int n = 0; n < picks; n++) {
+                    boolean pickRare = !rareGiven && (random.nextFloat() < perSlotRare);
+                    Item chosen = pickRare
+                            ? RARE_ITEMS[random.nextInt(RARE_ITEMS.length)]
+                            : COMMON_ITEMS[random.nextInt(COMMON_ITEMS.length)];
+
+                    // Clamp stack size to item’s max (handles unstackables like stews = 1)
+                    int maxStack = chosen.getDefaultMaxStackSize(); // Mojmap 1.20+
+                    int baseMax = Math.min(3, Math.max(1, maxStack));
+                    int count = pickRare ? 1 : (1 + random.nextInt(baseMax));
+
+                    inv.setItem(slots[n], new ItemStack(chosen, count));
+                    if (pickRare) rareGiven = true;
                 }
             }
         }
