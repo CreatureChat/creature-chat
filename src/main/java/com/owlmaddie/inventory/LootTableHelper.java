@@ -6,12 +6,22 @@ package com.owlmaddie.inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.storage.loot.LootTable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility for retrieving loot tables in a version-agnostic way.
  */
 public class LootTableHelper {
+    private static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+
     public static LootTable get(ServerLevel level, ResourceLocation id) {
-        return level.getServer().getLootData().getLootTable(id);
+        LootTable table = level.getServer().getLootData().getLootTable(id);
+        if (table == LootTable.EMPTY) {
+            LOGGER.info("Loot table {} not found or empty", id);
+        } else {
+            LOGGER.info("Loaded loot table {}", id);
+        }
+        return table;
     }
 }
