@@ -356,7 +356,7 @@ public class ServerPackets {
                     LOGGER.info("No loot matched for {} - using fallback", tableId);
                     RandomSource random = entity.getRandom();
                     Item[] items = new Item[] {
-                            Items.STICK, Items.OAK_PLANKS, Items.ROTTEN_FLESH, Items.WHEAT_SEEDS,
+                            Items.STICK, Items.OAK_PLANKS, Items.WHEAT_SEEDS,
                             Items.APPLE, Items.COBBLESTONE, Items.DIRT, Items.FLINT,
                             Items.STRING, Items.FEATHER, Items.BONE, Items.LEATHER,
                             Items.EGG, Items.PAPER, Items.SUGAR, Items.COAL,
@@ -364,9 +364,8 @@ public class ServerPackets {
                             Items.POTATO, Items.BEETROOT, Items.BEETROOT_SEEDS, Items.PUMPKIN_SEEDS,
                             Items.MELON_SEEDS, Items.MELON_SLICE, Items.PUMPKIN, Items.BROWN_MUSHROOM,
                             Items.RED_MUSHROOM, Items.MUSHROOM_STEW, Items.COD, Items.SALMON,
-                            Items.KELP, Items.DRIED_KELP, Items.CLAY_BALL, Items.BRICK,
-                            Items.SAND, Items.GRAVEL, Items.STONE, Items.OAK_SAPLING,
-                            Items.DIAMOND
+                            Items.KELP, Items.CLAY_BALL, Items.BRICK,
+                            Items.SAND, Items.GRAVEL, Items.OAK_SAPLING
                     };
                     int limit = Math.min(3, inv.getContainerSize());
                     for (int slot = 0; slot < limit; slot++) {
