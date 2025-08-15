@@ -346,10 +346,11 @@ public class ServerPackets {
             }
 
             if (empty && entity.level() instanceof ServerLevel level) {
-                ResourceLocation tableId = new ResourceLocation("creaturechat", "chat_inventory");
+                ResourceLocation tableId = new ResourceLocation("creaturechat", "inventory");
                 LootTable table = LootTableHelper.get(level, tableId);
                 LootParams params = new LootParams.Builder(level)
                         .withParameter(LootContextParams.ORIGIN, entity.position())
+                        .withOptionalParameter(LootContextParams.THIS_ENTITY, entity)
                         .create(LootContextParamSets.COMMAND);
                 List<ItemStack> stacks = table.getRandomItems(params);
                 if (stacks.isEmpty()) {

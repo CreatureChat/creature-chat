@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:generic",
+  "pools": [
+    {
+      "rolls": { "type":"minecraft:uniform", "min":1.0, "max":5.0 },
+      "entries": [
+        { "type":"minecraft:item","name":"minecraft:netherrack","weight":12,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":2.0,"max":7.0}}]},
+        { "type":"minecraft:item","name":"minecraft:soul_sand","weight":8,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":4.0}}]},
+        { "type":"minecraft:item","name":"minecraft:basalt","weight":8,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":2.0,"max":5.0}}]},
+        { "type":"minecraft:item","name":"minecraft:blackstone","weight":6,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":2.0,"max":4.0}}]},
+        { "type":"minecraft:item","name":"minecraft:nether_wart","weight":5,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":3.0}}]},
+        { "type":"minecraft:item","name":"minecraft:warped_fungus","weight":4,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":3.0}}]},
+        { "type":"minecraft:item","name":"minecraft:crimson_fungus","weight":4,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":3.0}}]},
+        { "type":"minecraft:item","name":"minecraft:glowstone_dust","weight":3,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":2.0,"max":4.0}}]},
+        { "type":"minecraft:item","name":"minecraft:quartz","weight":3,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":3.0}}]},
+        { "type":"minecraft:item","name":"minecraft:magma_cream","weight":1,"functions":[{ "function":"minecraft:set_count","count":1.0}]}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "type": "minecraft:generic",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:group",
+              "conditions": [{ "condition": "minecraft:location_check", "predicate": { "biomes": "#c:is_cave" } }],
+              "children": [{ "type": "minecraft:loot_table", "value": "creaturechat:biomes/cave" }]
+            },
+            {
+              "type": "minecraft:group",
+              "conditions": [{ "condition": "minecraft:location_check", "predicate": { "biomes": "#c:is_mushroom" } }],
+              "children": [{ "type": "minecraft:loot_table", "value": "creaturechat:biomes/mushroom" }]
+            },
+            {
+              "type": "minecraft:group",
+              "conditions": [{ "condition": "minecraft:location_check", "predicate": { "biomes": "#c:is_end" } }],
+              "children": [{ "type": "minecraft:loot_table", "value": "creaturechat:biomes/end" }]
+            },
+            {
+              "type": "minecraft:group",
+              "conditions": [{ "condition": "minecraft:location_check", "predicate": { "biomes": "#c:is_nether" } }],
+              "children": [{ "type": "minecraft:loot_table", "value": "creaturechat:biomes/nether" }]
+            },
+            {
+              "type": "minecraft:group",
+              "conditions": [{ "condition": "minecraft:location_check", "predicate": { "biomes": "#c:is_jungle" } }],
+              "children": [{ "type": "minecraft:loot_table", "value": "creaturechat:biomes/jungle" }]
+            },
+            {
+              "type": "minecraft:group",
+              "conditions": [{ "condition": "minecraft:location_check", "predicate": { "biomes": "#c:is_swamp" } }],
+              "children": [{ "type": "minecraft:loot_table", "value": "creaturechat:biomes/swamp" }]
+            },
+            {
+              "type": "minecraft:group",
+              "conditions": [{ "condition": "minecraft:location_check", "predicate": { "biomes": "#c:is_beach" } }],
+              "children": [{ "type": "minecraft:loot_table", "value": "creaturechat:biomes/beach" }]
+            },
+            {
+              "type": "minecraft:group",
+              "conditions": [{ "condition": "minecraft:location_check", "predicate": { "biomes": "#c:is_aquatic" } }],
+              "children": [{ "type": "minecraft:loot_table", "value": "creaturechat:biomes/aquatic" }]
+            },
+            {
+              "type": "minecraft:group",
+              "conditions": [{ "condition": "minecraft:location_check", "predicate": { "biomes": "#c:is_taiga" } }],
+              "children": [{ "type": "minecraft:loot_table", "value": "creaturechat:biomes/taiga" }]
+            },
+            {
+              "type": "minecraft:group",
+              "conditions": [{ "condition": "minecraft:location_check", "predicate": { "biomes": "#c:is_snowy" } }],
+              "children": [{ "type": "minecraft:loot_table", "value": "creaturechat:biomes/snowy" }]
+            },
+            {
+              "type": "minecraft:group",
+              "conditions": [{ "condition": "minecraft:location_check", "predicate": { "biomes": "#c:is_dry/overworld" } }],
+              "children": [{ "type": "minecraft:loot_table", "value": "creaturechat:biomes/dry_overworld" }]
+            },
+            {
+              "type": "minecraft:group",
+              "conditions": [{ "condition": "minecraft:location_check", "predicate": { "biomes": "#c:is_forest" } }],
+              "children": [{ "type": "minecraft:loot_table", "value": "creaturechat:biomes/forest" }]
+            },
+            {
+              "type": "minecraft:group",
+              "conditions": [{ "condition": "minecraft:location_check", "predicate": { "biomes": "#c:is_plains" } }],
+              "children": [{ "type": "minecraft:loot_table", "value": "creaturechat:biomes/plains" }]
+            },
+            { "type": "minecraft:loot_table", "value": "creaturechat:biomes/catch_all" }
+          ]
+        }
+      ]
+    }
+  ]
+}

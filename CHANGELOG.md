@@ -8,7 +8,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ### Added
 - Inventories for all entities with chat data (Shift+Right Click, or Press 'E' while riding)
-    - Random items added to inventory on character creation (new loot table for inventories)
+    - Random items added to inventory on character creation (biome-specific loot tables for inventories)
     - You can borrow items from friends, or steel items from enemies
     - Entities will react to changes in inventory
     - Integrates with existing inventories for Piglin, Pillager, Allay, and Villager

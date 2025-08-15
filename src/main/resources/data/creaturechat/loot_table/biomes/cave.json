@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:generic",
+  "pools": [
+    {
+      "rolls": { "type":"minecraft:uniform", "min":1.0, "max":5.0 },
+      "entries": [
+        { "type":"minecraft:item","name":"minecraft:cobblestone","weight":12,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":7.0}}]},
+        { "type":"minecraft:item","name":"minecraft:coal","weight":10,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":5.0}}]},
+        { "type":"minecraft:item","name":"minecraft:flint","weight":8,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":4.0}}]},
+        { "type":"minecraft:item","name":"minecraft:torch","weight":8,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":2.0,"max":6.0}}]},
+        { "type":"minecraft:item","name":"minecraft:string","weight":6,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":3.0}}]},
+        { "type":"minecraft:item","name":"minecraft:bone","weight":6,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":3.0}}]},
+        { "type":"minecraft:item","name":"minecraft:spider_eye","weight":3,"functions":[{ "function":"minecraft:set_count","count":1.0}]},
+        { "type":"minecraft:item","name":"minecraft:iron_nugget","weight":2,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":3.0}}]},
+        { "type":"minecraft:item","name":"minecraft:dripstone_block","weight":4,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":3.0}}]},
+        { "type":"minecraft:item","name":"minecraft:glow_berries","weight":3,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":3.0}}]}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:generic",
+  "pools": [
+    {
+      "rolls": { "type":"minecraft:uniform", "min":1.0, "max":5.0 },
+      "entries": [
+        { "type":"minecraft:item","name":"minecraft:end_stone","weight":12,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":2.0,"max":7.0}}]},
+        { "type":"minecraft:item","name":"minecraft:chorus_fruit","weight":8,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":4.0}}]},
+        { "type":"minecraft:item","name":"minecraft:popped_chorus_fruit","weight":4,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":3.0}}]},
+        { "type":"minecraft:item","name":"minecraft:purpur_block","weight":6,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":2.0,"max":4.0}}]},
+        { "type":"minecraft:item","name":"minecraft:purpur_pillar","weight":4,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":3.0}}]},
+        { "type":"minecraft:item","name":"minecraft:obsidian","weight":2,"functions":[{ "function":"minecraft:set_count","count":1.0}]},
+        { "type":"minecraft:item","name":"minecraft:purple_dye","weight":2,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":3.0}}]},
+        { "type":"minecraft:item","name":"minecraft:chorus_flower","weight":2,"functions":[{ "function":"minecraft:set_count","count":1.0}]},
+        { "type":"minecraft:item","name":"minecraft:end_rod","weight":1,"functions":[{ "function":"minecraft:set_count","count":{"type":"minecraft:uniform","min":1.0,"max":2.0}}]},
+        { "type":"minecraft:item","name":"minecraft:glass_bottle","weight":3,"functions":[{ "function":"minecraft:set_count","count":1.0}]}
+      ]
+    }
+  ]
+}
