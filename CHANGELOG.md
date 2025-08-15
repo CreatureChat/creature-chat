@@ -14,6 +14,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
     - Integrates with existing inventories for Piglin, Pillager, Allay, and Villager
     - Press 'E' while riding a mob with max friendship to show inventory
     - Ignores chest-based mobs (horse with chest, donkey with chest, llama with chest)
+    - Added Fabric DataGen for building compatible loot-tables (1.20 to 1.21.7 support)
 - Validation of mixin targets (on build script)
 - Solutions to common errors are now displayed on screen (i.e. more helpful)
 - New keep alive and accept HTTP headers

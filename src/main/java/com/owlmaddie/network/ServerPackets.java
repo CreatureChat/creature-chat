@@ -13,6 +13,7 @@ import com.owlmaddie.goals.GoalPriority;
 import com.owlmaddie.goals.TalkPlayerGoal;
 import com.owlmaddie.inventory.ChatInventory;
 import com.owlmaddie.inventory.LootTableHelper;
+import com.owlmaddie.inventory.InventoryLootTables;
 import com.owlmaddie.particle.Particles;
 import com.owlmaddie.utils.Compression;
 import com.owlmaddie.utils.Randomizer;
@@ -24,6 +25,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Holder;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -39,6 +41,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -346,7 +349,8 @@ public class ServerPackets {
             }
 
             if (empty && entity.level() instanceof ServerLevel level) {
-                ResourceLocation tableId = new ResourceLocation("creaturechat", "inventory");
+                Holder<Biome> biome = level.getBiome(entity.blockPosition());
+                ResourceLocation tableId = InventoryLootTables.forBiome(biome);
                 LootTable table = LootTableHelper.get(level, tableId);
                 LootParams params = new LootParams.Builder(level)
                         .withParameter(LootContextParams.ORIGIN, entity.position())

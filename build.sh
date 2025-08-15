@@ -70,6 +70,9 @@ EOD
   sed -i "s/\"minecraft\": \".*\"/\"minecraft\": \"~$mc_version\"/" \
     src/main/resources/fabric.mod.json
 
+  echo "Running data generation"
+  ./gradlew runDatagen --build-cache --parallel
+
   echo "Running mixin target validation"
   run_build
   if ! compgen -G "build/classes/java/main/*refmap.json" > /dev/null; then
