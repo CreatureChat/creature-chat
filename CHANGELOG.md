@@ -13,7 +13,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
     - Entities will react to changes in inventory
     - Integrates with existing inventories for Piglin, Pillager, Allay, and Villager
     - Press 'E' while riding a mob with max friendship to show inventory
-    - Ignores chest-based mobs (horse with chest, donkey with chest, llama with chest)
+    - Imports chest-based mobs (horse with chest, donkey with chest, llama with chest)
     - Added Fabric DataGen for building compatible loot-tables (1.20 to 1.21.7 support)
     - Randomly assign inventory loot items into random slots
     - Main/Off hand support for max friendship (uses bottom left 2 slots for main/off hand)

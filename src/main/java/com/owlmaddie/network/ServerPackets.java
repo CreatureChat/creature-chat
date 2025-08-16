@@ -37,6 +37,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.animal.horse.AbstractChestedHorse;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.biome.Biome;
@@ -334,6 +336,20 @@ public class ServerPackets {
 
             // Server-side only to avoid client duplicates
             if (entity.level().isClientSide) return;
+
+            // If this entity has a chest, copy its inventory into ours
+            if (entity instanceof AbstractChestedHorse chested && chested.hasChest()) {
+                int chestStart = AbstractHorse.CHEST_SLOT_OFFSET + 1; // skip the chest item slot
+                int chestSlots = chested.getInventoryColumns() * 3;
+
+                for (int i = 0; i < chestSlots && i < inv.getContainerSize(); i++) {
+                    ItemStack stack = chested.getSlot(chestStart + i).get();
+                    if (!stack.isEmpty()) {
+                        inv.setItem(i, stack.copy());
+                        chested.getSlot(chestStart + i).set(ItemStack.EMPTY);
+                    }
+                }
+            }
 
             boolean empty = true;
             for (int i = 0; i < inv.getContainerSize(); i++) {

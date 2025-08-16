@@ -21,7 +21,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -50,7 +49,7 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
     @Override
     public void openCustomInventoryScreen(Player player) {
         Mob thisEntity = (Mob) (Object) this;
-        if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal || thisEntity instanceof AbstractHorse) {
+        if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal) {
             return;
         }
 

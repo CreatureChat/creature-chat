@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.npc.Villager;
 
 /**
@@ -24,7 +23,7 @@ public class InventoryKeyHandler {
                 return;
             }
 
-            if (mob instanceof Villager || mob instanceof TamableAnimal || mob instanceof AbstractHorse) {
+            if (mob instanceof Villager || mob instanceof TamableAnimal) {
                 return;
             }
 

@@ -22,7 +22,6 @@ import net.minecraft.world.entity.HasCustomInventoryScreen;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.animal.horse.AbstractChestedHorse;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -30,7 +29,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -52,7 +50,7 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
     @Override
     public void openCustomInventoryScreen(Player player) {
         Mob thisEntity = (Mob) (Object) this;
-        if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal || thisEntity instanceof AbstractHorse) {
+        if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal) {
             return;
         }
 
@@ -93,11 +91,7 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
 
         Mob thisEntity = (Mob) (Object) this;
 
-        if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal || thisEntity instanceof AbstractHorse) {
-            return;
-        }
-
-        if (thisEntity instanceof AbstractChestedHorse chested && chested.hasChest()) {
+        if (thisEntity instanceof Villager || thisEntity instanceof TamableAnimal) {
             return;
         }
 
