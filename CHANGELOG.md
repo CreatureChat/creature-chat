@@ -26,6 +26,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Adding specific error messages for specific LLM request status codes (i.e. more helpful)
 - Leaving HTTP connection open (better connection pooling)
 - Expanded 'no response' messages
+- build.gradle now includes running Fabric datagen (for generating the JSON loot tables)
 
 ### Fixed
 - Fixed constant death messages which appeared on each attack (for Minecraft 1.21.2+)
