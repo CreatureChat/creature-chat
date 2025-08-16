@@ -12,8 +12,8 @@ import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.goals.GoalPriority;
 import com.owlmaddie.goals.TalkPlayerGoal;
 import com.owlmaddie.inventory.ChatInventory;
-import com.owlmaddie.inventory.LootTableHelper;
 import com.owlmaddie.inventory.InventoryLootTables;
+import com.owlmaddie.inventory.LootTableHelper;
 import com.owlmaddie.particle.Particles;
 import com.owlmaddie.utils.Compression;
 import com.owlmaddie.utils.Randomizer;
@@ -22,10 +22,10 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.Holder;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -38,9 +38,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
@@ -49,10 +47,7 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -358,30 +353,18 @@ public class ServerPackets {
                         .create(LootContextParamSets.COMMAND);
                 List<ItemStack> stacks = table.getRandomItems(params);
                 if (stacks.isEmpty()) {
-                    LOGGER.info("No loot matched for {} - using fallback", tableId);
-                    RandomSource random = entity.getRandom();
-                    Item[] items = new Item[] {
-                            Items.STICK, Items.OAK_PLANKS, Items.WHEAT_SEEDS,
-                            Items.APPLE, Items.COBBLESTONE, Items.DIRT, Items.FLINT,
-                            Items.STRING, Items.FEATHER, Items.BONE, Items.LEATHER,
-                            Items.EGG, Items.PAPER, Items.SUGAR, Items.COAL,
-                            Items.CHARCOAL, Items.TORCH, Items.BREAD, Items.CARROT,
-                            Items.POTATO, Items.BEETROOT, Items.BEETROOT_SEEDS, Items.PUMPKIN_SEEDS,
-                            Items.MELON_SEEDS, Items.MELON_SLICE, Items.PUMPKIN, Items.BROWN_MUSHROOM,
-                            Items.RED_MUSHROOM, Items.MUSHROOM_STEW, Items.COD, Items.SALMON,
-                            Items.KELP, Items.CLAY_BALL, Items.BRICK,
-                            Items.SAND, Items.GRAVEL, Items.OAK_SAPLING
-                    };
-                    int limit = Math.min(3, inv.getContainerSize());
-                    for (int slot = 0; slot < limit; slot++) {
-                        Item item = items[random.nextInt(items.length)];
-                        int count = 1 + random.nextInt(3);
-                        inv.setItem(slot, new ItemStack(item, count));
-                    }
+                    LOGGER.info("No loot matched for {}", tableId);
                 } else {
+                    // Randomly assign inventory loot items into random slots
+                    RandomSource random = entity.getRandom();
                     int limit = Math.min(3, Math.min(inv.getContainerSize(), stacks.size()));
-                    for (int slot = 0; slot < limit; slot++) {
-                        inv.setItem(slot, stacks.get(slot));
+                    List<Integer> slots = new ArrayList<>();
+                    for (int i = 0; i < inv.getContainerSize(); i++) {
+                        slots.add(i);
+                    }
+                    Collections.shuffle(slots, new java.util.Random(random.nextLong()));
+                    for (int i = 0; i < limit; i++) {
+                        inv.setItem(slots.get(i), stacks.get(i));
                     }
                 }
             }

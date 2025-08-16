@@ -22,7 +22,7 @@ import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
  * code so they can compile across multiple Minecraft versions.
  */
 public final class InventoryLootTableGenerator {
-    private static final NumberProvider DEFAULT_ROLLS = UniformGenerator.between(1.0F, 6.0F);
+    private static final NumberProvider DEFAULT_ROLLS = UniformGenerator.between(2.0F, 8.0F);
 
     private InventoryLootTableGenerator() {}
 
