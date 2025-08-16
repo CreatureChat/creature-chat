@@ -43,8 +43,17 @@ public class MobInventoryScreen extends AbstractContainerScreen<MobInventoryMenu
     @Override
     public void render(GuiGraphics guiGraphics, int i, int j, float f) {
         this.xMouse = (float)i;
-        this.yMouse = (float)j;
-        super.render(guiGraphics, i, j, f);
+       this.yMouse = (float)j;
+       super.render(guiGraphics, i, j, f);
+        if (this.minecraft.player != null) {
+            for (Slot slot : this.menu.slots) {
+                if (!slot.mayPickup(this.minecraft.player)) {
+                    int x = this.leftPos + slot.x;
+                    int y = this.topPos + slot.y;
+                    guiGraphics.fill(x, y, x + 16, y + 16, 0x90000000);
+                }
+            }
+        }
         this.renderTooltip(guiGraphics, i, j);
     }
 }

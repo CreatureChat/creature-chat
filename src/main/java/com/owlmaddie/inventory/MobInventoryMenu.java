@@ -7,8 +7,11 @@ import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.network.ServerPackets;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.Container;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -31,16 +34,41 @@ public class MobInventoryMenu extends AbstractContainerMenu {
     private final Container inventory;
     private final Mob mob;
     private final ServerPlayer serverPlayer;
+    private final PlayerData playerData;
     private final Map<Item, Integer> initialCounts = new HashMap<>();
     private final int mobInvSize;
     private final int rows;
+    private final int mainHandSlot;
+    private final int offHandSlot;
+    private final ItemStack initialMainHand;
+    private final ItemStack initialOffHand;
 
     public MobInventoryMenu(int syncId, Inventory playerInventory, Container inventory, Mob mob, ServerPlayer player) {
         super(ModMenus.MOB_INVENTORY, syncId);
         this.inventory = inventory;
         this.mob = mob;
         this.serverPlayer = player;
+        ChatDataManager chatDataManager = player == null ? ChatDataManager.getClientInstance() : ChatDataManager.getServerInstance();
+        EntityChatData chatData = chatDataManager.getOrCreateChatData(mob.getStringUUID());
+        String playerName;
+        if (player != null) {
+            playerName = player.getDisplayName().getString();
+        } else if (playerInventory.player != null) {
+            playerName = playerInventory.player.getDisplayName().getString();
+        } else {
+            playerName = "";
+        }
+        this.playerData = chatData.getPlayerData(playerName);
         this.mobInvSize = inventory.getContainerSize();
+        this.rows = (mobInvSize + 4) / 5;
+        int bottomRowStart = (rows - 1) * 5;
+        this.mainHandSlot = bottomRowStart;
+        this.offHandSlot = bottomRowStart + 1;
+        this.initialMainHand = mob.getMainHandItem().copy();
+        this.initialOffHand = mob.getOffhandItem().copy();
+
+        syncHandSlots();
+
         for (int i = 0; i < mobInvSize; i++) {
             ItemStack stack = inventory.getItem(i);
             if (!stack.isEmpty()) {
@@ -49,12 +77,24 @@ public class MobInventoryMenu extends AbstractContainerMenu {
         }
         inventory.startOpen(playerInventory.player);
 
-        this.rows = (mobInvSize + 4) / 5;
         int slot = 0;
+        boolean canAccessInventory = playerData.friendship > 0;
+        boolean canAccessHands = playerData.friendship >= 3;
         for (int row = 0; row < rows; ++row) {
             for (int col = 0; col < 5 && slot < mobInvSize; ++col) {
                 // shift the mob inventory grid two columns to the right so it no longer overlaps the entity preview
-                this.addSlot(new Slot(inventory, slot++, 75 + col * 18, 18 + row * 18));
+                int x = 75 + col * 18;
+                int y = 18 + row * 18;
+                if (slot == mainHandSlot) {
+                    this.addSlot(canAccessHands ? new HandSlot(inventory, slot++, x, y, mob, EquipmentSlot.MAINHAND)
+                                               : new LockedSlot(inventory, slot++, x, y));
+                } else if (slot == offHandSlot) {
+                    this.addSlot(canAccessHands ? new HandSlot(inventory, slot++, x, y, mob, EquipmentSlot.OFFHAND)
+                                               : new LockedSlot(inventory, slot++, x, y));
+                } else {
+                    this.addSlot(canAccessInventory ? new Slot(inventory, slot++, x, y)
+                                                    : new LockedSlot(inventory, slot++, x, y));
+                }
             }
         }
 
@@ -83,6 +123,9 @@ public class MobInventoryMenu extends AbstractContainerMenu {
         ItemStack itemStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
         if (slot != null && slot.hasItem()) {
+            if (!slot.mayPickup(player)) {
+                return ItemStack.EMPTY;
+            }
             ItemStack stackInSlot = slot.getItem();
             itemStack = stackInSlot.copy();
             if (index < mobInvSize) {
@@ -107,6 +150,9 @@ public class MobInventoryMenu extends AbstractContainerMenu {
         super.removed(player);
         inventory.stopOpen(player);
         if (!player.level().isClientSide() && player == serverPlayer) {
+            if (playerData.friendship <= 0) {
+                return;
+            }
             Map<Item, Integer> finalCounts = new HashMap<>();
             for (int i = 0; i < mobInvSize; i++) {
                 ItemStack stack = inventory.getItem(i);
@@ -116,36 +162,210 @@ public class MobInventoryMenu extends AbstractContainerMenu {
             }
             Set<Item> all = new HashSet<>(initialCounts.keySet());
             all.addAll(finalCounts.keySet());
-            List<String> added = new ArrayList<>();
-            List<String> removed = new ArrayList<>();
+            Map<Item, Integer> added = new HashMap<>();
+            Map<Item, Integer> removed = new HashMap<>();
             for (Item item : all) {
                 int before = initialCounts.getOrDefault(item, 0);
                 int after = finalCounts.getOrDefault(item, 0);
                 int diff = after - before;
                 if (diff > 0) {
-                    added.add(diff + " " + new ItemStack(item).getHoverName().getString());
+                    added.put(item, diff);
                 } else if (diff < 0) {
-                    removed.add(-diff + " " + new ItemStack(item).getHoverName().getString());
+                    removed.put(item, -diff);
                 }
             }
-            if (!added.isEmpty() || !removed.isEmpty()) {
+            List<String> disarmedToInventory = new ArrayList<>();
+            List<String> disarmedTaken = new ArrayList<>();
+            ItemStack finalMain = mob.getMainHandItem();
+            ItemStack finalOff = mob.getOffhandItem();
+            collectDisarmed(initialMainHand, finalMain, finalOff, disarmedToInventory, disarmedTaken, removed);
+            collectDisarmed(initialOffHand, finalMain, finalOff, disarmedToInventory, disarmedTaken, removed);
+            boolean swapped = handsSwapped(initialMainHand, initialOffHand, finalMain, finalOff);
+            boolean handChanged = (!sameItem(initialMainHand, finalMain) && !finalMain.isEmpty()) ||
+                                 (!sameItem(initialOffHand, finalOff) && !finalOff.isEmpty());
+            if (!added.isEmpty() || !removed.isEmpty() || !disarmedToInventory.isEmpty() || !disarmedTaken.isEmpty() || swapped || handChanged) {
                 ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
                 EntityChatData chatData = chatDataManager.getOrCreateChatData(mob.getStringUUID());
-                PlayerData playerData = chatData.getPlayerData(player.getDisplayName().getString());
-                String verb = playerData.friendship > 0 ? " borrowed " : " stole ";
+                PlayerData pd = chatData.getPlayerData(player.getDisplayName().getString());
+                String verbBase = pd.friendship >= 3 ? "borrowed" : pd.friendship == 2 ? "took" : "stole";
+                String verb = " " + verbBase + " ";
                 StringBuilder msg = new StringBuilder("<" + player.getName().getString());
+                boolean first = true;
+                if (swapped) {
+                    msg.append(" swapped the items in your hands");
+                    first = false;
+                } else if (handChanged) {
+                    msg.append(" swapped your held items to ").append(formatHands(finalMain, finalOff));
+                    first = false;
+                }
                 if (!added.isEmpty()) {
-                    msg.append(" gave you ").append(String.join(", ", added));
-                    if (!removed.isEmpty()) {
-                        msg.append(", and");
-                    }
+                    if (!first) { msg.append(", and"); }
+                    msg.append(" gave you ").append(joinCounts(added));
+                    first = false;
                 }
                 if (!removed.isEmpty()) {
-                    msg.append(verb).append(String.join(", ", removed));
+                    if (!first) { msg.append(", and"); }
+                    msg.append(verb).append(joinCounts(removed));
+                    first = false;
+                }
+                if (!disarmedToInventory.isEmpty()) {
+                    if (!first) { msg.append(", and"); }
+                    msg.append(" disarmed you and placed ").append(String.join(", ", disarmedToInventory)).append(" into your inventory");
+                    first = false;
+                }
+                if (!disarmedTaken.isEmpty()) {
+                    if (!first) { msg.append(", and"); }
+                    msg.append(" disarmed you and ").append(verbBase).append(" ").append(String.join(", ", disarmedTaken));
                 }
                 msg.append(">");
                 ServerPackets.generate_chat("N/A", chatData, serverPlayer, mob, msg.toString(), true);
             }
+        }
+    }
+
+    private void syncHandSlots() {
+        handleHandSlot(mainHandSlot, mob.getMainHandItem());
+        handleHandSlot(offHandSlot, mob.getOffhandItem());
+    }
+
+    private void handleHandSlot(int slotIndex, ItemStack handStack) {
+        if (slotIndex >= mobInvSize) {
+            return;
+        }
+        ItemStack current = inventory.getItem(slotIndex);
+        if (handStack.isEmpty()) {
+            if (!current.isEmpty()) {
+                moveOrDrop(slotIndex, current);
+            }
+            inventory.setItem(slotIndex, ItemStack.EMPTY);
+        } else {
+            if (!current.isEmpty() && !ItemStack.isSameItem(current, handStack)) {
+                moveOrDrop(slotIndex, current);
+            }
+            inventory.setItem(slotIndex, handStack.copy());
+        }
+    }
+
+    private void moveOrDrop(int fromSlot, ItemStack stack) {
+        int empty = findEmptySlot(fromSlot);
+        inventory.setItem(fromSlot, ItemStack.EMPTY);
+        if (empty >= 0) {
+            inventory.setItem(empty, stack);
+        } else if (mob.level() instanceof ServerLevel serverLevel) {
+            ItemEntity item = new ItemEntity(serverLevel, mob.getX(), mob.getY(), mob.getZ(), stack);
+            item.setDefaultPickUpDelay();
+            serverLevel.addFreshEntity(item);
+        }
+    }
+
+    private int findEmptySlot(int skip) {
+        for (int i = 0; i < mobInvSize; i++) {
+            if (i == mainHandSlot || i == offHandSlot || i == skip) {
+                continue;
+            }
+            if (inventory.getItem(i).isEmpty()) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void collectDisarmed(ItemStack initial, ItemStack finalMain, ItemStack finalOff,
+                                 List<String> toInventory, List<String> taken, Map<Item, Integer> removed) {
+        if (initial.isEmpty()) {
+            return;
+        }
+        if (ItemStack.isSameItem(initial, finalMain) || ItemStack.isSameItem(initial, finalOff)) {
+            return;
+        }
+        String name = initial.getHoverName().getString();
+        for (int i = 0; i < mobInvSize; i++) {
+            if (i == mainHandSlot || i == offHandSlot) {
+                continue;
+            }
+            ItemStack stack = inventory.getItem(i);
+            if (!stack.isEmpty() && ItemStack.isSameItem(stack, initial)) {
+                toInventory.add(name);
+                return;
+            }
+        }
+        taken.add(name);
+        removed.computeIfPresent(initial.getItem(), (item, count) -> {
+            int remaining = count - initial.getCount();
+            return remaining > 0 ? remaining : null;
+        });
+    }
+
+    private static String joinCounts(Map<Item, Integer> map) {
+        List<String> parts = new ArrayList<>();
+        for (Map.Entry<Item, Integer> entry : map.entrySet()) {
+            parts.add(entry.getValue() + " " + new ItemStack(entry.getKey()).getHoverName().getString());
+        }
+        return String.join(", ", parts);
+    }
+
+    private static String formatHands(ItemStack main, ItemStack off) {
+        String mainName = main.isEmpty() ? "" : main.getHoverName().getString();
+        String offName = off.isEmpty() ? "" : off.getHoverName().getString();
+        if (!mainName.isEmpty() && !offName.isEmpty()) {
+            return mainName + " and " + offName;
+        }
+        return !mainName.isEmpty() ? mainName : offName;
+    }
+
+    private static boolean sameItem(ItemStack a, ItemStack b) {
+        if (a.isEmpty() && b.isEmpty()) {
+            return true;
+        }
+        return ItemStack.isSameItem(a, b);
+    }
+
+    private static boolean handsSwapped(ItemStack initMain, ItemStack initOff, ItemStack finalMain, ItemStack finalOff) {
+        return sameItem(initMain, finalOff) && sameItem(initOff, finalMain) &&
+               !(sameItem(initMain, finalMain) && sameItem(initOff, finalOff));
+    }
+
+    private static class HandSlot extends Slot {
+        private final Mob mob;
+        private final EquipmentSlot equipmentSlot;
+
+        HandSlot(Container container, int index, int x, int y, Mob mob, EquipmentSlot equipmentSlot) {
+            super(container, index, x, y);
+            this.mob = mob;
+            this.equipmentSlot = equipmentSlot;
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return stack.isEmpty() || mob.canHoldItem(stack);
+        }
+
+        @Override
+        public void set(ItemStack stack) {
+            super.set(stack);
+            mob.setItemSlot(equipmentSlot, stack.copy());
+        }
+
+        @Override
+        public void onTake(Player player, ItemStack stack) {
+            super.onTake(player, stack);
+            mob.setItemSlot(equipmentSlot, this.getItem().copy());
+        }
+    }
+
+    private static class LockedSlot extends Slot {
+        LockedSlot(Container container, int index, int x, int y) {
+            super(container, index, x, y);
+        }
+
+        @Override
+        public boolean mayPickup(Player player) {
+            return false;
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return false;
         }
     }
 }

@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 
 /**
  * Client screen for mob inventories.
@@ -44,6 +45,15 @@ public class MobInventoryScreen extends AbstractContainerScreen<MobInventoryMenu
         this.xMouse = (float)i;
         this.yMouse = (float)j;
         super.render(guiGraphics, i, j, f);
+        if (this.minecraft.player != null) {
+            for (Slot slot : this.menu.slots) {
+                if (!slot.mayPickup(this.minecraft.player)) {
+                    int x = this.leftPos + slot.x;
+                    int y = this.topPos + slot.y;
+                    guiGraphics.fill(x, y, x + 16, y + 16, 0x90000000);
+                }
+            }
+        }
         this.renderTooltip(guiGraphics, i, j);
     }
 }
