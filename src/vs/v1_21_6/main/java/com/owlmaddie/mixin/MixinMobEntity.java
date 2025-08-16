@@ -94,6 +94,12 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
             return;
         }
 
+        // Only open the inventory if chat data exists and has been used
+        EntityChatData chatData = ChatDataManager.getServerInstance().entityChatDataMap.get(thisEntity.getStringUUID());
+        if (chatData == null || chatData.status == ChatDataManager.ChatStatus.NONE) {
+            return;
+        }
+
         if (player instanceof ServerPlayer serverPlayer) {
             ExtendedScreenHandlerFactory<Integer> provider = new ExtendedScreenHandlerFactory<>() {
                 @Override
