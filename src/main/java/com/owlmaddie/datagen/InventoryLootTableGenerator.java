@@ -163,17 +163,17 @@ public final class InventoryLootTableGenerator {
             b.item(Items.QUARTZ, 10, 1, 8);
             b.item(Items.MAGMA_CREAM, 10, 1, 4);
             b.item(Items.NETHER_BRICK, 9, 1, 8);
-            b.item(Items.GOLD_NUGGET, 8, 3, 8);
-            b.item(Items.BLACKSTONE, 8, 1, 16);
-            b.item(Items.GLASS_BOTTLE, 8, 1, 3);
-            b.item(Items.POLISHED_BLACKSTONE, 7, 1, 8);
-            b.item(Items.NETHER_BRICKS, 7, 1, 16);
+            b.item(Items.NETHER_BRICKS, 8, 1, 16);
+            b.item(Items.GOLD_NUGGET, 7, 3, 8);
+            b.item(Items.BLACKSTONE, 7, 1, 16);
+            b.item(Items.POLISHED_BLACKSTONE, 6, 1, 8);
             b.item(Items.SOUL_SAND, 6, 1, 8);
             b.item(Items.CRIMSON_FUNGUS, 5, 1, 4);
             b.item(Items.WARPED_FUNGUS, 5, 1, 4);
+            b.item(Items.GLASS_BOTTLE, 4, 1, 3);
             b.item(Items.NETHER_WART, 4, 1, 8);
-            b.item(Items.GOLD_INGOT, 4, 1, 4);
-            b.item(Items.GHAST_TEAR, 3, 1, 3);
+            b.item(Items.GOLD_INGOT, 3, 1, 4);
+            b.item(Items.GHAST_TEAR, 2, 1, 3);
             b.item(Items.OBSIDIAN, 1, 1, 4);
         });
         biome(out, "plains", b -> {
