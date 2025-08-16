@@ -201,6 +201,31 @@ java {
 
 sourceSets.main.resources.srcDir "src/main/generated"
 
+def generatedResources = file("src/main/generated")
+
+tasks.named("runDatagen") {
+    outputs.dir generatedResources
+    doFirst {
+        delete generatedResources
+    }
+}
+
+tasks.named("classes") {
+    finalizedBy "runDatagen"
+}
+
+tasks.named("build") {
+    dependsOn "runDatagen"
+}
+
+tasks.named("sourcesJar") {
+    dependsOn "runDatagen"
+}
+
+tasks.named("clean") {
+    delete generatedResources
+}
+
 jar {
 	from("LICENSE") {
 		rename { "${it}_${project.base.archivesName.get()}"}
