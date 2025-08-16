@@ -427,27 +427,27 @@ public class ServerPackets {
                     entity.setCustomNameVisible(true);
                     entity.setPersistenceRequired();
                 }
-            }
 
-            // Make auto-generated message appear as a pending icon (attack, show/give, arrival)
-            if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.auto_generated > 0) {
-                chatData.status = ChatDataManager.ChatStatus.PENDING;
-            }
+                // Make auto-generated message appear as a pending icon (attack, show/give, arrival)
+                if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.auto_generated > 0) {
+                    chatData.status = ChatDataManager.ChatStatus.PENDING;
+                }
 
-            // Iterate over all players and send the packet
-            for (ServerPlayer player : serverInstance.getPlayerList().getPlayers()) {
-                FriendlyByteBuf buffer = BufferHelper.create();
-                buffer.writeUtf(chatData.entityId);
-                buffer.writeUtf(chatData.currentMessage);
-                buffer.writeInt(chatData.currentLineNumber);
-                buffer.writeUtf(chatData.status.toString());
-                buffer.writeUtf(chatData.sender.toString());
-                writePlayerDataMap(buffer, chatData.players);
+                // Iterate over all players and send the packet
+                for (ServerPlayer player : serverInstance.getPlayerList().getPlayers()) {
+                    FriendlyByteBuf buffer = BufferHelper.create();
+                    buffer.writeUtf(chatData.entityId);
+                    buffer.writeUtf(chatData.currentMessage);
+                    buffer.writeInt(chatData.currentLineNumber);
+                    buffer.writeUtf(chatData.status.toString());
+                    buffer.writeUtf(chatData.sender.toString());
+                    writePlayerDataMap(buffer, chatData.players);
 
-                // Send message to player
-                PacketHelper.send(player, PACKET_S2C_ENTITY_MESSAGE, buffer);
+                    // Send message to player
+                    PacketHelper.send(player, PACKET_S2C_ENTITY_MESSAGE, buffer);
+                }
+                break;
             }
-            break;
         }
     }
 
