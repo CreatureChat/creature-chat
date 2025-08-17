@@ -34,16 +34,22 @@ public class BuildCommands {
             dispatcher.register(Commands.literal("creaturechat")
                     .then(Commands.literal("buildrec")
                             .then(Commands.literal("start").executes(BuildCommands::start))
-                            .then(Commands.literal("stop").executes(BuildCommands::stop))
+                            .then(Commands.literal("stop")
+                                    .executes(ctx -> stop(ctx, null))
+                                    .then(Commands.argument("name", StringArgumentType.string())
+                                            .executes(ctx -> stop(ctx, StringArgumentType.getString(ctx, "name")))))
                             .then(Commands.literal("replay")
                                     .then(Commands.argument("id", StringArgumentType.string())
                                             .suggests(BuildCommands::suggest)
-                                            .executes(ctx -> replay(ctx, 2))
-                                            .then(Commands.argument("speed", IntegerArgumentType.integer(1, 4))
+                                            .executes(ctx -> replay(ctx, 1))
+                                            .then(Commands.argument("speed", IntegerArgumentType.integer(1, 32))
                                                     .suggests((c, b) -> {
                                                         b.suggest("1");
                                                         b.suggest("2");
                                                         b.suggest("4");
+                                                        b.suggest("8");
+                                                        b.suggest("16");
+                                                        b.suggest("32");
                                                         return b.buildFuture();
                                                     })
                                                     .executes(ctx -> replay(ctx, IntegerArgumentType.getInteger(ctx, "speed"))))))));
@@ -60,9 +66,9 @@ public class BuildCommands {
         return 0;
     }
 
-    private static int stop(CommandContext<CommandSourceStack> context) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+    private static int stop(CommandContext<CommandSourceStack> context, String name) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        Summary s = BuildRecorder.stop(player);
+        Summary s = BuildRecorder.stop(player, name);
         if (s != null) {
             Component msg = Component.literal("Saved build " + s.id + ". Blocks: " + s.total + ", additions: " + s.additions + ", destroys: " + s.destroys);
             context.getSource().sendSuccess(() -> msg, false);
@@ -73,7 +79,10 @@ public class BuildCommands {
     }
 
     private static int replay(CommandContext<CommandSourceStack> context, int speed) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
-        int spd = (speed == 1 || speed == 2 || speed == 4) ? speed : 1;
+        int spd = switch (speed) {
+            case 1, 2, 4, 8, 16, 32 -> speed;
+            default -> 1;
+        };
         ServerPlayer player = context.getSource().getPlayerOrException();
         String id = StringArgumentType.getString(context, "id");
         if (BuildRecorder.startReplay(player, id, spd)) {

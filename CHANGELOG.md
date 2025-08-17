@@ -6,6 +6,14 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ## Unreleased
 
+## Added
+- New build recording command
+  - Record, Save, and Replay builds (placing, destroying, interacting with blocks + player poses)
+  - Spawns a pig to replay builds (temporarily placeholder)
+  - Replay speeds can be adjusted between 1X and 32X
+
+## Unreleased
+
 ### Added
 - Inventories for all entities with chat data (Shift+Right Click, or Press 'E' while riding)
     - Random items added to inventory on character creation (biome-specific loot tables for inventories)
