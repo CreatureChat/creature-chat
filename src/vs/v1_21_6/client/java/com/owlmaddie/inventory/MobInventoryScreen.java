@@ -3,57 +3,35 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.inventory;
 
-import com.owlmaddie.utils.TextureLoader;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.Slot;
 
 /**
  * Client screen for mob inventories.
  */
-public class MobInventoryScreen extends AbstractContainerScreen<MobInventoryMenu> {
-    private static final TextureLoader textures = new TextureLoader();
-    private static final ResourceLocation INVENTORY_TEXTURE = textures.GetUI("inventory");
-    private float xMouse;
-    private float yMouse;
+public class MobInventoryScreen extends MobInventoryScreenBase {
 
     public MobInventoryScreen(MobInventoryMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageWidth = 176;
-        this.imageHeight = 166;
     }
 
     @Override
-    protected void renderBg(GuiGraphics guiGraphics, float f, int i, int j) {
-        int k = (this.width - this.imageWidth) / 2;
-        int l = (this.height - this.imageHeight) / 2;
-        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, INVENTORY_TEXTURE, k, l, 0.0F, 0.0F, this.imageWidth, this.imageHeight, 256, 256);
-        Mob mob = this.menu.getMob();
-        if (mob != null) {
-            InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, k , l, k + 78, l + 70, 20, 0.25F, this.xMouse, this.yMouse, mob);
-        }
+    protected void blitBackground(GuiGraphics guiGraphics, net.minecraft.resources.ResourceLocation background, int x, int y) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, background, x, y, 0.0F, 0.0F, this.imageWidth, this.imageHeight, 256, 256);
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int i, int j, float f) {
-        this.xMouse = (float)i;
-       this.yMouse = (float)j;
-       super.render(guiGraphics, i, j, f);
-        if (this.minecraft.player != null) {
-            for (Slot slot : this.menu.slots) {
-                if (!slot.mayPickup(this.minecraft.player)) {
-                    int x = this.leftPos + slot.x;
-                    int y = this.topPos + slot.y;
-                    guiGraphics.fill(x, y, x + 16, y + 16, 0x90000000);
-                }
-            }
-        }
-        this.renderTooltip(guiGraphics, i, j);
+    protected void renderMob(GuiGraphics guiGraphics, Mob mob, int left, int top, int right, int bottom, int scale, float yOffset) {
+        float cx = (left + right) * 0.5f;
+        float cy = (top + bottom) * 0.5f;
+        int L = (int)(cx - INF);
+        int T = (int)(cy - INF);
+        int R = (int)(cx + INF);
+        int B = (int)(cy + INF);
+        InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, L, T, R, B, scale, yOffset, this.xMouse, this.yMouse, mob);
     }
 }
