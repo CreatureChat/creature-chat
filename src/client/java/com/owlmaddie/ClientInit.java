@@ -15,12 +15,17 @@ import com.owlmaddie.ui.PlayerMessageManager;
 import com.owlmaddie.utils.TickDelta;
 import com.owlmaddie.inventory.ModMenus;
 import com.owlmaddie.inventory.MobInventoryScreen;
+import com.owlmaddie.items.ModItems;
+import com.owlmaddie.ui.BookScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.InteractionResult;
 
 /**
  * The {@code ClientInit} class initializes this mod in the client and defines all hooks into the
@@ -55,6 +60,16 @@ public class ClientInit implements ClientModInitializer {
         InventoryKeyHandler.register();
         ClientPackets.register();
         MenuScreens.register(ModMenus.MOB_INVENTORY, MobInventoryScreen::new);
+
+        UseItemCallback.EVENT.register((player, world, hand) -> {
+            if (player.getItemInHand(hand).is(ModItems.MEMORY_BOOK)) {
+                if (world.isClientSide) {
+                    Minecraft.getInstance().setScreen(new BookScreen());
+                }
+                return InteractionResult.SUCCESS;
+            }
+            return InteractionResult.PASS;
+        });
 
         // Register an event callback to render text bubbles
         WorldRenderEvents.BEFORE_DEBUG_RENDER.register(ctx -> {

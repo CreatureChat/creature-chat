@@ -157,4 +157,9 @@ public class ChatScreen extends ScreenHelper {
     protected Component getLabelText() {
         return this.labelText;
     }
+
+    @Override
+    protected String getBackgroundTextureId() {
+        return "chat-background";
+    }
 }

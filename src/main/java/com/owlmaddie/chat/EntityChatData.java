@@ -155,6 +155,10 @@ public class EntityChatData {
     }
 
     public String getCharacterProp(String propertyName) {
+        if (characterSheet == null || characterSheet.isEmpty()) {
+            return "N/A";
+        }
+
         // Create a case-insensitive regex pattern to match the property name and capture its value
         Pattern pattern = Pattern.compile("-?\\s*" + Pattern.quote(propertyName) + ":\\s*(.+)", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(characterSheet);

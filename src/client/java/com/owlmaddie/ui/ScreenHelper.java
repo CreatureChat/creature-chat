@@ -28,13 +28,19 @@ public abstract class ScreenHelper extends Screen {
     /** Subclass must return its label Text here */
     protected abstract Component getLabelText();
 
+    /** Subclass must supply the UI texture id for its background */
+    protected abstract String getBackgroundTextureId();
+
+    /** Hook for subclasses to render additional content above the background */
+    protected void renderContent(GuiGraphics context, int mouseX, int mouseY, float delta) {}
+
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         // Full-screen vanilla gradient
         renderBackground(context);
 
-        // Chat-box texture
-        ResourceLocation bgTex = textures.GetUI("chat-background");
+        // Background texture
+        ResourceLocation bgTex = textures.GetUI(getBackgroundTextureId());
         if (bgTex != null) {
             context.blit(
                     bgTex,
@@ -44,6 +50,9 @@ public abstract class ScreenHelper extends Screen {
                     BG_WIDTH, BG_HEIGHT
             );
         }
+
+        // Allow subclass to render content on top of background but before widgets
+        renderContent(context, mouseX, mouseY, delta);
 
         // Render all children (textField, buttons)
         super.render(context, mouseX, mouseY, delta);
