@@ -17,7 +17,7 @@ public final class UseItemCallbackHelper {
     private UseItemCallbackHelper() {}
 
     /**
-     * Fabric 1.20.x & 1.21.2 handler using TypedActionResult&lt;ItemStack&gt;.
+     * Fabric 1.20.x–1.21.1 handler using InteractionResultHolder<ItemStack>.
      */
     public static InteractionResultHolder<ItemStack> handleUseItemAction(
             Player player,

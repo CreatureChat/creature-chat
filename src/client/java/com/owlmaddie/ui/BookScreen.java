@@ -8,11 +8,12 @@ import com.owlmaddie.chat.ChatMessage;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.render.EntityTextureHelper;
-import com.owlmaddie.utils.TextureLoader;
+import com.owlmaddie.render.PoseHelper;
+import com.owlmaddie.render.RenderPipelineHelper;
+import com.owlmaddie.utils.ClientEntityFinder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -33,7 +34,6 @@ public class BookScreen extends ScreenHelper {
     private Button prevButton;
     private Button nextButton;
     private EditBox dummyField;
-    private static final TextureLoader textures = new TextureLoader();
     private static final int PAGE_CONTENT_W = 120;   // width of text block per page
     private static final int PAGE_CONTENT_H = 120;   // height of text block (for scissor)
     private static final int LABEL_COLOR    = 0xFF6B4A3B; // warm brown, matches book UI
@@ -105,6 +105,13 @@ public class BookScreen extends ScreenHelper {
     }
 
     @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (prevButton.mouseClicked(mouseX, mouseY, button)) return true;
+        if (nextButton.mouseClicked(mouseX, mouseY, button)) return true;
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
     protected void renderContent(net.minecraft.client.gui.GuiGraphics ctx, int mouseX, int mouseY, float delta) {
         renderPage(ctx, bgX + 32, bgY + 51, index);
         renderPage(ctx, bgX + 162, bgY + 51, index + 1);
@@ -149,12 +156,12 @@ public class BookScreen extends ScreenHelper {
         else if (friendship > 0) titleColor = 0xFF2ECC40; // green
 
         // Title (slightly larger, soft shadow)
-        ctx.pose().pushMatrix();
-        ctx.pose().translate((float)x, (float)y);
-        ctx.pose().scale(1.12f, 1.12f);
+        PoseHelper.push(ctx.pose());
+        PoseHelper.translate(ctx.pose(), (float)x, (float)y);
+        PoseHelper.scale(ctx.pose(), 1.12f, 1.12f);
         ctx.drawString(this.font, displayName, 1, 1, 0x66000000, false); // shadow
         ctx.drawString(this.font, displayName, 0, 0, titleColor, false);
-        ctx.pose().popMatrix();
+        PoseHelper.pop(ctx.pose());
 
         int offsetY = y + Math.round(this.font.lineHeight * 1.12f) + 6;
 
@@ -162,7 +169,7 @@ public class BookScreen extends ScreenHelper {
         if (entity != null) drawEntityIcon(ctx, entity, x, offsetY);
         ResourceLocation frTex = textures.GetUI("friendship" + friendship);
         if (frTex != null) {
-            ctx.blit(RenderPipelines.GUI_TEXTURED, frTex, x + 34, offsetY, 0, 0, 31, 21, 31, 21);
+            RenderPipelineHelper.blitGuiTexture(ctx, frTex, x + 34, offsetY, 0, 0, 31, 21, 31, 21);
         }
 
         int lineY = offsetY + 35;
@@ -187,11 +194,11 @@ public class BookScreen extends ScreenHelper {
 
         // UUID footer (tiny light gray) aligned to page bottom
         int debugY = bgY + BG_HEIGHT - 6;
-        ctx.pose().pushMatrix();
-        ctx.pose().translate((float)x, (float)debugY);
-        ctx.pose().scale(0.8f, 0.8f);
+        PoseHelper.push(ctx.pose());
+        PoseHelper.translate(ctx.pose(), (float)x, (float)debugY);
+        PoseHelper.scale(ctx.pose(), 0.8f, 0.8f);
         ctx.drawString(this.font, data.entityId, 0, 0, LIGHT_GRAY, false);
-        ctx.pose().popMatrix();
+        PoseHelper.pop(ctx.pose());
     }
 
 // ---------- helpers ----------
@@ -237,9 +244,9 @@ public class BookScreen extends ScreenHelper {
         String rest = text;
         int drawnPx = 0;
 
-        ctx.pose().pushMatrix();
-        ctx.pose().translate((float)x, (float)y);
-        ctx.pose().scale(scale, scale);
+        PoseHelper.push(ctx.pose());
+        PoseHelper.translate(ctx.pose(), (float)x, (float)y);
+        PoseHelper.scale(ctx.pose(), scale, scale);
 
         for (int line = 0; line < maxLines && !rest.isEmpty(); line++) {
             String piece = this.font.plainSubstrByWidth(rest, avail);
@@ -260,7 +267,7 @@ public class BookScreen extends ScreenHelper {
             drawnPx += this.font.lineHeight;
         }
 
-        ctx.pose().popMatrix();
+        PoseHelper.pop(ctx.pose());
         return y + Math.round(drawnPx * scale);
     }
 
@@ -275,7 +282,7 @@ public class BookScreen extends ScreenHelper {
         if (skinId == null) return;
         ResourceLocation icon = textures.GetEntity(skinId.getPath());
         if (icon == null) return;
-        ctx.blit(RenderPipelines.GUI_TEXTURED, icon,
+        RenderPipelineHelper.blitGuiTexture(ctx, icon,
                 x, y,
                 0, 0,
                 30, 30,
@@ -285,7 +292,9 @@ public class BookScreen extends ScreenHelper {
     private Entity getEntity(String id) {
         try {
             UUID uuid = UUID.fromString(id);
-            return Minecraft.getInstance().level.getEntity(uuid);
+            var level = Minecraft.getInstance().level;
+            if (level == null) return null;
+            return ClientEntityFinder.getEntityByUUID(level, uuid);
         } catch (Exception e) {
             return null;
         }

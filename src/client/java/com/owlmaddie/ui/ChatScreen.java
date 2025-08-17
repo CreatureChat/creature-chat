@@ -5,7 +5,6 @@ package com.owlmaddie.ui;
 
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.network.ClientPackets;
-import com.owlmaddie.utils.TextureLoader;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
@@ -41,7 +40,6 @@ public class ChatScreen extends ScreenHelper {
     private Button cancelButton;
     private Entity screenEntity;
     private final Component labelText = Component.literal("Enter your message:");
-    private static final TextureLoader textures = new TextureLoader();
 
     public ChatScreen(Entity entity, Player player) {
         super(Component.literal("Simple Chat"));

@@ -13,7 +13,6 @@ import com.owlmaddie.ui.ClickHandler;
 import com.owlmaddie.ui.InventoryKeyHandler;
 import com.owlmaddie.ui.PlayerMessageManager;
 import com.owlmaddie.utils.TickDelta;
-import com.owlmaddie.utils.UseItemCallbackHelper;
 import com.owlmaddie.inventory.ModMenus;
 import com.owlmaddie.inventory.MobInventoryScreen;
 import com.owlmaddie.items.ModItems;
@@ -26,7 +25,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 
 /**
  * The {@code ClientInit} class initializes this mod in the client and defines all hooks into the
@@ -67,9 +66,9 @@ public class ClientInit implements ClientModInitializer {
                 if (world.isClientSide) {
                     Minecraft.getInstance().setScreen(new BookScreen());
                 }
-                return InteractionResultHolder.success(player.getItemInHand(hand));
+                return InteractionResult.SUCCESS;
             }
-            return UseItemCallbackHelper.handleUseItemAction(player, world, hand);
+            return InteractionResult.PASS;
         });
 
         // Register an event callback to render text bubbles

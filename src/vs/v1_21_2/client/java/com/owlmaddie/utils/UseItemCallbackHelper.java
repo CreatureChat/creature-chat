@@ -4,25 +4,29 @@
 package com.owlmaddie.utils;
 
 import com.owlmaddie.ui.ClickHandler;
-import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
-public class UseItemCallbackHelper {
+/**
+ * Helper for UseItemCallback, forwarding to the shared shouldCancelAction logic.
+ */
+public final class UseItemCallbackHelper {
+    private UseItemCallbackHelper() {}
+
     /**
-     * Fabric 1.21.2+ handler using ActionResult
+     * Fabric 1.21.2+ handler returning InteractionResult.
      */
     public static InteractionResult handleUseItemAction(
             Player player,
             Level world,
             InteractionHand hand
     ) {
-        // fully qualified call into your ClickHandler
-        if (ClickHandler.shouldCancelAction(world)) {
-            return InteractionResult.FAIL;
-        }
-        return InteractionResult.PASS;
+        return shouldCancelAction(world) ? InteractionResult.FAIL : InteractionResult.PASS;
+    }
+
+    private static boolean shouldCancelAction(Level world) {
+        return ClickHandler.shouldCancelAction(world);
     }
 }
