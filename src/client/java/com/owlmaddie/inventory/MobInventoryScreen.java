@@ -3,6 +3,7 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.inventory;
 
+import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.utils.TextureLoader;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -18,7 +19,8 @@ import net.minecraft.world.inventory.Slot;
  */
 public class MobInventoryScreen extends AbstractContainerScreen<MobInventoryMenu> {
     private static final TextureLoader textures = new TextureLoader();
-    private static final ResourceLocation INVENTORY_TEXTURE = textures.GetUI("inventory");
+    private static final ResourceLocation FRIEND_TEXTURE = textures.GetUI("inventory");
+    private static final ResourceLocation ENEMY_TEXTURE = textures.GetUI("inventory-enemy");
     private float xMouse;
     private float yMouse;
 
@@ -26,18 +28,38 @@ public class MobInventoryScreen extends AbstractContainerScreen<MobInventoryMenu
         super(menu, playerInventory, title);
         this.imageWidth = 176;
         this.imageHeight = 166;
+        this.inventoryLabelY += 2;
     }
 
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float f, int i, int j) {
         int k = (this.width - this.imageWidth) / 2;
         int l = (this.height - this.imageHeight) / 2;
-        guiGraphics.blit(INVENTORY_TEXTURE, k, l, 0, 0, this.imageWidth, this.imageHeight);
         Mob mob = this.menu.getMob();
+        ResourceLocation background = FRIEND_TEXTURE;
+        if (mob != null && this.minecraft.player != null) {
+            int friendship = ChatDataManager.getClientInstance()
+                    .getOrCreateChatData(mob.getStringUUID())
+                    .getPlayerData(this.minecraft.player.getDisplayName().getString())
+                    .friendship;
+            if (friendship <= 0) {
+                background = ENEMY_TEXTURE;
+            }
+        }
+        guiGraphics.blit(background, k, l, 0, 0, this.imageWidth, this.imageHeight);
         if (mob != null) {
-            float relX = (float)(k + 78) - this.xMouse;
-            float relY = (float)(l + 70) - this.yMouse;
-            InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, k + 40, l + 55, 20, relX, relY, mob);
+            int left = k + 13 + 8;
+            int top = l + 18 + 12;
+            int width = 52 - 8 - 8;
+            int height = 52 - 12 - 8;
+            float widthScale = (float) width / mob.getBbWidth();
+            float heightScale = (float) height / mob.getBbHeight();
+            float scale = Math.min(widthScale, heightScale);
+            int xCenter = left + width / 2;
+            int yBottom = top + height;
+            float relX = (float) xCenter - this.xMouse;
+            float relY = (float) yBottom - this.yMouse;
+            InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, xCenter, yBottom , (int) scale, relX, relY, mob);
         }
     }
 
