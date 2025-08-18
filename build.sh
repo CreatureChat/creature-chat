@@ -8,11 +8,11 @@ DRY_RUN=${DRY_RUN:-0}
 shopt -s nullglob
 
 run_build() {
-  ./gradlew build -x test -x validateAccessWidener --build-cache --parallel && return 0
+  ./gradlew build -x test -x validateAccessWidener --build-cache --parallel </dev/null && return 0
   echo "Gradle failed; attempting to clear locks and retry..."
   ./gradlew --stop >/dev/null 2>&1 || true
   find .gradle ~/.gradle -type f -name '*.lock' -delete 2>/dev/null || true
-  ./gradlew build -x test -x validateAccessWidener --build-cache --parallel
+  ./gradlew build -x test -x validateAccessWidener --build-cache --parallel </dev/null
 }
 
 # Format: minecraft_version  yarn_mappings       loader_version  loom_version      fabric_version
