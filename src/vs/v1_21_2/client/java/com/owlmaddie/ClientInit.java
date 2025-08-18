@@ -62,7 +62,7 @@ public class ClientInit implements ClientModInitializer {
         MenuScreens.register(ModMenus.MOB_INVENTORY, MobInventoryScreen::new);
 
         UseItemCallback.EVENT.register((player, world, hand) -> {
-            if (player.getItemInHand(hand).is(ModItems.MEMORY_BOOK)) {
+            if (player.getItemInHand(hand).is(ModItems.BOOK)) {
                 if (world.isClientSide) {
                     Minecraft.getInstance().setScreen(new BookScreen());
                 }

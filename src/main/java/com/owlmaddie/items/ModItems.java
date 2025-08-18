@@ -15,11 +15,11 @@ public final class ModItems {
     private ModItems() {}
 
     /** The book that opens the creature log UI. */
-    private static final ResourceLocation MEMORY_BOOK_ID = new ResourceLocation("creaturechat", "memory_book");
+    private static final ResourceLocation BOOK_ID = new ResourceLocation("creaturechat", "book");
 
-    public static final Item MEMORY_BOOK = Registry.register(
+    public static final Item BOOK = Registry.register(
             BuiltInRegistries.ITEM,
-            MEMORY_BOOK_ID,
+            BOOK_ID,
             new Item(new Item.Properties()
                     .stacksTo(1)
                     )

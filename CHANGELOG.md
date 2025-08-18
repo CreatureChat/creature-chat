@@ -7,6 +7,14 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ## Unreleased
 
 ### Added
+- New Book Item
+  - Load client entity chat data and display friends and enemies by most recent
+  - Using Fabric datagen to create book item
+
+
+## Unreleased
+
+### Added
 - Inventories for all entities with chat data (Shift+Right Click, or Press 'E' while riding)
     - Random items added to inventory on character creation (biome-specific loot tables for inventories)
     - You can borrow items from friends, or steel items from enemies
