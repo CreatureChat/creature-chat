@@ -3,7 +3,7 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.chat;
 
-import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,7 +31,7 @@ public class AdvancementHelper {
             return;
         }
         MinecraftServer server = player.getServer();
-        Advancement adv = server.getAdvancements().getAdvancement(id);
+        AdvancementHolder adv = server.getAdvancements().get(id);
         if (adv != null) {
             boolean awarded = player.getAdvancements().award(adv, "triggered");
             if (!awarded) {
