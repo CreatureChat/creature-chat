@@ -4,12 +4,16 @@
 package com.owlmaddie.buildrec;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.stream.JsonReader;
+import com.owlmaddie.buildrec.MobHelper;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,12 +21,19 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -43,6 +54,7 @@ public class BuildRecorder {
     private static final Gson GSON = new Gson();
     private static final Map<UUID, Recording> RECORDINGS = new ConcurrentHashMap<>();
     private static final List<Replay> REPLAYS = new ArrayList<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
 
     static {
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
@@ -80,47 +92,114 @@ public class BuildRecorder {
         // Ensure static initializer runs
     }
 
-    public static boolean start(ServerPlayer player) {
+    public static boolean start(ServerPlayer player, String name) {
         if (RECORDINGS.containsKey(player.getUUID())) {
+            LOGGER.info("[BuildRec] start ignored already recording player={}", player.getGameProfile().getName());
             return false;
         }
-        RECORDINGS.put(player.getUUID(), new Recording(player));
+        RECORDINGS.put(player.getUUID(), new Recording(player, name));
+        LOGGER.info("[BuildRec] start name={} player={}", name, player.getGameProfile().getName());
         return true;
     }
 
-    public static Summary stop(ServerPlayer player, String name) {
+    public static Summary stop(ServerPlayer player) {
         Recording rec = RECORDINGS.remove(player.getUUID());
-        if (rec == null) return null;
-        return rec.save(name);
+        if (rec == null) {
+            LOGGER.info("[BuildRec] stop ignored no active recording player={}", player.getGameProfile().getName());
+            return null;
+        }
+        Summary summary = rec.finish(player);
+        LOGGER.info("[BuildRec] stop player={} file={} total={} additions={} destroys={}",
+                player.getGameProfile().getName(), summary.id, summary.total, summary.additions, summary.destroys);
+        return summary;
     }
 
-    public static boolean startReplay(ServerPlayer player, String fileName, int speed) {
+    public static boolean startReplay(ServerPlayer player, String fileName, EntityType<? extends Mob> entityType, int speed) {
         Path dir = buildDir();
-        Path file = dir.resolve(fileName);
-        if (!Files.exists(file)) return false;
+        String actual = fileName.endsWith(".json.gz") ? fileName : fileName + ".json.gz";
+        Path file = dir.resolve(actual);
+        LOGGER.info("[BuildRec] replay file={} entity={} speed={} player={}", actual,
+                entityType != null ? BuiltInRegistries.ENTITY_TYPE.getKey(entityType).toString() : "pig", speed,
+                player.getGameProfile().getName());
+        if (!Files.exists(file)) {
+            LOGGER.info("[BuildRec] replay missing file={}", file);
+            return false;
+        }
         try (JsonReader reader = new JsonReader(new InputStreamReader(new GZIPInputStream(Files.newInputStream(file)), StandardCharsets.UTF_8))) {
             List<Action> actions = new ArrayList<>();
             reader.beginArray();
+            JsonElement first = GSON.fromJson(reader, JsonElement.class);
+            RecordingMeta meta;
+            if (first != null && first.isJsonObject() && first.getAsJsonObject().has("action") && "meta".equals(first.getAsJsonObject().get("action").getAsString())) {
+                meta = GSON.fromJson(first, RecordingMeta.class);
+            } else {
+                meta = new RecordingMeta();
+                if (first != null) {
+                    Action firstAction = GSON.fromJson(first, Action.class);
+                    if (firstAction != null) actions.add(firstAction);
+                }
+            }
             while (reader.hasNext()) {
-                actions.add(GSON.fromJson(reader, Action.class));
+                Action a = GSON.fromJson(reader, Action.class);
+                if (a != null) actions.add(a);
             }
             reader.endArray();
+            if (actions.isEmpty()) {
+                LOGGER.info("[BuildRec] replay file={} has no actions", file);
+                return false;
+            }
+            double recEye = meta.eyeHeight > 0 ? meta.eyeHeight : player.getEyeHeight();
+            double recWidth = meta.bbWidth;
+            double recHeight = meta.bbHeight;
             ServerLevel level = (ServerLevel) player.level();
-            Pig pig = new Pig(EntityType.PIG, level);
-            pig.teleportTo(player.getX(), player.getY(), player.getZ());
-            pig.setYRot(player.getYRot());
-            pig.setXRot(player.getXRot());
-            pig.yHeadRot = player.getYRot();
-            pig.yBodyRot = player.getYRot();
-            pig.setNoAi(true);
-            pig.setInvulnerable(true);
-            level.addFreshEntity(pig);
-            REPLAYS.add(new Replay(pig, actions, speed));
+            Mob actor;
+            if (entityType == null) {
+                actor = new Pig(EntityType.PIG, level);
+            } else {
+                actor = MobHelper.create(entityType, level);
+                if (actor == null) {
+                    LOGGER.info("[BuildRec] replay could not create {}", BuiltInRegistries.ENTITY_TYPE.getKey(entityType));
+                    return false;
+                }
+            }
+            MobHelper.initSpawn(actor, level);
+            actor.teleportTo(player.getX(), player.getY(), player.getZ());
+            actor.setYRot(player.getYRot());
+            float sp = adjustPitch(level, player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot(), recEye, actor.getEyeHeight(), actor);
+            actor.setXRot(sp);
+            actor.yHeadRot = player.getYRot();
+            actor.yBodyRot = player.getYRot();
+            actor.setNoAi(true);
+            actor.setInvulnerable(true);
+            actor.setPersistenceRequired();
+            level.addFreshEntity(actor);
+            REPLAYS.add(new Replay(actor, actions, speed, recEye, recWidth, recHeight));
+            LOGGER.info("[BuildRec] replay loaded actions={} eyeHeight={} bbW={} bbH={}", actions.size(), recEye, recWidth, recHeight);
             return true;
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException | JsonParseException e) {
+            LOGGER.error("[BuildRec] replay failed to load {}", file, e);
+        } catch (Exception e) {
+            LOGGER.error("[BuildRec] replay runtime error {}", file, e);
         }
         return false;
+    }
+
+    private static float adjustPitch(ServerLevel level, double x, double y, double z, float yaw, float pitch,
+                                     double fromEye, double toEye, Entity ctx) {
+        if (fromEye <= 0 || toEye <= 0) return pitch;
+        double yawRad = Math.toRadians(yaw);
+        double pitchRad = Math.toRadians(pitch);
+        double dx = -Math.sin(yawRad) * Math.cos(pitchRad);
+        double dy = -Math.sin(pitchRad);
+        double dz = Math.cos(yawRad) * Math.cos(pitchRad);
+        Vec3 start = new Vec3(x, y + fromEye, z);
+        Vec3 end = start.add(dx * 64, dy * 64, dz * 64);
+        var hit = level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, ctx));
+        Vec3 target = hit.getType() == HitResult.Type.MISS ? end : hit.getLocation();
+        Vec3 newEye = new Vec3(x, y + toEye, z);
+        Vec3 diff = target.subtract(newEye);
+        double horiz = Math.sqrt(diff.x * diff.x + diff.z * diff.z);
+        return (float) -Math.toDegrees(Math.atan2(diff.y, horiz));
     }
 
     private static void recordPlace(ServerPlayer player, BlockPos pos, BlockState state,
@@ -182,61 +261,63 @@ public class BuildRecorder {
             while (advance > 0) {
                 if (r.action == null) {
                     if (r.index >= r.actions.size()) {
-                        r.pig.discard();
+                        LOGGER.info("[BuildRec] replay finished actor={} actions={} speed={}",
+                                r.actor.getType().toShortString(), r.actions.size(), r.speed);
+                        r.actor.discard();
                         it.remove();
                         break;
                     }
                     r.action = r.actions.get(r.index++);
                     r.progress = 0;
-                    r.sx = r.pig.getX();
-                    r.sy = r.pig.getY();
-                    r.sz = r.pig.getZ();
-                    r.syaw = r.pig.getYRot();
-                    r.spitch = r.pig.getXRot();
+                    r.sx = r.actor.getX();
+                    r.sy = r.actor.getY();
+                    r.sz = r.actor.getZ();
+                    r.syaw = r.actor.getYRot();
+                    r.spitch = r.actor.getXRot();
                     r.tx = r.baseX + r.action.px;
                     r.ty = r.baseY + r.action.py;
                     r.tz = r.baseZ + r.action.pz;
                     r.tyaw = r.action.yaw;
-                    r.tpitch = r.action.pitch;
+                    r.tpitch = adjustPitch((ServerLevel) r.actor.level(), r.baseX + r.action.px, r.baseY + r.action.py, r.baseZ + r.action.pz, r.action.yaw, r.action.pitch, r.recordEyeHeight, r.actor.getEyeHeight(), r.actor);
                 }
                 double remain = r.action.dt - r.progress;
                 if (remain <= advance) {
                     r.progress += remain;
                     advance -= remain;
-                    r.pig.teleportTo(r.tx, r.ty, r.tz);
-                    r.pig.setYRot(r.tyaw);
-                    r.pig.setXRot(r.tpitch);
-                    r.pig.yHeadRot = r.tyaw;
-                    r.pig.yBodyRot = r.tyaw;
+                    r.actor.teleportTo(r.tx, r.ty, r.tz);
+                    r.actor.setYRot(r.tyaw);
+                    r.actor.setXRot(r.tpitch);
+                    r.actor.yHeadRot = r.tyaw;
+                    r.actor.yBodyRot = r.tyaw;
                     if ("place".equals(r.action.action) || "break".equals(r.action.action) || "interact".equals(r.action.action)) {
                         BlockPos bpos = new BlockPos(Mth.floor(r.baseX + r.action.bx), Mth.floor(r.baseY + r.action.by), Mth.floor(r.baseZ + r.action.bz));
-                        r.pig.level().getChunkAt(bpos);
+                        r.actor.level().getChunkAt(bpos);
                         if ("place".equals(r.action.action)) {
                             BlockState state = Block.stateById(r.action.stateId);
                             boolean upper = state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF) && state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER;
-                            r.pig.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(state.getBlock()));
-                            r.pig.level().setBlock(bpos, state, 3);
+                            r.actor.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(state.getBlock()));
+                            r.actor.level().setBlock(bpos, state, 3);
                             if (!upper) {
-                                r.pig.level().playSound(null, bpos, state.getSoundType().getPlaceSound(), SoundSource.BLOCKS, 1f, 1f);
-                                r.pig.swing(InteractionHand.MAIN_HAND);
+                                r.actor.level().playSound(null, bpos, state.getSoundType().getPlaceSound(), SoundSource.BLOCKS, 1f, 1f);
+                                r.actor.swing(InteractionHand.MAIN_HAND);
                             }
                         } else if ("break".equals(r.action.action)) {
-                            BlockState state = r.pig.level().getBlockState(bpos);
+                            BlockState state = r.actor.level().getBlockState(bpos);
                             boolean upper = state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF) && state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER;
                             if (!upper) {
-                                r.pig.level().levelEvent(2001, bpos, Block.getId(state));
-                                r.pig.swing(InteractionHand.MAIN_HAND);
+                                r.actor.level().levelEvent(2001, bpos, Block.getId(state));
+                                r.actor.swing(InteractionHand.MAIN_HAND);
                             }
-                            r.pig.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-                            r.pig.level().removeBlock(bpos, false);
+                            r.actor.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                            r.actor.level().removeBlock(bpos, false);
                         } else {
                             BlockState state = Block.stateById(r.action.stateId);
                             boolean upper = state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF) && state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER;
-                            r.pig.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-                            r.pig.level().setBlock(bpos, state, 3);
+                            r.actor.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                            r.actor.level().setBlock(bpos, state, 3);
                             if (!upper) {
-                                r.pig.level().playSound(null, bpos, state.getSoundType().getHitSound(), SoundSource.BLOCKS, 1f, 1f);
-                                r.pig.swing(InteractionHand.MAIN_HAND);
+                                r.actor.level().playSound(null, bpos, state.getSoundType().getHitSound(), SoundSource.BLOCKS, 1f, 1f);
+                                r.actor.swing(InteractionHand.MAIN_HAND);
                             }
                         }
                     }
@@ -247,11 +328,11 @@ public class BuildRecorder {
                     double px = Mth.lerp(t, r.sx, r.tx);
                     double py = Mth.lerp(t, r.sy, r.ty);
                     double pz = Mth.lerp(t, r.sz, r.tz);
-                    r.pig.teleportTo(px, py, pz);
-                    r.pig.setYRot(r.syaw);
-                    r.pig.setXRot(r.spitch);
-                    r.pig.yHeadRot = r.syaw;
-                    r.pig.yBodyRot = r.syaw;
+                    r.actor.teleportTo(px, py, pz);
+                    r.actor.setYRot(r.syaw);
+                    r.actor.setXRot(r.spitch);
+                    r.actor.yHeadRot = r.syaw;
+                    r.actor.yBodyRot = r.syaw;
                     advance = 0;
                 }
             }
@@ -266,6 +347,7 @@ public class BuildRecorder {
         }
         return dir;
     }
+
 
 
     public static class Summary {
@@ -285,6 +367,10 @@ public class BuildRecorder {
     private static class Recording {
         final int ox, oy, oz;
         final List<Action> actions = new ArrayList<>();
+        final String name;
+        final double eyeHeight;
+        final double bbWidth;
+        final double bbHeight;
         int additions = 0;
         int destroys = 0;
         int poseTick = 0;
@@ -293,12 +379,16 @@ public class BuildRecorder {
         float lastYaw, lastPitch;
         boolean poseInit = false;
 
-        Recording(ServerPlayer player) {
+        Recording(ServerPlayer player, String name) {
+            this.name = name;
             BlockPos p = player.blockPosition();
             this.ox = p.getX();
             this.oy = p.getY();
             this.oz = p.getZ();
             this.lastTick = player.level().getServer().getTickCount();
+            this.eyeHeight = player.getEyeHeight();
+            this.bbWidth = player.getBbWidth();
+            this.bbHeight = player.getBbHeight();
         }
 
         void tick(ServerPlayer player) {
@@ -354,43 +444,70 @@ public class BuildRecorder {
             else if ("break".equals(type)) destroys++;
         }
 
-        Summary save(String name) {
+        Summary save() {
             String base = (name == null || name.isBlank()) ? UUID.randomUUID().toString().split("-")[0] : name.replaceAll("[^a-zA-Z0-9-_]", "_");
             String id = base + ".json.gz";
             Path file = buildDir().resolve(id);
             try (BufferedWriter w = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(file)), StandardCharsets.UTF_8))) {
                 w.write("[\n");
-                for (int i = 0; i < actions.size(); i++) {
-                    w.write(GSON.toJson(actions.get(i)));
-                    if (i < actions.size() - 1) w.write(",\n");
+                w.write(GSON.toJson(new RecordingMeta(eyeHeight, bbWidth, bbHeight)));
+                for (Action a : actions) {
+                    w.write(",\n");
+                    w.write(GSON.toJson(a));
                 }
                 w.write("\n]");
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("[BuildRec] save failed file={}", id, e);
             }
+            LOGGER.info("[BuildRec] save file={} actions={} additions={} destroys={}", id, actions.size(), additions, destroys);
             return new Summary(id, actions.size(), additions, destroys);
+        }
+
+        Summary finish(ServerPlayer player) {
+            return save();
         }
     }
 
     private static class Replay {
-        final Pig pig;
+        final Mob actor;
         final List<Action> actions;
         final double baseX, baseY, baseZ;
         final int speed;
+        final double recordEyeHeight;
+        final double recordBbWidth;
+        final double recordBbHeight;
         int index = 0;
         Action action = null;
         double progress = 0;
         double sx, sy, sz, tx, ty, tz;
         float syaw, spitch, tyaw, tpitch;
 
-        Replay(Pig pig, List<Action> actions, int speed) {
-            this.pig = pig;
+        Replay(Mob actor, List<Action> actions, int speed, double recordEyeHeight, double recordBbWidth, double recordBbHeight) {
+            this.actor = actor;
             this.actions = actions;
             this.speed = speed;
-            BlockPos p = pig.blockPosition();
+            this.recordEyeHeight = recordEyeHeight;
+            this.recordBbWidth = recordBbWidth;
+            this.recordBbHeight = recordBbHeight;
+            BlockPos p = actor.blockPosition();
             this.baseX = p.getX();
             this.baseY = p.getY();
             this.baseZ = p.getZ();
+        }
+    }
+
+    private static class RecordingMeta {
+        String action = "meta";
+        double eyeHeight;
+        double bbWidth;
+        double bbHeight;
+
+        RecordingMeta() {}
+
+        RecordingMeta(double eyeHeight, double bbWidth, double bbHeight) {
+            this.eyeHeight = eyeHeight;
+            this.bbWidth = bbWidth;
+            this.bbHeight = bbHeight;
         }
     }
 

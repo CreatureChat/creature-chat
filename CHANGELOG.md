@@ -9,8 +9,9 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ## Added
 - New build recording command
   - Record, Save, and Replay builds (placing, destroying, interacting with blocks + player poses)
-  - Spawns a pig to replay builds (temporarily placeholder)
-  - Replay speeds can be adjusted between 1X and 32X
+  - Spawns any entity type to replay build
+  - Replay speeds can be adjusted (any integer, but defaults to 1X - the original speed)
+  - Replay adjusts eye height (line of sight) so entities look at the same place as the player
 
 ## Unreleased
 
