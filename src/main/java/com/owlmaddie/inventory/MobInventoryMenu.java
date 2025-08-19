@@ -6,6 +6,7 @@ package com.owlmaddie.inventory;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
+import com.owlmaddie.chat.AdvancementHelper;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -189,6 +190,9 @@ public class MobInventoryMenu extends AbstractContainerMenu {
                 PlayerData pd = chatData.getPlayerData(player.getDisplayName().getString());
                 String verbBase = pd.friendship >= 3 ? "borrowed" : pd.friendship == 2 ? "took" : "stole";
                 String verb = " " + verbBase + " ";
+                if (!removed.isEmpty()) {
+                    AdvancementHelper.itemTaken(serverPlayer, pd);
+                }
                 StringBuilder msg = new StringBuilder("<" + player.getName().getString());
                 boolean first = true;
                 if (swapped) {

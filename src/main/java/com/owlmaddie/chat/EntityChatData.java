@@ -473,6 +473,7 @@ public class EntityChatData {
 
                             } else if (behavior.getName().equals("FRIENDSHIP")) {
                                 int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
+                                int old_friendship = playerData.friendship;
 
                                 // Does friendship improve?
                                 if (new_friendship > playerData.friendship) {
@@ -590,6 +591,7 @@ public class EntityChatData {
                                 }
 
                                 playerData.friendship = new_friendship;
+                                AdvancementHelper.friendshipChanged(player, playerData, old_friendship, new_friendship, entity);
                             }
                         }
                     }
@@ -720,6 +722,10 @@ public class EntityChatData {
 
         // Broadcast new entity message status (i.e. pending)
         ServerPackets.BroadcastEntityMessage(this);
+
+        if (sender == ChatDataManager.ChatSender.ASSISTANT) {
+            AdvancementHelper.chatExchange(player, this);
+        }
     }
 
     // Get wrapped lines

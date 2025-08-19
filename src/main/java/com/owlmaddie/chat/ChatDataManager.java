@@ -95,11 +95,11 @@ public class ChatDataManager {
     }
 
     // Save chat data to file
-    public String GetLightChatData(String playerName) {
+    public String GetLightChatData(String playerId) {
         try {
             // Create "light" version of entire chat data HashMap
             HashMap<String, EntityChatDataLight> lightVersionMap = new HashMap<>();
-            this.entityChatDataMap.forEach((name, entityChatData) -> lightVersionMap.put(name, entityChatData.toLightVersion(playerName)));
+            this.entityChatDataMap.forEach((name, entityChatData) -> lightVersionMap.put(name, entityChatData.toLightVersion(playerId)));
             return GSON.toJson(lightVersionMap);
         } catch (Exception e) {
             // Handle exceptions

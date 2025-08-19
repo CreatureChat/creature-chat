@@ -7,6 +7,22 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ## Unreleased
 
 ### Added
+- Initial Advancements for CreatureChat
+  - Ice Breaker: Start a real chat with a critter
+  - Friendly Creature: Turn a neutral into a pal
+  - Beastie Bestie: Hit the highest friendship tier
+  - Arch Nemesis: Slide all the way to the bottom
+  - Love Hate Relationship: Flip the vibe from good to bad or vice versa
+  - Drama Llama: Rocket from highs to lows in a short window
+  - Smooth Talker: Jump up the ranks purely by conversation
+  - No Hard Feelings: Make peace soon after a scuffle
+  - Squad Goals: Be surrounded by several friendly neighbors
+  - Borrowed Forever: Walk away with an item when you’re on great terms
+
+
+## Unreleased
+
+### Added
 - Inventories for all entities with chat data (Shift+Right Click, or Press 'E' while riding)
     - Random items added to inventory on character creation (biome-specific loot tables for inventories)
     - You can borrow items from friends, or steel items from enemies
