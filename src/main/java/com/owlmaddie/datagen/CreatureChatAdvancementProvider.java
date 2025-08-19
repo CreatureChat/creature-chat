@@ -3,85 +3,96 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.datagen;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
-import net.minecraft.data.CachedOutput;
-import net.minecraft.data.DataProvider;
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricAdvancementProvider;
 
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementRewards;
+import net.minecraft.advancements.AdvancementType;
+import net.minecraft.advancements.Criterion;
+import net.minecraft.advancements.DisplayInfo;
+import net.minecraft.advancements.CriteriaTriggers;
+import net.minecraft.advancements.critereon.ImpossibleTrigger;
+import net.minecraft.core.ClientAsset;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
-public class CreatureChatAdvancementProvider implements DataProvider {
-    private final FabricDataOutput output;
+public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
+    private static final String MODID = "creaturechat";
 
-    public CreatureChatAdvancementProvider(FabricDataOutput output) {
-        this.output = output;
+    public CreatureChatAdvancementProvider(FabricDataOutput output,
+                                           CompletableFuture<HolderLookup.Provider> registryLookup) {
+        super(output, registryLookup);
     }
 
     @Override
-    public CompletableFuture<?> run(CachedOutput cache) {
-        List<CompletableFuture<?>> futures = new ArrayList<>();
-        futures.add(save(cache, "ice_breaker", advancement("Ice Breaker", "So… weather, huh?", "task")));
-        futures.add(save(cache, "friendly_creature", advancement("Friendly Creature", "Made a new pal!", "task")));
-        futures.add(save(cache, "beastie_bestie", advancement("Beastie Bestie", "They would share their last potato with you.", "goal")));
-        futures.add(save(cache, "arch_nemesis", advancement("Arch Nemesis", "They hiss in your general direction.", "challenge")));
-        futures.add(save(cache, "love_hate", advancement("Love Hate Relationship", "Best friend, worst enemy… same creature.", "challenge")));
-        futures.add(save(cache, "drama_llama", advancement("Drama Llama", "It’s not complicated, it’s chaotic.", "goal")));
-        futures.add(save(cache, "smooth_talker", advancement("Smooth Talker", "All persuasion, zero inventory.", "goal")));
-        futures.add(save(cache, "no_hard_feelings", advancement("No Hard Feelings", "Ouch. Sorry. Friends?", "task")));
-        futures.add(save(cache, "squad_goals", advancement("Squad Goals", "Group selfie energy.", "goal")));
-        futures.add(save(cache, "borrowed_forever", advancement("Borrowed Forever", "Technically not stealing.", "challenge")));
-        return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
+    public void generateAdvancement(HolderLookup.Provider lookup, Consumer<AdvancementHolder> out) {
+        // Optional visible root tab
+        AdvancementHolder root = make(out, null, "root",
+                "CreatureChat", "Talk to mobs. Make friends. Start drama.",
+                AdvancementType.TASK,
+                new ResourceLocation("minecraft", "textures/gui/advancements/backgrounds/adventure.png"));
+
+        make(out, root, "ice_breaker",       "Ice Breaker",            "So... weather, huh?",                            AdvancementType.TASK,      null);
+        make(out, root, "friendly_creature", "Friendly Creature",      "Made a new pal!",                                AdvancementType.TASK,      null);
+        make(out, root, "beastie_bestie",    "Beastie Bestie",         "They would share their last potato with you.",   AdvancementType.GOAL,      null);
+        make(out, root, "arch_nemesis",      "Arch Nemesis",           "They hiss in your general direction.",           AdvancementType.CHALLENGE, null);
+        make(out, root, "love_hate",         "Love Hate Relationship", "Best friend, worst enemy... same creature.",     AdvancementType.CHALLENGE, null);
+        make(out, root, "drama_llama",       "Drama Llama",            "It’s not complicated, it’s chaotic.",            AdvancementType.GOAL,      null);
+        make(out, root, "smooth_talker",     "Smooth Talker",          "All persuasion, zero inventory.",                AdvancementType.GOAL,      null);
+        make(out, root, "no_hard_feelings",  "No Hard Feelings",       "Ouch. Sorry. Friends?",                          AdvancementType.TASK,      null);
+        make(out, root, "squad_goals",       "Squad Goals",            "Group selfie energy.",                           AdvancementType.GOAL,      null);
+        make(out, root, "borrowed_forever",  "Borrowed Forever",       "Technically not stealing.",                      AdvancementType.CHALLENGE, null);
     }
 
-    private CompletableFuture<?> save(CachedOutput cache, String name, JsonObject json) {
-        Path path = this.output.getOutputFolder().resolve("data/creaturechat/advancements/" + name + ".json");
-        return DataProvider.saveStable(cache, json, path);
-    }
+    private static AdvancementHolder make(Consumer<AdvancementHolder> out,
+                                          AdvancementHolder parentOrNull,
+                                          String path,
+                                          String title,
+                                          String description,
+                                          AdvancementType type,
+                                          ResourceLocation backgroundTextureOrNull) {
 
-    private JsonObject advancement(String title, String description, String frame) {
-        JsonObject root = new JsonObject();
+        Optional<ClientAsset> bg = backgroundTextureOrNull == null
+                ? Optional.empty()
+                : Optional.of(new ClientAsset(backgroundTextureOrNull));
 
-        JsonObject display = new JsonObject();
-        JsonObject icon = new JsonObject();
-        icon.addProperty("item", "minecraft:paper");
-        display.add("icon", icon);
+        DisplayInfo display = new DisplayInfo(
+                new ItemStack(Items.PAPER),
+                Component.literal(title),
+                Component.literal(description),
+                bg,
+                type,
+                true,   // show_toast
+                true,   // announce_to_chat
+                false   // hidden
+        );
 
-        JsonObject titleObj = new JsonObject();
-        titleObj.addProperty("text", title);
-        display.add("title", titleObj);
-        JsonObject descObj = new JsonObject();
-        descObj.addProperty("text", description);
-        display.add("description", descObj);
+        Criterion<?> impossible = CriteriaTriggers.IMPOSSIBLE.createCriterion(new ImpossibleTrigger.TriggerInstance());
 
-        display.addProperty("frame", frame);
-        display.addProperty("show_toast", true);
-        display.addProperty("announce_to_chat", true);
-        display.addProperty("hidden", false);
-        root.add("display", display);
+        Advancement.Builder b = Advancement.Builder.advancement()
+                .display(display)
+                .rewards(AdvancementRewards.EMPTY)
+                .addCriterion("triggered", impossible);
 
-        JsonObject criterion = new JsonObject();
-        criterion.addProperty("trigger", "minecraft:impossible");
-        criterion.add("conditions", new JsonObject());
+        if (parentOrNull != null) {
+            b.parent(parentOrNull);
+        }
 
-        JsonObject criteria = new JsonObject();
-        criteria.add("triggered", criterion);
-        root.add("criteria", criteria);
-
-        JsonArray requirements = new JsonArray();
-        JsonArray inner = new JsonArray();
-        inner.add("triggered");
-        requirements.add(inner);
-        root.add("requirements", requirements);
-
-        return root;
+        AdvancementHolder holder = b.save(out, new ResourceLocation(MODID, path).toString());
+        return holder;
     }
 
     @Override
     public String getName() {
-        return "CreatureChat Advancements";
+        return "CreatureChat Advancements (mojmap 1.21.7)";
     }
 }
