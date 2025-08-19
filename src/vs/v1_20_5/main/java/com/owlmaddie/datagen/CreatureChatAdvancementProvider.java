@@ -19,14 +19,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import com.owlmaddie.chat.Advancements;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
-    private static final String MODID = "creaturechat";
-
     public CreatureChatAdvancementProvider(FabricDataOutput output,
                                            CompletableFuture<HolderLookup.Provider> registryLookup) {
         super(output, registryLookup);
@@ -34,44 +33,30 @@ public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
 
     @Override
     public void generateAdvancement(HolderLookup.Provider lookup, Consumer<AdvancementHolder> out) {
-        AdvancementHolder root = make(out, null, "root",
-                "CreatureChat", "Talk to mobs. Make friends. Start drama.",
-                AdvancementType.TASK,
-                new ResourceLocation("minecraft", "textures/gui/advancements/backgrounds/adventure.png"));
-
-        make(out, root, "ice_breaker",       "Ice Breaker",            "So... weather, huh?",                            AdvancementType.TASK,      null);
-        make(out, root, "friendly_creature", "Friendly Creature",      "Made a new pal!",                                AdvancementType.TASK,      null);
-        make(out, root, "beastie_bestie",    "Beastie Bestie",         "They would share their last potato with you.",   AdvancementType.GOAL,      null);
-        make(out, root, "arch_nemesis",      "Arch Nemesis",           "They hiss in your general direction.",           AdvancementType.CHALLENGE, null);
-        make(out, root, "love_hate",         "Love Hate Relationship", "Best friend, worst enemy... same creature.",     AdvancementType.CHALLENGE, null);
-        make(out, root, "drama_llama",       "Drama Llama",            "It’s not complicated, it’s chaotic.",            AdvancementType.GOAL,      null);
-        make(out, root, "smooth_talker",     "Smooth Talker",          "All persuasion, zero inventory.",                AdvancementType.GOAL,      null);
-        make(out, root, "no_hard_feelings",  "No Hard Feelings",       "Ouch. Sorry. Friends?",                          AdvancementType.TASK,      null);
-        make(out, root, "squad_goals",       "Squad Goals",            "Group selfie energy.",                           AdvancementType.GOAL,      null);
-        make(out, root, "borrowed_forever",  "Borrowed Forever",       "Technically not stealing.",                      AdvancementType.CHALLENGE, null);
+        AdvancementHolder root = make(out, null, Advancements.ROOT);
+        for (Advancements adv : Advancements.values()) {
+            if (adv == Advancements.ROOT) continue;
+            make(out, root, adv);
+        }
     }
 
     private static AdvancementHolder make(Consumer<AdvancementHolder> out,
                                           AdvancementHolder parentOrNull,
-                                          String path,
-                                          String title,
-                                          String description,
-                                          AdvancementType type,
-                                          ResourceLocation backgroundTextureOrNull) {
+                                          Advancements adv) {
 
-        Optional<ResourceLocation> bg = backgroundTextureOrNull == null
+        Optional<ResourceLocation> bg = adv.background == null
                 ? Optional.empty()
-                : Optional.of(backgroundTextureOrNull);
+                : Optional.of(adv.background);
 
         DisplayInfo display = new DisplayInfo(
                 new ItemStack(Items.PAPER),
-                Component.literal(title),
-                Component.literal(description),
+                Component.literal(adv.title),
+                Component.literal(adv.description),
                 bg,
-                type,
-                true,   // show_toast
-                true,   // announce_to_chat
-                false   // hidden
+                toAdvancementType(adv.type),
+                true,
+                true,
+                false
         );
 
         Criterion<?> impossible = CriteriaTriggers.IMPOSSIBLE.createCriterion(new ImpossibleTrigger.TriggerInstance());
@@ -85,7 +70,15 @@ public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
             b.parent(parentOrNull);
         }
 
-        return b.save(out, new ResourceLocation(MODID, path).toString());
+        return b.save(out, adv.id.toString());
+    }
+
+    private static AdvancementType toAdvancementType(Advancements.Type type) {
+        return switch (type) {
+            case TASK -> AdvancementType.TASK;
+            case GOAL -> AdvancementType.GOAL;
+            case CHALLENGE -> AdvancementType.CHALLENGE;
+        };
     }
 
     @Override
