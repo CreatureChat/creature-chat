@@ -7,6 +7,7 @@ import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.ChatMessage;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
+import com.owlmaddie.network.ClientPackets;
 import com.owlmaddie.render.EntityTextureHelper;
 import com.owlmaddie.render.PoseHelper;
 import com.owlmaddie.render.RenderPipelineHelper;
@@ -17,9 +18,9 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -44,8 +45,34 @@ public class BookScreen extends ScreenHelper {
     public BookScreen() {
         super(Component.literal("Creature Log"));
         ChatDataManager mgr = ChatDataManager.getClientInstance();
-        ordered = new ArrayList<>(mgr.entityChatDataMap.values());
-        ordered.sort(Comparator.comparingLong(BookScreen::getLastInteraction).reversed());
+        ordered = mgr.entityChatDataMap.values().stream()
+                .filter(data -> {
+                    String nameText = resolveName(data);
+                    boolean hasName = nameText != null && !nameText.isBlank();
+                    boolean hasMsg = data.currentMessage != null && !data.currentMessage.isBlank();
+                    return hasName && hasMsg;
+                })
+                .sorted(Comparator.comparingLong(BookScreen::getLastInteraction).reversed())
+                .toList();
+    }
+
+    private String resolveName(EntityChatData data) {
+        Entity entity = getEntity(data.entityId);
+        String nameText = null;
+        if (entity instanceof Mob) {
+            if (entity.getCustomName() != null) {
+                nameText = entity.getCustomName().getString();
+            }
+        } else if (entity instanceof Player) {
+            nameText = entity.getName().getString();
+        }
+        if (nameText == null || nameText.isBlank()) {
+            String sheetName = data.getCharacterProp("Name");
+            if (sheetName != null && !sheetName.isBlank() && !"N/A".equals(sheetName)) {
+                nameText = sheetName;
+            }
+        }
+        return nameText;
     }
 
     private static long getLastInteraction(EntityChatData data) {
@@ -78,6 +105,7 @@ public class BookScreen extends ScreenHelper {
                 b -> {
                     index = Math.max(0, index - 2);
                     updateButtons();
+                    requestDataForCurrentPages();
                 },
                 button -> Component.empty()
         );
@@ -90,6 +118,7 @@ public class BookScreen extends ScreenHelper {
                 b -> {
                     index = Math.min(ordered.size(), index + 2);
                     updateButtons();
+                    requestDataForCurrentPages();
                 },
                 button -> Component.empty()
         );
@@ -97,6 +126,7 @@ public class BookScreen extends ScreenHelper {
         addRenderableWidget(prevButton);
         addRenderableWidget(nextButton);
         updateButtons();
+        requestDataForCurrentPages();
     }
 
     private void updateButtons() {
@@ -106,8 +136,14 @@ public class BookScreen extends ScreenHelper {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (prevButton.mouseClicked(mouseX, mouseY, button)) return true;
-        if (nextButton.mouseClicked(mouseX, mouseY, button)) return true;
+        if (prevButton.active && prevButton.isMouseOver(mouseX, mouseY)) {
+            prevButton.onPress();
+            return true;
+        }
+        if (nextButton.active && nextButton.isMouseOver(mouseX, mouseY)) {
+            nextButton.onPress();
+            return true;
+        }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
@@ -124,11 +160,11 @@ public class BookScreen extends ScreenHelper {
         Player player = Minecraft.getInstance().player;
         if (player == null) return;
 
-        PlayerData pData = data.getPlayerData(player.getName().getString());
+        String playerName = player.getDisplayName().getString();
+        PlayerData pData = data.getPlayerData(playerName);
         int friendship = pData != null ? pData.friendship : 0;
 
         // Character-sheet props (use lorem fallback)
-        String csName      = data.getCharacterProp("Name"); // keep real name logic for the title
         String personality = orLoremSeeded(data.getCharacterProp("Personality"),         data.entityId, "Personality", 20, 100);
         String speaking    = orLoremSeeded(firstNonNull(
                 data.getCharacterProp("Speaking Style / Tone"),
@@ -145,10 +181,12 @@ public class BookScreen extends ScreenHelper {
             lastMsg = loremSeeded(30, 90, seedFrom(data.entityId, "LastMessage"));
         }
 
-        // Name to show: sheet name > entity name > "Unknown"
+        // Name to show: custom name > sheet name > entity name
         Entity entity = getEntity(data.entityId);
-        String displayName = (csName != null && !csName.equals("N/A")) ? csName
-                : (entity != null ? entity.getName().getString() : "Unknown");
+        String displayName = resolveName(data);
+        if (displayName == null || displayName.isBlank()) {
+            displayName = (entity != null ? entity.getName().getString() : "Unknown");
+        }
 
         // Title color by friendship
         int titleColor = 0xFF808080;          // neutral
@@ -199,6 +237,17 @@ public class BookScreen extends ScreenHelper {
         PoseHelper.scale(ctx.pose(), 0.8f, 0.8f);
         ctx.drawString(this.font, data.entityId, 0, 0, LIGHT_GRAY, false);
         PoseHelper.pop(ctx.pose());
+    }
+
+    private void requestDataForCurrentPages() {
+        if (index < ordered.size()) {
+            UUID left = UUID.fromString(ordered.get(index).entityId);
+            ClientPackets.requestEntityData(left);
+        }
+        if (index + 1 < ordered.size()) {
+            UUID right = UUID.fromString(ordered.get(index + 1).entityId);
+            ClientPackets.requestEntityData(right);
+        }
     }
 
 // ---------- helpers ----------
@@ -298,11 +347,6 @@ public class BookScreen extends ScreenHelper {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    private String getEntityName(String id) {
-        Entity e = getEntity(id);
-        return e != null ? e.getName().getString() : id;
     }
 
     @Override
