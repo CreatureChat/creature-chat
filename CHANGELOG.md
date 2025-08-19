@@ -4,23 +4,37 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
-## [Unreleased]
+## Unreleased
 
 ### Added
+- Inventories for all entities with chat data (Shift+Right Click, or Press 'E' while riding)
+    - Random items added to inventory on character creation (biome-specific loot tables for inventories)
+    - You can borrow items from friends, or steel items from enemies
+    - Entities will react to changes in inventory
+    - Integrates with existing inventories for Piglin, Pillager, Allay, and Villager
+    - Press 'E' while riding a mob with max friendship to show inventory
+    - Imports chest-based mobs (horse with chest, donkey with chest, llama with chest)
+    - Added Fabric DataGen for building compatible loot-tables (1.20 to 1.21.7 support)
+    - Randomly assign inventory loot items into random slots
+    - Main/Off hand support for max friendship (uses bottom left 2 slots for main/off hand)
+- Validation of mixin targets (on build script)
 - Solutions to common errors are now displayed on screen (i.e. more helpful)
 - New keep alive and accept HTTP headers
 - Unit tests for all LLM request failure scenarios + solutions
-- New mixin validation on build script (to validate all injection entry points)
-- Validation of mixin targets (on build script)
 
 ### Changed
 - Adding specific error messages for specific LLM request status codes (i.e. more helpful)
 - Leaving HTTP connection open (better connection pooling)
 - Expanded 'no response' messages
+- build.gradle now includes running Fabric datagen (for generating the JSON loot tables)
+- Increasing max auto-generated messages to 12 (up from 3)
 
 ### Fixed
 - Fixed constant death messages which appeared on each attack (for Minecraft 1.21.2+)
+- Support NBT format from 1.20 to 1.21.4 in newer versions (migrate CCUID)
+- Fixed "entity is null" errors when killing mobs (usually when killing lots of mobs)
+- Fixed names that were not appearing in the End and the Nether.
+- Fixed Z-fighting on message text and entity name (on chat bubble)
 
 ## [2.5.0] - 2025-07-07
 

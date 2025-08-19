@@ -9,17 +9,16 @@ import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.inventory.ChatInventory;
 import com.owlmaddie.inventory.MobInventoryMenu;
 import com.owlmaddie.network.ServerPackets;
+import net.minecraft.world.entity.HasCustomInventoryScreen;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.entity.HasCustomInventoryScreen;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.npc.Villager;
@@ -28,7 +27,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -55,10 +53,10 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
         }
 
         if (player instanceof ServerPlayer serverPlayer) {
-            ExtendedScreenHandlerFactory provider = new ExtendedScreenHandlerFactory() {
+            ExtendedScreenHandlerFactory<Integer> provider = new ExtendedScreenHandlerFactory<>() {
                 @Override
-                public void writeScreenOpeningData(ServerPlayer p, FriendlyByteBuf buf) {
-                    buf.writeVarInt(thisEntity.getId());
+                public Integer getScreenOpeningData(ServerPlayer p) {
+                    return thisEntity.getId();
                 }
 
                 @Override
@@ -67,7 +65,7 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
                 }
 
                 @Override
-                public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player p) {
+                public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player p) {
                     return new MobInventoryMenu(syncId, playerInventory, creaturechat$inventory, thisEntity, serverPlayer);
                 }
             };
@@ -102,10 +100,10 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
         }
 
         if (player instanceof ServerPlayer serverPlayer) {
-            ExtendedScreenHandlerFactory provider = new ExtendedScreenHandlerFactory() {
+            ExtendedScreenHandlerFactory<Integer> provider = new ExtendedScreenHandlerFactory<>() {
                 @Override
-                public void writeScreenOpeningData(ServerPlayer p, FriendlyByteBuf buf) {
-                    buf.writeVarInt(thisEntity.getId());
+                public Integer getScreenOpeningData(ServerPlayer p) {
+                    return thisEntity.getId();
                 }
 
                 @Override
@@ -124,41 +122,29 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
     }
 
     @Inject(method = "addAdditionalSaveData", at = @At("RETURN"))
-    private void creaturechat$saveInventory(CompoundTag tag, CallbackInfo ci) {
-        ListTag listTag = new ListTag();
-        for (int i = 0; i < creaturechat$inventory.getContainerSize(); i++) {
-            ItemStack stack = creaturechat$inventory.getItem(i);
-            if (!stack.isEmpty()) {
-                CompoundTag wrapper = new CompoundTag();
-                wrapper.putByte("Slot", (byte) i);
-
-                CompoundTag itemTag = new CompoundTag();
-                stack.save(itemTag);
-                wrapper.put("Item", itemTag);
-
-                listTag.add(wrapper);
-            }
-        }
-        tag.put("CreatureChatInventory", listTag);
+    private void creaturechat$saveInventory(ValueOutput tag, CallbackInfo ci) {
+        creaturechat$inventory.storeAsItemList(tag.list("CreatureChatInventory", ItemStack.CODEC));
     }
 
     @Inject(method = "readAdditionalSaveData", at = @At("RETURN"))
-    private void creaturechat$loadInventory(CompoundTag tag, CallbackInfo ci) {
-        ListTag listTag = tag.getList("CreatureChatInventory", 10);
-        for (int i = 0; i < listTag.size(); ++i) {
-            CompoundTag wrapper = listTag.getCompound(i);
-            int slot = wrapper.getByte("Slot") & 255;
-            if (slot >= 0 && slot < creaturechat$inventory.getContainerSize()) {
-                CompoundTag itemTag;
-                if (wrapper.contains("Item", 10)) {
-                    itemTag = wrapper.getCompound("Item");
-                } else {
-                    itemTag = wrapper.copy();
-                    itemTag.remove("Slot");
+    private void creaturechat$loadInventory(ValueInput tag, CallbackInfo ci) {
+        tag.childrenList("CreatureChatInventory").ifPresent(list -> {
+            if (!list.isEmpty()) {
+                ValueInput first = list.stream().findFirst().orElse(null);
+                if (first != null && first.child("Item").isPresent()) {
+                    for (ValueInput wrapper : list) {
+                        int slot = wrapper.getByteOr("Slot", (byte) 0) & 255;
+                        if (slot >= 0 && slot < creaturechat$inventory.getContainerSize()) {
+                            wrapper.read("Item", ItemStack.CODEC)
+                                .ifPresent(stack -> creaturechat$inventory.setItem(slot, stack));
+                        }
+                    }
+                    return;
                 }
-                creaturechat$inventory.setItem(slot, ItemStack.of(itemTag));
             }
-        }
+            tag.list("CreatureChatInventory", ItemStack.CODEC)
+                .ifPresent(creaturechat$inventory::fromItemList);
+        });
     }
 
     @Inject(method = "interact", at = @At(value = "RETURN"))

@@ -11,15 +11,18 @@ import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.goals.GoalPriority;
 import com.owlmaddie.goals.TalkPlayerGoal;
+import com.owlmaddie.inventory.ChatInventory;
+import com.owlmaddie.inventory.InventoryLootTables;
+import com.owlmaddie.inventory.LootTableHelper;
 import com.owlmaddie.particle.Particles;
 import com.owlmaddie.utils.Compression;
 import com.owlmaddie.utils.Randomizer;
 import com.owlmaddie.utils.ServerEntityFinder;
-import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -30,16 +33,23 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.animal.horse.AbstractChestedHorse;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -319,6 +329,62 @@ public class ServerPackets {
 
         // Generate new character
         chatData.generateCharacter(userLanguage, player, userMessageBuilder.toString(), false);
+
+// Populate inventory with some simple starter items if empty
+        if (entity instanceof ChatInventory chatInv) {
+            Container inv = chatInv.creaturechat$getInventory();
+
+            // Server-side only to avoid client duplicates
+            if (entity.level().isClientSide) return;
+
+            // If this entity has a chest, copy its inventory into ours
+            if (entity instanceof AbstractChestedHorse chested && chested.hasChest()) {
+                int chestStart = AbstractHorse.CHEST_SLOT_OFFSET + 1; // skip the chest item slot
+                int chestSlots = chested.getInventoryColumns() * 3;
+
+                for (int i = 0; i < chestSlots && i < inv.getContainerSize(); i++) {
+                    ItemStack stack = chested.getSlot(chestStart + i).get();
+                    if (!stack.isEmpty()) {
+                        inv.setItem(i, stack.copy());
+                        chested.getSlot(chestStart + i).set(ItemStack.EMPTY);
+                    }
+                }
+            }
+
+            boolean empty = true;
+            for (int i = 0; i < inv.getContainerSize(); i++) {
+                if (!inv.getItem(i).isEmpty()) {
+                    empty = false;
+                    break;
+                }
+            }
+
+            if (empty && entity.level() instanceof ServerLevel level) {
+                Holder<Biome> biome = level.getBiome(entity.blockPosition());
+                ResourceLocation tableId = InventoryLootTables.forBiome(biome);
+                LootTable table = LootTableHelper.get(level, tableId);
+                LootParams params = new LootParams.Builder(level)
+                        .withParameter(LootContextParams.ORIGIN, entity.position())
+                        .withOptionalParameter(LootContextParams.THIS_ENTITY, entity)
+                        .create(LootContextParamSets.COMMAND);
+                List<ItemStack> stacks = table.getRandomItems(params);
+                if (stacks.isEmpty()) {
+                    LOGGER.info("No loot matched for {}", tableId);
+                } else {
+                    // Randomly assign inventory loot items into random slots
+                    RandomSource random = entity.getRandom();
+                    int limit = Math.min(3, Math.min(inv.getContainerSize(), stacks.size()));
+                    List<Integer> slots = new ArrayList<>();
+                    for (int i = 0; i < inv.getContainerSize(); i++) {
+                        slots.add(i);
+                    }
+                    Collections.shuffle(slots, new java.util.Random(random.nextLong()));
+                    for (int i = 0; i < limit; i++) {
+                        inv.setItem(slots.get(i), stacks.get(i));
+                    }
+                }
+            }
+        }
     }
 
     public static void generate_chat(String userLanguage, EntityChatData chatData, ServerPlayer player, Mob entity, String message, boolean is_auto_message) {
@@ -360,27 +426,27 @@ public class ServerPackets {
                     entity.setCustomNameVisible(true);
                     entity.setPersistenceRequired();
                 }
-            }
 
-            // Make auto-generated message appear as a pending icon (attack, show/give, arrival)
-            if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.auto_generated > 0) {
-                chatData.status = ChatDataManager.ChatStatus.PENDING;
-            }
+                // Make auto-generated message appear as a pending icon (attack, show/give, arrival)
+                if (chatData.sender == ChatDataManager.ChatSender.USER && chatData.auto_generated > 0) {
+                    chatData.status = ChatDataManager.ChatStatus.PENDING;
+                }
 
-            // Iterate over all players and send the packet
-            for (ServerPlayer player : serverInstance.getPlayerList().getPlayers()) {
-                FriendlyByteBuf buffer = BufferHelper.create();
-                buffer.writeUtf(chatData.entityId);
-                buffer.writeUtf(chatData.currentMessage);
-                buffer.writeInt(chatData.currentLineNumber);
-                buffer.writeUtf(chatData.status.toString());
-                buffer.writeUtf(chatData.sender.toString());
-                writePlayerDataMap(buffer, chatData.players);
+                // Iterate over all players and send the packet
+                for (ServerPlayer player : serverInstance.getPlayerList().getPlayers()) {
+                    FriendlyByteBuf buffer = BufferHelper.create();
+                    buffer.writeUtf(chatData.entityId);
+                    buffer.writeUtf(chatData.currentMessage);
+                    buffer.writeInt(chatData.currentLineNumber);
+                    buffer.writeUtf(chatData.status.toString());
+                    buffer.writeUtf(chatData.sender.toString());
+                    writePlayerDataMap(buffer, chatData.players);
 
-                // Send message to player
-                PacketHelper.send(player, PACKET_S2C_ENTITY_MESSAGE, buffer);
+                    // Send message to player
+                    PacketHelper.send(player, PACKET_S2C_ENTITY_MESSAGE, buffer);
+                }
+                break;
             }
-            break;
         }
     }
 

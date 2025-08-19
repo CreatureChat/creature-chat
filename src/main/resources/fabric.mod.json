@@ -15,14 +15,17 @@
 	"license": "GPLv3",
 	"icon": "assets/creaturechat/icon.png",
 	"environment": "*",
-	"entrypoints": {
-		"main": [
-			"com.owlmaddie.ModInit"
-		],
-		"client": [
-			"com.owlmaddie.ClientInit"
-		]
-	},
+    "entrypoints": {
+        "main": [
+          "com.owlmaddie.ModInit"
+        ],
+        "client": [
+          "com.owlmaddie.ClientInit"
+        ],
+        "fabric-datagen": [
+          "com.owlmaddie.datagen.CreatureChatDataGenerator"
+        ]
+    },
 	"mixins": [
 		"creaturechat.mixins.json",
 		{

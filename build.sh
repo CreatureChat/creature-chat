@@ -7,23 +7,31 @@ DRY_RUN=${DRY_RUN:-0}
 # Allow “pattern→empty” instead of “pattern→itself”
 shopt -s nullglob
 
+run_build() {
+  ./gradlew build -x test -x validateAccessWidener --build-cache --parallel </dev/null && return 0
+  echo "Gradle failed; attempting to clear locks and retry..."
+  ./gradlew --stop >/dev/null 2>&1 || true
+  find .gradle ~/.gradle -type f -name '*.lock' -delete 2>/dev/null || true
+  ./gradlew build -x test -x validateAccessWidener --build-cache --parallel </dev/null
+}
+
 # Format: minecraft_version  yarn_mappings       loader_version  loom_version      fabric_version
 VERSIONS=$(cat <<'EOF'
-1.20    1.20+build.1       0.16.14    1.11-SNAPSHOT   0.83.0+1.20
-1.20.1  1.20.1+build.10    0.15.11    1.11-SNAPSHOT   0.92.1+1.20.1
-1.20.2  1.20.2+build.4     0.15.11    1.11-SNAPSHOT   0.91.6+1.20.2
-1.20.3  1.20.3+build.1     0.15.11    1.11-SNAPSHOT   0.91.1+1.20.3
-1.20.4  1.20.4+build.3     0.15.11    1.11-SNAPSHOT   0.97.0+1.20.4
-1.20.5  1.20.5+build.1     0.16.14    1.11-SNAPSHOT   0.97.8+1.20.5
-1.20.6  1.20.6+build.3     0.16.14    1.11-SNAPSHOT   0.100.8+1.20.6
-1.21    1.21+build.9       0.16.14    1.11-SNAPSHOT   0.102.0+1.21
-1.21.1  1.21.1+build.3     0.16.14    1.11-SNAPSHOT   0.116.3+1.21.1
-1.21.2  1.21.2+build.1     0.16.14    1.11-SNAPSHOT   0.106.1+1.21.2
-1.21.3  1.21.3+build.2     0.16.14    1.11-SNAPSHOT   0.114.1+1.21.3
-1.21.4  1.21.4+build.8     0.16.14    1.11-SNAPSHOT   0.119.3+1.21.4
-1.21.5  1.21.5+build.1     0.16.14    1.11-SNAPSHOT   0.128.1+1.21.5
-1.21.6  1.21.6+build.1     0.16.14    1.11-SNAPSHOT   0.128.2+1.21.6
-1.21.7  1.21.7+build.6     0.16.14    1.11-SNAPSHOT   0.128.2+1.21.7
+1.20    1.20+build.1       0.17.2    1.11-SNAPSHOT   0.83.0+1.20
+1.20.1  1.20.1+build.10    0.17.2    1.11-SNAPSHOT   0.92.1+1.20.1
+1.20.2  1.20.2+build.4     0.17.2    1.11-SNAPSHOT   0.91.6+1.20.2
+1.20.3  1.20.3+build.1     0.17.2    1.11-SNAPSHOT   0.91.1+1.20.3
+1.20.4  1.20.4+build.3     0.17.2    1.11-SNAPSHOT   0.97.0+1.20.4
+1.20.5  1.20.5+build.1     0.17.2    1.11-SNAPSHOT   0.97.8+1.20.5
+1.20.6  1.20.6+build.3     0.17.2    1.11-SNAPSHOT   0.100.8+1.20.6
+1.21    1.21+build.9       0.17.2    1.11-SNAPSHOT   0.102.0+1.21
+1.21.1  1.21.1+build.3     0.17.2    1.11-SNAPSHOT   0.116.3+1.21.1
+1.21.2  1.21.2+build.1     0.17.2    1.11-SNAPSHOT   0.106.1+1.21.2
+1.21.3  1.21.3+build.2     0.17.2    1.11-SNAPSHOT   0.114.1+1.21.3
+1.21.4  1.21.4+build.8     0.17.2    1.11-SNAPSHOT   0.119.3+1.21.4
+1.21.5  1.21.5+build.1     0.17.2    1.11-SNAPSHOT   0.128.1+1.21.5
+1.21.6  1.21.6+build.1     0.17.2    1.11-SNAPSHOT   0.128.2+1.21.6
+1.21.7  1.21.7+build.6     0.17.2    1.11-SNAPSHOT   0.128.2+1.21.7
 EOF
 )
 
@@ -62,8 +70,8 @@ EOD
   sed -i "s/\"minecraft\": \".*\"/\"minecraft\": \"~$mc_version\"/" \
     src/main/resources/fabric.mod.json
 
-  echo "Running mixin target validation"
-  ./gradlew build -x test -x validateAccessWidener --build-cache --parallel
+  echo "Running build (datagen + mixin target validation)"
+  run_build
   if ! compgen -G "build/classes/java/main/*refmap.json" > /dev/null; then
     echo "Error: mixin refmap missing; target validation did not run" >&2
     exit 1

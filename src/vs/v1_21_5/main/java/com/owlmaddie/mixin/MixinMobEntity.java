@@ -9,17 +9,17 @@ import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.inventory.ChatInventory;
 import com.owlmaddie.inventory.MobInventoryMenu;
 import com.owlmaddie.network.ServerPackets;
+import net.minecraft.world.entity.HasCustomInventoryScreen;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.entity.HasCustomInventoryScreen;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.npc.Villager;
@@ -28,7 +28,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -55,10 +54,10 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
         }
 
         if (player instanceof ServerPlayer serverPlayer) {
-            ExtendedScreenHandlerFactory provider = new ExtendedScreenHandlerFactory() {
+            ExtendedScreenHandlerFactory<Integer> provider = new ExtendedScreenHandlerFactory<>() {
                 @Override
-                public void writeScreenOpeningData(ServerPlayer p, FriendlyByteBuf buf) {
-                    buf.writeVarInt(thisEntity.getId());
+                public Integer getScreenOpeningData(ServerPlayer p) {
+                    return thisEntity.getId();
                 }
 
                 @Override
@@ -67,7 +66,7 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
                 }
 
                 @Override
-                public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player p) {
+                public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player p) {
                     return new MobInventoryMenu(syncId, playerInventory, creaturechat$inventory, thisEntity, serverPlayer);
                 }
             };
@@ -102,10 +101,10 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
         }
 
         if (player instanceof ServerPlayer serverPlayer) {
-            ExtendedScreenHandlerFactory provider = new ExtendedScreenHandlerFactory() {
+            ExtendedScreenHandlerFactory<Integer> provider = new ExtendedScreenHandlerFactory<>() {
                 @Override
-                public void writeScreenOpeningData(ServerPlayer p, FriendlyByteBuf buf) {
-                    buf.writeVarInt(thisEntity.getId());
+                public Integer getScreenOpeningData(ServerPlayer p) {
+                    return thisEntity.getId();
                 }
 
                 @Override
@@ -126,39 +125,46 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
     @Inject(method = "addAdditionalSaveData", at = @At("RETURN"))
     private void creaturechat$saveInventory(CompoundTag tag, CallbackInfo ci) {
         ListTag listTag = new ListTag();
+        HolderLookup.Provider provider = ((Mob) (Object) this).registryAccess();
+
         for (int i = 0; i < creaturechat$inventory.getContainerSize(); i++) {
             ItemStack stack = creaturechat$inventory.getItem(i);
             if (!stack.isEmpty()) {
                 CompoundTag wrapper = new CompoundTag();
                 wrapper.putByte("Slot", (byte) i);
 
-                CompoundTag itemTag = new CompoundTag();
-                stack.save(itemTag);
-                wrapper.put("Item", itemTag);
+                // ItemStack#save now returns the tag instead of mutating a provided instance.
+                // Write that returned tag directly so the item id is preserved.
+                wrapper.put("Item", stack.save(provider));
 
                 listTag.add(wrapper);
             }
         }
+
         tag.put("CreatureChatInventory", listTag);
     }
 
     @Inject(method = "readAdditionalSaveData", at = @At("RETURN"))
     private void creaturechat$loadInventory(CompoundTag tag, CallbackInfo ci) {
-        ListTag listTag = tag.getList("CreatureChatInventory", 10);
-        for (int i = 0; i < listTag.size(); ++i) {
-            CompoundTag wrapper = listTag.getCompound(i);
-            int slot = wrapper.getByte("Slot") & 255;
-            if (slot >= 0 && slot < creaturechat$inventory.getContainerSize()) {
-                CompoundTag itemTag;
-                if (wrapper.contains("Item", 10)) {
-                    itemTag = wrapper.getCompound("Item");
-                } else {
-                    itemTag = wrapper.copy();
-                    itemTag.remove("Slot");
-                }
-                creaturechat$inventory.setItem(slot, ItemStack.of(itemTag));
+        HolderLookup.Provider provider = ((Mob) (Object) this).registryAccess();
+        tag.getList("CreatureChatInventory").ifPresent(listTag -> {
+            for (int i = 0; i < listTag.size(); ++i) {
+                listTag.getCompound(i).ifPresent(wrapper -> {
+                    int slot = wrapper.getByte("Slot").orElse((byte) 0) & 255;
+                    if (slot >= 0 && slot < creaturechat$inventory.getContainerSize()) {
+                        wrapper.getCompound("Item").ifPresentOrElse(itemTag -> {
+                            ItemStack parsed = ItemStack.parse(provider, itemTag).orElse(ItemStack.EMPTY);
+                            creaturechat$inventory.setItem(slot, parsed);
+                        }, () -> {
+                            CompoundTag copy = wrapper.copy();
+                            copy.remove("Slot");
+                            ItemStack parsed = ItemStack.parse(provider, copy).orElse(ItemStack.EMPTY);
+                            creaturechat$inventory.setItem(slot, parsed);
+                        });
+                    }
+                });
             }
-        }
+        });
     }
 
     @Inject(method = "interact", at = @At(value = "RETURN"))

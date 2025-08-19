@@ -10,7 +10,6 @@ import com.owlmaddie.inventory.ChatInventory;
 import com.owlmaddie.inventory.MobInventoryMenu;
 import com.owlmaddie.network.ServerPackets;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundChatPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
@@ -39,21 +38,12 @@ public abstract class MixinOnChat {
     private void onChatMessage(ServerboundChatPacket packet, CallbackInfo ci) {
         ConfigurationHandler.Config config = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
         if (config.getChatBubbles()) {
-
-            // Get the player who sent the message
             ServerGamePacketListenerImpl handler = (ServerGamePacketListenerImpl) (Object) this;
             ServerPlayer player = handler.player;
-
-            // Get the chat message
             String chatMessage = packet.message();
-
-            // Example: Call your broadcast function
             EntityChatData chatData = new EntityChatData(player.getStringUUID());
             chatData.currentMessage = chatMessage;
             BroadcastPlayerMessage(chatData, player);
-
-            // Optionally, cancel the event to prevent the default behavior
-            //ci.cancel();
         }
     }
 
@@ -79,10 +69,10 @@ public abstract class MixinOnChat {
             return;
         }
 
-        ExtendedScreenHandlerFactory provider = new ExtendedScreenHandlerFactory() {
+        ExtendedScreenHandlerFactory<Integer> provider = new ExtendedScreenHandlerFactory<>() {
             @Override
-            public void writeScreenOpeningData(ServerPlayer p, FriendlyByteBuf buf) {
-                buf.writeVarInt(mob.getId());
+            public Integer getScreenOpeningData(ServerPlayer p) {
+                return mob.getId();
             }
 
             @Override
@@ -100,3 +90,4 @@ public abstract class MixinOnChat {
         ci.cancel();
     }
 }
+

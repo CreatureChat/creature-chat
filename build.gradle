@@ -131,6 +131,14 @@ loom {
 		}
 	}
 
+    runs {
+        datagen {
+            server()
+            vmArg "-Dfabric-api.datagen"
+            vmArg "-Dfabric-api.datagen.output-dir=${file('src/main/generated').absolutePath}"
+            vmArg "-Dfabric-api.datagen.modid=creaturechat"
+        }
+    }
 }
 
 dependencies {
@@ -189,6 +197,33 @@ java {
 
 	sourceCompatibility = JavaVersion.VERSION_17
 	targetCompatibility = JavaVersion.VERSION_17
+}
+
+sourceSets.main.resources.srcDir "src/main/generated"
+
+def generatedResources = file("src/main/generated")
+
+tasks.named("runDatagen") {
+    outputs.dir generatedResources
+    doFirst {
+        delete generatedResources
+    }
+}
+
+tasks.named("classes") {
+    finalizedBy "runDatagen"
+}
+
+tasks.named("build") {
+    dependsOn "runDatagen"
+}
+
+tasks.named("sourcesJar") {
+    dependsOn "runDatagen"
+}
+
+tasks.named("clean") {
+    delete generatedResources
 }
 
 jar {

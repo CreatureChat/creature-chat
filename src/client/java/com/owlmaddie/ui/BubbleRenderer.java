@@ -55,6 +55,7 @@ public class BubbleRenderer {
     public static long lastTick = 0;
     public static int light = 15728880;
     public static int overlay = OverlayTexture.NO_OVERLAY;
+    private static final float TEXT_Z_OFFSET = -0.005F;
     public static List<String> whitelist = new ArrayList<>();
     public static List<String> blacklist = new ArrayList<>();
     private static int queryEntityDataCount = 0;
@@ -343,13 +344,14 @@ public class BubbleRenderer {
     private static void drawMessageText(Matrix4f matrix, List<String> lines, int starting_line, int ending_line,
                                  MultiBufferSource immediate, float lineSpacing, int fullBright, float yOffset) {
         Font fontRenderer = Minecraft.getInstance().font;
+        Matrix4f textMatrix = new Matrix4f(matrix).translate(0.0F, 0.0F, TEXT_Z_OFFSET);
         int currentLineIndex = 0; // We'll use this to track which line we're on
 
         for (String lineText : lines) {
             // Only draw lines that are within the specified range
             if (currentLineIndex >= starting_line && currentLineIndex < ending_line) {
                 fontRenderer.drawInBatch(lineText, -fontRenderer.width(lineText) / 2f, yOffset, 0xffffffff,
-                        false, matrix, immediate, DisplayMode.NORMAL, 0, fullBright);
+                        false, textMatrix, immediate, DisplayMode.NORMAL, 0, fullBright);
                 yOffset += fontRenderer.lineHeight + lineSpacing;
             }
             currentLineIndex++;
@@ -381,8 +383,9 @@ public class BubbleRenderer {
             nameText = nameText.substring(0, 14) + "...";
         }
 
+        Matrix4f textMatrix = new Matrix4f(matrix).translate(0.0F, 0.0F, TEXT_Z_OFFSET);
         fontRenderer.drawInBatch(nameText, -fontRenderer.width(nameText) / 2f, yOffset, 0xffffffff,
-                false, matrix, immediate, DisplayMode.NORMAL, 0, fullBright);
+                false, textMatrix, immediate, DisplayMode.NORMAL, 0, fullBright);
     }
 
     public static void drawTextAboveEntities(WorldRenderContext context, long tick, float partialTicks) {
