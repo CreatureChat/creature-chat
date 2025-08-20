@@ -7,6 +7,12 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ## Unreleased
 
 ### Added
+- All entities with chat data can now open doors and path find through doors
+
+
+## Unreleased
+
+### Added
 - Inventories for all entities with chat data (Shift+Right Click, or Press 'E' while riding)
     - Random items added to inventory on character creation (biome-specific loot tables for inventories)
     - You can borrow items from friends, or steel items from enemies
