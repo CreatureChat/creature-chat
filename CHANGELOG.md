@@ -13,6 +13,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - New packet types for sending / receiving all entity data (by UUID - per page)
   - Dynamic Next/Previous buttons with hover (hidden when no page to turn)
   - Summary pages are displayed first, then Detail pages with more info
+  - Improvements to page contents, layout, pagination - and page turn sounds
 
 ## Unreleased
 

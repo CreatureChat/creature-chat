@@ -15,6 +15,8 @@ import com.owlmaddie.utils.ClientEntityFinder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -50,6 +52,8 @@ public class BookScreen extends ScreenHelper {
     private List<List<Pair>> sectionPages;
     private List<ChatMessage> detailMessages;
     private List<List<ChatMessage>> messagePages;
+    private int sectionRemainingSpace;
+    private boolean messagesOnSectionPage;
 
     private final List<EntityChatData> all;
     private List<EntityChatData> ordered;
@@ -93,6 +97,7 @@ public class BookScreen extends ScreenHelper {
                 .sorted(Comparator.comparingLong(BookScreen::getLastInteraction).reversed())
                 .collect(Collectors.toList());
         ordered = new ArrayList<>(all);
+        sortOrdered();
         summaryIndex = 0;
     }
 
@@ -164,7 +169,7 @@ public class BookScreen extends ScreenHelper {
 
         addRenderableWidget(searchField);
 
-        prevButton = ButtonHelper.createImageButton(
+        prevButton = createPageButton(
                 bgX + PREV_X, bgY + PREV_Y,
                 PREV_W, PREV_H,
                 textures.GetUI("book/previous"),
@@ -183,12 +188,11 @@ public class BookScreen extends ScreenHelper {
                     updateButtons();
                     requestDataForCurrentPages();
                     LOGGER.info("BookScreen: previous clicked mode={} summaryIndex={} detailPage={}", mode, summaryIndex, detailPage);
-                },
-                w -> Component.empty()
+                }
         );
         addRenderableWidget(prevButton);
 
-        nextButton = ButtonHelper.createImageButton(
+        nextButton = createPageButton(
                 bgX + NEXT_X, bgY + NEXT_Y,
                 NEXT_W, NEXT_H,
                 textures.GetUI("book/next"),
@@ -205,8 +209,7 @@ public class BookScreen extends ScreenHelper {
                     updateButtons();
                     requestDataForCurrentPages();
                     LOGGER.info("BookScreen: next clicked mode={} summaryIndex={} detailPage={}", mode, summaryIndex, detailPage);
-                },
-                w -> Component.empty()
+                }
         );
         addRenderableWidget(nextButton);
 
@@ -232,6 +235,27 @@ public class BookScreen extends ScreenHelper {
             nextButton.active = nextActive;
             nextButton.visible = nextActive;
         }
+    }
+
+    private Button createPageButton(int x, int y, int width, int height,
+                                    ResourceLocation normalTex, ResourceLocation hoverTex,
+                                    Button.OnPress onPress) {
+        return new Button(x, y, width, height, Component.empty(), onPress, w -> Component.empty()) {
+            @Override
+            public void renderWidget(net.minecraft.client.gui.GuiGraphics ctx, int mouseX, int mouseY, float delta) {
+                ResourceLocation tex = isHovered() ? hoverTex : normalTex;
+                RenderPipelineHelper.blitGuiTexture(ctx, tex, getX(), getY(), 0, 0, width, height, width, height);
+            }
+
+            @Override
+            public void playDownSound(net.minecraft.client.sounds.SoundManager mgr) {
+                mgr.play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0F));
+            }
+        };
+    }
+
+    private void sortOrdered() {
+        ordered.sort(Comparator.comparingLong(BookScreen::getLastInteraction).reversed());
     }
 
     private boolean inside(double mx, double my, int x, int y, int w, int h) {
@@ -272,6 +296,7 @@ public class BookScreen extends ScreenHelper {
             setFocused(null);
             searchField.setValue("");
             ordered = new ArrayList<>(all);
+            sortOrdered();
             summaryIndex = 0;
             mode = Mode.SUMMARY;
             updateButtons();
@@ -288,6 +313,7 @@ public class BookScreen extends ScreenHelper {
                     return n != null && n.toLowerCase(Locale.ROOT).contains(q);
                 })
                 .collect(Collectors.toList());
+        sortOrdered();
         summaryIndex = 0;
         mode = Mode.SUMMARY;
         updateButtons();
@@ -328,7 +354,7 @@ public class BookScreen extends ScreenHelper {
         paginateSections();
         paginateMessages();
 
-        detailTotalPages = sectionPages.size() + messagePages.size();
+        detailTotalPages = sectionPages.size() + messagePages.size() - (messagesOnSectionPage ? 1 : 0);
         mode = Mode.DETAIL;
         updateButtons();
         requestDataForCurrentPages();
@@ -336,12 +362,13 @@ public class BookScreen extends ScreenHelper {
 
     private void paginateSections() {
         sectionPages = new ArrayList<>();
+        sectionRemainingSpace = 0;
         List<Pair> page = new ArrayList<>();
         int used = 0;
         int headerHeight = Math.round(this.font.lineHeight * 1.12f) + 6 + 35;
         for (Pair p : detailSections) {
             int h = this.font.lineHeight;
-            h += measureWrappedHeight(p.value, PAGE_CONTENT_W, 0.92f, 2);
+            h += measureWrappedHeight(p.value, PAGE_CONTENT_W, 0.92f, 3);
             h += 4;
             int available = sectionPages.isEmpty() ? PAGE_CONTENT_H - headerHeight : PAGE_CONTENT_H;
             if (used + h > available && !page.isEmpty()) {
@@ -358,20 +385,34 @@ public class BookScreen extends ScreenHelper {
         }
         if (sectionPages.isEmpty()) {
             sectionPages.add(Collections.emptyList());
+            sectionRemainingSpace = PAGE_CONTENT_H - headerHeight;
+        } else {
+            int available = sectionPages.size() == 1 ? PAGE_CONTENT_H - headerHeight : PAGE_CONTENT_H;
+            sectionRemainingSpace = Math.max(0, available - used);
         }
     }
 
     private void paginateMessages() {
         messagePages = new ArrayList<>();
+        int headerH = this.font.lineHeight + 2;
+        int minMsgH = this.font.lineHeight + 1 + Math.round(this.font.lineHeight * 0.9f) + 4;
+        messagesOnSectionPage = sectionRemainingSpace >= headerH + minMsgH && !detailMessages.isEmpty();
+        int available = messagesOnSectionPage ? sectionRemainingSpace - headerH : PAGE_CONTENT_H - headerH;
+        if (available < 0) available = 0;
         List<ChatMessage> page = new ArrayList<>();
         int used = 0;
         for (ChatMessage m : detailMessages) {
             int h = font.lineHeight + 1;
-            h += measureWrappedHeight(safe(m.message), PAGE_CONTENT_W - 4, 0.9f, 3) + 4;
-            if (used + h > PAGE_CONTENT_H && !page.isEmpty()) {
+            h += measureWrappedHeight(safe(m.message), PAGE_CONTENT_W - 4, 0.9f, 4) + 4;
+            if (used + h > available && !page.isEmpty()) {
                 messagePages.add(page);
                 page = new ArrayList<>();
                 used = 0;
+                available = PAGE_CONTENT_H - headerH;
+            }
+            if (used + h > available && page.isEmpty()) {
+                // ensure progress even if single message exceeds available
+                available = PAGE_CONTENT_H - headerH;
             }
             page.add(m);
             used += h;
@@ -485,27 +526,16 @@ public class BookScreen extends ScreenHelper {
             for (Pair p : page) {
                 lineY = drawPair(ctx, p.label, p.value, x, lineY, PAGE_CONTENT_W);
             }
+            // append messages on same page if space was reserved
+            if (messagesOnSectionPage && pageIndex == sectionPageCount - 1) {
+                lineY = renderMessagesPage(ctx, x, lineY, messagePages.get(0));
+            }
             ctx.disableScissor();
         } else { // messages pages
-            int msgPage = pageIndex - sectionPageCount;
+            int msgPage = pageIndex - sectionPageCount + (messagesOnSectionPage ? 1 : 0);
             List<ChatMessage> msgs = messagePages.get(msgPage);
-            int lineY = y;
             ctx.enableScissor(x, y, x + PAGE_CONTENT_W, y + PAGE_CONTENT_H);
-            ctx.drawString(this.font, "Recent Messages", x, lineY, LABEL_COLOR, false);
-            lineY += this.font.lineHeight + 2;
-            for (ChatMessage m : msgs) {
-                String speaker = m.sender == ChatDataManager.ChatSender.USER ? "You" : resolveName(detailEntity);
-                if (speaker == null || speaker.isBlank()) speaker = "Unknown";
-                long ts = m.timestamp == null ? 0L : m.timestamp;
-                String ago = friendlyTime(System.currentTimeMillis() - ts) + " ago";
-                int timeW = this.font.width(ago);
-                speaker = this.font.plainSubstrByWidth(speaker, PAGE_CONTENT_W - timeW - 2);
-                ctx.drawString(this.font, speaker, x, lineY, LABEL_COLOR, false);
-                ctx.drawString(this.font, ago, x + PAGE_CONTENT_W - timeW, lineY, LABEL_COLOR, false);
-                lineY += this.font.lineHeight + 1;
-                lineY = drawWrapped(ctx, safe(m.message), x + 4, lineY, PAGE_CONTENT_W - 4, 0.9f, 3, BODY_COLOR);
-                lineY += 4;
-            }
+            renderMessagesPage(ctx, x, y, msgs);
             ctx.disableScissor();
         }
 
@@ -517,7 +547,28 @@ public class BookScreen extends ScreenHelper {
         PoseHelper.pop(ctx.pose());
     }
 
+    private int renderMessagesPage(net.minecraft.client.gui.GuiGraphics ctx, int x, int startY, List<ChatMessage> msgs) {
+        int lineY = startY;
+        ctx.drawString(this.font, "Recent Messages", x, lineY, LABEL_COLOR, false);
+        lineY += this.font.lineHeight + 2;
+        for (ChatMessage m : msgs) {
+            String speaker = m.sender == ChatDataManager.ChatSender.USER ? "You" : resolveName(detailEntity);
+            if (speaker == null || speaker.isBlank()) speaker = "Unknown";
+            long ts = m.timestamp == null ? 0L : m.timestamp;
+            String ago = friendlyTime(System.currentTimeMillis() - ts) + " ago";
+            int timeW = this.font.width(ago);
+            speaker = this.font.plainSubstrByWidth(speaker, PAGE_CONTENT_W - timeW - 2);
+            ctx.drawString(this.font, speaker, x, lineY, LABEL_COLOR, false);
+            ctx.drawString(this.font, ago, x + PAGE_CONTENT_W - timeW, lineY, LABEL_COLOR, false);
+            lineY += this.font.lineHeight + 1;
+            lineY = drawWrapped(ctx, safe(m.message), x + 4, lineY, PAGE_CONTENT_W - 4, 0.9f, 4, BODY_COLOR);
+            lineY += 4;
+        }
+        return lineY;
+    }
+
     private void requestDataForCurrentPages() {
+        sortOrdered();
         if (mode == Mode.SUMMARY) {
             for (int i = 0; i < SUMMARY_ROWS_PER_PAGE * 2; i++) {
                 int idx = summaryIndex + i;
@@ -564,7 +615,7 @@ public class BookScreen extends ScreenHelper {
     private int drawPair(net.minecraft.client.gui.GuiGraphics ctx, String label, String value, int x, int y, int widthPx) {
         ctx.drawString(this.font, label, x, y, LABEL_COLOR, false);
         y += this.font.lineHeight;
-        return drawWrapped(ctx, value, x, y, widthPx, 0.92f, 2, BODY_COLOR) + 4; // slight gap after pair
+        return drawWrapped(ctx, value, x, y, widthPx, 0.92f, 3, BODY_COLOR) + 4; // slight gap after pair
     }
 
     /** Wrapped text with scaling and maxLines, adds ellipsis if truncated. Returns next y. */
