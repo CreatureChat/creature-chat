@@ -36,67 +36,137 @@ public class AdvancementHelper {
         if (data.previousMessages.size() >= 2) {
             award(player, Advancements.ICE_BREAKER.id);
         }
+        PlayerData pd = data.getPlayerData(player.getUUID().toString());
+        pd.conversationCount++;
+        if (pd.friendship < 0) {
+            pd.droppedBelowZero = true;
+        }
+        if (!pd.droppedBelowZero && pd.conversationCount >= 50) {
+            award(player, Advancements.LONG_CONVERSATION.id);
+            pd.conversationCount = 0;
+            pd.droppedBelowZero = false;
+        }
     }
 
-    public static void friendshipChanged(ServerPlayer player, PlayerData data, int oldFriendship, int newFriendship, Mob entity) {
-        if (oldFriendship < 1 && newFriendship >= 1) {
-            award(player, Advancements.FRIENDLY_CREATURE.id);
-        }
-        if (newFriendship == 3) {
-            award(player, Advancements.BEASTIE_BESTIE.id);
-        }
-        if (newFriendship == -3) {
-            award(player, Advancements.ARCH_NEMESIS.id);
-        }
-        if ((oldFriendship > 0 && newFriendship < 0) || (oldFriendship < 0 && newFriendship > 0)) {
-            award(player, Advancements.LOVE_HATE.id);
-        }
-        if (oldFriendship == 0 && newFriendship >= 2) {
-            award(player, Advancements.SMOOTH_TALKER.id);
-        }
-        long now = System.currentTimeMillis();
-        // If we were already high before this change and we just fell low quickly -> award
-        if (oldFriendship >= 2 && newFriendship <= -2 && data.swingStartTime != 0 && (now - data.swingStartTime) <= 1_200_000L) {
-            award(player, Advancements.DRAMA_LLAMA.id);
-            data.swingStartTime = 0; // reset after awarding
-        }
-
-        // If we just entered the high range (from below), start the timer
-        if (oldFriendship < 2 && newFriendship >= 2) {
-            data.swingStartTime = now;
-        }
-
-        // If we fell out of the high range without awarding, clear the timer to avoid stale hits
-        if (newFriendship < 2 && data.swingStartTime != 0 && !(oldFriendship >= 2 && newFriendship <= -2)) {
-            data.swingStartTime = 0;
-        }
-        if (data.lastDamageTime != 0 && now - data.lastDamageTime <= 30_000L && newFriendship >= 0) {
-            award(player, Advancements.NO_HARD_FEELINGS.id);
-            data.lastDamageTime = 0;
-        }
-        if (newFriendship >= 2) {
-            String playerId = player.getDisplayName().getString();
-            ChatDataManager manager = ChatDataManager.getServerInstance();
-            List<Mob> mobs = player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(8.0));
-            int count = 0;
-            for (Mob m : mobs) {
-                if (m == entity) continue; // don't count the focused mob itself
-                EntityChatData other = manager.entityChatDataMap.get(m.getStringUUID());
-                if (other == null) continue;
-                PlayerData pd = other.getPlayerData(playerId);
-                if (pd != null && pd.friendship >= 2) {
-                    if (++count >= 3) {
-                        award(player, Advancements.SQUAD_GOALS.id);
-                        break;
-                    }
+    public static void checkInnerCircle(ServerPlayer player, Mob entity) {
+        String playerId = player.getUUID().toString();
+        ChatDataManager manager = ChatDataManager.getServerInstance();
+        List<Mob> mobs = player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(8.0));
+        int count = 0;
+        for (Mob m : mobs) {
+            if (m == entity) continue;
+            EntityChatData other = manager.entityChatDataMap.get(m.getStringUUID());
+            if (other == null) continue;
+            PlayerData pd = other.getPlayerData(playerId);
+            if (pd != null && pd.friendship >= 2) {
+                if (++count >= 5) {
+                    award(player, Advancements.INNER_CIRCLE.id);
+                    break;
                 }
             }
         }
     }
 
+    public static void friendshipChanged(ServerPlayer player, PlayerData data, int oldFriendship, int newFriendship, Mob entity) {
+        if (oldFriendship < 1 && newFriendship >= 1) {
+            award(player, Advancements.FIRST_IMPRESSIONS.id);
+        }
+        if (newFriendship == 3) {
+            award(player, Advancements.TRUE_COMPANION.id);
+            data.reachedPos3 = true;
+        }
+        if (newFriendship == -3) {
+            award(player, Advancements.ARCH_NEMESIS.id);
+            data.reachedNeg3 = true;
+        }
+        if (data.reachedPos3 && data.reachedNeg3) {
+            award(player, Advancements.FRIEND_OR_FOE.id);
+            data.reachedPos3 = false;
+            data.reachedNeg3 = false;
+        }
+        int newSign = Integer.compare(newFriendship, 0);
+        if (newSign != 0 && newSign != data.lastSign) {
+            data.signFlipCount++;
+            data.lastSign = newSign;
+        }
+        if (data.signFlipCount >= 4) {
+            award(player, Advancements.LOVE_HATE_RELATIONSHIP.id);
+            data.signFlipCount = 0;
+        }
+        if (newFriendship >= 2) {
+            data.seenHigh = true;
+        }
+        if (newFriendship <= -2) {
+            data.seenLow = true;
+        }
+        if (data.seenHigh && data.seenLow) {
+            award(player, Advancements.DRAMA_LLAMA.id);
+            data.seenHigh = false;
+            data.seenLow = false;
+        }
+        if (data.lastDamageFriendship != Integer.MIN_VALUE && newFriendship == data.lastDamageFriendship) {
+            award(player, Advancements.NO_HARD_FEELINGS.id);
+            data.lastDamageFriendship = Integer.MIN_VALUE;
+        }
+        if (newFriendship - oldFriendship >= 2) {
+            award(player, Advancements.GRAND_GESTURE.id);
+        }
+        if (entity instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon && newFriendship == 3) {
+            award(player, Advancements.LOVE_CONQUERS_ALL.id);
+        }
+        checkInnerCircle(player, entity);
+    }
+
+    public static void follow(ServerPlayer player) {
+        award(player, Advancements.TAG_ALONG.id);
+    }
+
+    public static void lead(ServerPlayer player) {
+        award(player, Advancements.LEAD_THE_WAY.id);
+    }
+
+    public static void bodyguard(ServerPlayer player) {
+        award(player, Advancements.BODYGUARD_DETAIL.id);
+    }
+
+    public static void calmTheStorm(ServerPlayer player) {
+        award(player, Advancements.CALM_THE_STORM.id);
+    }
+
+    public static void doNotRun(ServerPlayer player) {
+        award(player, Advancements.DO_NOT_RUN.id);
+    }
+
+    public static void backseatDriver(ServerPlayer player) {
+        award(player, Advancements.BACKSEAT_DRIVER.id);
+    }
+
     public static void itemTaken(ServerPlayer player, PlayerData data) {
         if (data.friendship == 3) {
-            award(player, Advancements.BORROWED_FOREVER.id);
+            award(player, Advancements.FINDERS_KEEPERS.id);
         }
+    }
+
+    public static void checkSharedStash(ServerPlayer player) {
+        String playerId = player.getUUID().toString();
+        ChatDataManager manager = ChatDataManager.getServerInstance();
+        int count = 0;
+        for (EntityChatData chat : manager.entityChatDataMap.values()) {
+            PlayerData pd = chat.players.get(playerId);
+            if (pd != null && pd.gaveItem && pd.friendship > 0) {
+                if (++count >= 5) {
+                    award(player, Advancements.SHARED_STASH.id);
+                    break;
+                }
+            }
+        }
+    }
+
+    public static void potatoPact(ServerPlayer player) {
+        award(player, Advancements.POTATO_PACT.id);
+    }
+
+    public static void hailToTheKing(ServerPlayer player) {
+        award(player, Advancements.HAIL_TO_THE_KING.id);
     }
 }

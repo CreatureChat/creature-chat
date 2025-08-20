@@ -20,6 +20,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,9 +54,9 @@ public class MobInventoryMenu extends AbstractContainerMenu {
         EntityChatData chatData = chatDataManager.getOrCreateChatData(mob.getStringUUID());
         String playerName;
         if (player != null) {
-            playerName = player.getDisplayName().getString();
+            playerName = player.getUUID().toString();
         } else if (playerInventory.player != null) {
-            playerName = playerInventory.player.getDisplayName().getString();
+            playerName = playerInventory.player.getUUID().toString();
         } else {
             playerName = "";
         }
@@ -187,11 +188,24 @@ public class MobInventoryMenu extends AbstractContainerMenu {
             if (!added.isEmpty() || !removed.isEmpty() || !disarmedToInventory.isEmpty() || !disarmedTaken.isEmpty() || swapped || handChanged) {
                 ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
                 EntityChatData chatData = chatDataManager.getOrCreateChatData(mob.getStringUUID());
-                PlayerData pd = chatData.getPlayerData(player.getDisplayName().getString());
+                PlayerData pd = chatData.getPlayerData(player.getUUID().toString());
                 String verbBase = pd.friendship >= 3 ? "borrowed" : pd.friendship == 2 ? "took" : "stole";
                 String verb = " " + verbBase + " ";
                 if (!removed.isEmpty()) {
                     AdvancementHelper.itemTaken(serverPlayer, pd);
+                }
+                if (!added.isEmpty() && pd.friendship > 0) {
+                    pd.gaveItem = true;
+                    if (mob.getType() == net.minecraft.world.entity.EntityType.PIG && pd.friendship == 3) {
+                        if (added.containsKey(Items.POTATO)) pd.pigPotato = true;
+                        if (added.containsKey(Items.BAKED_POTATO)) pd.pigBakedPotato = true;
+                        if (added.containsKey(Items.POISONOUS_POTATO)) pd.pigPoisonousPotato = true;
+                    }
+                    AdvancementHelper.checkSharedStash(serverPlayer);
+                }
+                if (mob.getType() == net.minecraft.world.entity.EntityType.PIG && pd.friendship == 3 && pd.pigProtect && finalOff.getItem() == Items.GOLDEN_HELMET) {
+                    AdvancementHelper.hailToTheKing(serverPlayer);
+                    pd.pigProtect = false;
                 }
                 StringBuilder msg = new StringBuilder("<" + player.getName().getString());
                 boolean first = true;

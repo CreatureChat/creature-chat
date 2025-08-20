@@ -260,7 +260,7 @@ public class EntityChatData {
             contextData.put("entity_maturity", "Adult");
         }
 
-        PlayerData playerData = this.getPlayerData(player.getDisplayName().getString());
+        PlayerData playerData = this.getPlayerData(player.getUUID().toString());
         if (playerData != null) {
             contextData.put("entity_friendship", String.valueOf(playerData.friendship));
         } else {
@@ -374,7 +374,7 @@ public class EntityChatData {
         Map<String, String> contextData = getPlayerContext(player, userLanguage, config);
 
         // Get messages for player
-        PlayerData playerData = this.getPlayerData(player.getDisplayName().getString());
+        PlayerData playerData = this.getPlayerData(player.getUUID().toString());
         if (previousMessages.size() == 1) {
             // No messages exist yet for this player (start with normal greeting)
             String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");
@@ -409,6 +409,25 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
+                                if (playerData.attacking) {
+                                    AdvancementHelper.calmTheStorm(player);
+                                    playerData.attacking = false;
+                                }
+                                playerData.fleeing = false;
+                                playerData.hasFollowed = true;
+                                AdvancementHelper.follow(player);
+                                if (playerData.hasLed) {
+                                    AdvancementHelper.backseatDriver(player);
+                                    playerData.hasFollowed = false;
+                                    playerData.hasLed = false;
+                                }
+                                if (entity.getType() == net.minecraft.world.entity.EntityType.PIG && playerData.friendship == 3
+                                        && playerData.pigPotato && playerData.pigBakedPotato && playerData.pigPoisonousPotato) {
+                                    AdvancementHelper.potatoPact(player);
+                                    playerData.pigPotato = false;
+                                    playerData.pigBakedPotato = false;
+                                    playerData.pigPoisonousPotato = false;
+                                }
                                 if (playerData.friendship >= 0) {
                                     ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FOLLOW_FRIEND_PARTICLE, 0.5, 1);
                                 } else {
@@ -428,9 +447,18 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
                                 ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FLEE_PARTICLE, 0.5, 1);
+                                playerData.fleeing = true;
+                                if (playerData.attacking) {
+                                    AdvancementHelper.calmTheStorm(player);
+                                    playerData.attacking = false;
+                                }
 
                             } else if (behavior.getName().equals("UNFLEE")) {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                                if (playerData.fleeing) {
+                                    AdvancementHelper.doNotRun(player);
+                                    playerData.fleeing = false;
+                                }
 
                             } else if (behavior.getName().equals("ATTACK")) {
                                 AttackPlayerGoal attackGoal = new AttackPlayerGoal(player, entity, entitySpeedFast);
@@ -441,6 +469,7 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
                                 ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FLEE_PARTICLE, 0.5, 1);
+                                playerData.attacking = true;
 
                             } else if (behavior.getName().equals("PROTECT")) {
                                 if (playerData.friendship <= 0) {
@@ -452,6 +481,15 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, protectGoal, GoalPriority.PROTECT_PLAYER);
+                                if (playerData.attacking) {
+                                    AdvancementHelper.calmTheStorm(player);
+                                    playerData.attacking = false;
+                                }
+                                playerData.fleeing = false;
+                                AdvancementHelper.bodyguard(player);
+                                if (entity.getType() == net.minecraft.world.entity.EntityType.PIG && playerData.friendship == 3) {
+                                    playerData.pigProtect = true;
+                                }
                                 ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) PROTECT_PARTICLE, 0.5, 1);
 
                             } else if (behavior.getName().equals("UNPROTECT")) {
@@ -463,6 +501,18 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, leadGoal, GoalPriority.LEAD_PLAYER);
+                                if (playerData.attacking) {
+                                    AdvancementHelper.calmTheStorm(player);
+                                    playerData.attacking = false;
+                                }
+                                playerData.fleeing = false;
+                                playerData.hasLed = true;
+                                AdvancementHelper.lead(player);
+                                if (playerData.hasFollowed) {
+                                    AdvancementHelper.backseatDriver(player);
+                                    playerData.hasFollowed = false;
+                                    playerData.hasLed = false;
+                                }
                                 if (playerData.friendship >= 0) {
                                     ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) LEAD_FRIEND_PARTICLE, 0.5, 1);
                                 } else {
@@ -591,6 +641,15 @@ public class EntityChatData {
                                 }
 
                                 playerData.friendship = new_friendship;
+                                if (playerData.attacking) {
+                                    EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                                    AdvancementHelper.calmTheStorm(player);
+                                    playerData.attacking = false;
+                                }
+                                if (playerData.fleeing && new_friendship >= 0) {
+                                    EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                                    playerData.fleeing = false;
+                                }
                                 AdvancementHelper.friendshipChanged(player, playerData, old_friendship, new_friendship, entity);
                             }
                         }
@@ -725,6 +784,10 @@ public class EntityChatData {
 
         if (sender == ChatDataManager.ChatSender.ASSISTANT) {
             AdvancementHelper.chatExchange(player, this);
+            Mob entity = (Mob) ServerEntityFinder.getEntityByUUID((ServerLevel) player.level(), UUID.fromString(entityId));
+            if (entity != null) {
+                AdvancementHelper.checkInnerCircle(player, entity);
+            }
         }
     }
 

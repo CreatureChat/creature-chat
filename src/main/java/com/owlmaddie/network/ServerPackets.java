@@ -213,7 +213,7 @@ public class ServerPackets {
 
             LOGGER.info("Server send compressed, chunked login message packets to player: " + player.getName().getString());
             // Get lite JSON data & compress to byte array
-            String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData(player.getDisplayName().getString());
+            String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData(player.getUUID().toString());
             byte[] compressedData = Compression.compressString(chatDataJSON);
             if (compressedData == null) {
                 LOGGER.error("Failed to compress chat data.");

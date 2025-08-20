@@ -18,6 +18,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - No Hard Feelings: Make peace soon after a scuffle
   - Squad Goals: Be surrounded by several friendly neighbors
   - Borrowed Forever: Walk away with an item when you’re on great terms
+  - Expanding list of advancements (WIP)
 
 
 ## Unreleased

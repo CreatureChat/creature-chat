@@ -9,12 +9,44 @@ package com.owlmaddie.chat;
  */
 public class PlayerData {
     public int friendship;
-    public long lastDamageTime;
-    public long swingStartTime;
+    public int lastDamageFriendship;
+    public int signFlipCount;
+    public int lastSign;
+    public boolean seenHigh;
+    public boolean seenLow;
+    public boolean reachedPos3;
+    public boolean reachedNeg3;
+    public boolean attacking;
+    public boolean fleeing;
+    public boolean gaveItem;
+    public boolean hasFollowed;
+    public boolean hasLed;
+    public boolean pigProtect;
+    public boolean pigPotato;
+    public boolean pigBakedPotato;
+    public boolean pigPoisonousPotato;
+    public int conversationCount;
+    public boolean droppedBelowZero;
 
     public PlayerData() {
         this.friendship = 0;
-        this.lastDamageTime = 0;
-        this.swingStartTime = 0;
+        this.lastDamageFriendship = Integer.MIN_VALUE;
+        this.signFlipCount = 0;
+        this.lastSign = 0;
+        this.seenHigh = false;
+        this.seenLow = false;
+        this.reachedPos3 = false;
+        this.reachedNeg3 = false;
+        this.attacking = false;
+        this.fleeing = false;
+        this.gaveItem = false;
+        this.hasFollowed = false;
+        this.hasLed = false;
+        this.pigProtect = false;
+        this.pigPotato = false;
+        this.pigBakedPotato = false;
+        this.pigPoisonousPotato = false;
+        this.conversationCount = 0;
+        this.droppedBelowZero = false;
     }
 }

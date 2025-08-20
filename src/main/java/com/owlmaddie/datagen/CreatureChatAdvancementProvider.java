@@ -13,9 +13,10 @@ import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.advancements.critereon.ImpossibleTrigger;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import com.owlmaddie.chat.Advancements;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
@@ -25,38 +26,46 @@ public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
 
     @Override
     public void generateAdvancement(Consumer<Advancement> out) {
-        Advancement root = make(out, null, Advancements.ROOT);
+        Map<Advancements, Advancement> built = new HashMap<>();
         for (Advancements adv : Advancements.values()) {
-            if (adv == Advancements.ROOT) continue;
-            make(out, root, adv);
+            build(out, adv, built);
         }
     }
 
-    private static Advancement make(Consumer<Advancement> out,
-                                    Advancement parentOrNull,
-                                    Advancements adv) {
+    private static Advancement build(Consumer<Advancement> out,
+                                     Advancements adv,
+                                     Map<Advancements, Advancement> built) {
+        if (built.containsKey(adv)) return built.get(adv);
+
+        Advancement parent = adv.parent == null ? null : build(out, adv.parent, built);
 
         DisplayInfo display = new DisplayInfo(
-                new ItemStack(Items.PAPER),
+                new ItemStack(adv.icon),
                 Component.literal(adv.title),
                 Component.literal(adv.description),
                 adv.background,
                 toFrameType(adv.type),
                 true,
                 true,
-                false
+                adv.hidden
         );
+
+        AdvancementRewards rewards = adv.rewardXp > 0
+                ? AdvancementRewards.Builder.experience(adv.rewardXp).build()
+                : AdvancementRewards.EMPTY;
 
         Advancement.Builder b = Advancement.Builder.advancement()
                 .display(display)
-                .rewards(AdvancementRewards.EMPTY)
+                .rewards(rewards)
                 .addCriterion("triggered", new ImpossibleTrigger.TriggerInstance());
 
-        if (parentOrNull != null) {
-            b.parent(parentOrNull);
+        if (parent != null) {
+            b.parent(parent);
         }
 
-        return b.save(out, adv.id.toString());
+        Advancement saved = b.save(out, adv.id.toString());
+        built.put(adv, saved);
+        return saved;
     }
 
     private static FrameType toFrameType(Advancements.Type type) {

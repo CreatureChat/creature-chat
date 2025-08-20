@@ -18,10 +18,11 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import com.owlmaddie.chat.Advancements;
 
 import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -33,44 +34,52 @@ public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
 
     @Override
     public void generateAdvancement(HolderLookup.Provider lookup, Consumer<AdvancementHolder> out) {
-        AdvancementHolder root = make(out, null, Advancements.ROOT);
+        Map<Advancements, AdvancementHolder> built = new HashMap<>();
         for (Advancements adv : Advancements.values()) {
-            if (adv == Advancements.ROOT) continue;
-            make(out, root, adv);
+            build(out, adv, built);
         }
     }
 
-    private static AdvancementHolder make(Consumer<AdvancementHolder> out,
-                                          AdvancementHolder parentOrNull,
-                                          Advancements adv) {
+    private static AdvancementHolder build(Consumer<AdvancementHolder> out,
+                                           Advancements adv,
+                                           Map<Advancements, AdvancementHolder> built) {
+        if (built.containsKey(adv)) return built.get(adv);
+
+        AdvancementHolder parent = adv.parent == null ? null : build(out, adv.parent, built);
 
         Optional<ResourceLocation> bg = adv.background == null
                 ? Optional.empty()
                 : Optional.of(adv.background);
 
         DisplayInfo display = new DisplayInfo(
-                new ItemStack(Items.PAPER),
+                new ItemStack(adv.icon),
                 Component.literal(adv.title),
                 Component.literal(adv.description),
                 bg,
                 toAdvancementType(adv.type),
                 true,
                 true,
-                false
+                adv.hidden
         );
 
         Criterion<?> impossible = CriteriaTriggers.IMPOSSIBLE.createCriterion(new ImpossibleTrigger.TriggerInstance());
 
+        AdvancementRewards rewards = adv.rewardXp > 0
+                ? AdvancementRewards.Builder.experience(adv.rewardXp).build()
+                : AdvancementRewards.EMPTY;
+
         Advancement.Builder b = Advancement.Builder.advancement()
                 .display(display)
-                .rewards(AdvancementRewards.EMPTY)
+                .rewards(rewards)
                 .addCriterion("triggered", impossible);
 
-        if (parentOrNull != null) {
-            b.parent(parentOrNull);
+        if (parent != null) {
+            b.parent(parent);
         }
 
-        return b.save(out, adv.id.toString());
+        AdvancementHolder saved = b.save(out, adv.id.toString());
+        built.put(adv, saved);
+        return saved;
     }
 
     private static AdvancementType toAdvancementType(Advancements.Type type) {
