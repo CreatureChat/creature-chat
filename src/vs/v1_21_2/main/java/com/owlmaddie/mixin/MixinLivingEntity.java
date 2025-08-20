@@ -83,6 +83,7 @@ public class MixinLivingEntity {
 
             PlayerData pd = data.getPlayerData(serverPlayer.getUUID().toString());
             pd.lastDamageFriendship = pd.friendship;
+            pd.wordsmithDamaged = true;
             if (!data.characterSheet.isEmpty()
                     && data.auto_generated < ChatDataManager.MAX_AUTOGENERATE_RESPONSES) {
 

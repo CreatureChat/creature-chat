@@ -15,7 +15,7 @@ import net.minecraft.world.item.Items;
  */
 public enum Advancements {
     ROOT("root", "CreatureChat", "Talk to mobs. Make friends. Start drama.", Type.TASK,
-            Items.BOOK, null, 0, false, new ResourceLocation("minecraft", "icon.png")),
+            Items.BOOK, null, 0, false, new ResourceLocation("minecraft", "block/diamond_block")),
 
     ICE_BREAKER("ice_breaker", "Ice Breaker", "Send at least 2 player messages to the same mob.", Type.TASK,
             Items.WRITABLE_BOOK, ROOT, 0, false),

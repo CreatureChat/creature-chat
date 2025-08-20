@@ -7,11 +7,17 @@ import net.minecraft.advancements.Advancement;
 import net.minecraft.resources.ResourceLocation;
 import com.owlmaddie.chat.Advancements;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.UUID;
+import com.owlmaddie.utils.ServerEntityFinder;
 
 public class AdvancementHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
@@ -38,6 +44,7 @@ public class AdvancementHelper {
         }
         PlayerData pd = data.getPlayerData(player.getUUID().toString());
         pd.conversationCount++;
+        pd.messageCount++;
         if (pd.friendship < 0) {
             pd.droppedBelowZero = true;
         }
@@ -46,6 +53,7 @@ public class AdvancementHelper {
             pd.conversationCount = 0;
             pd.droppedBelowZero = false;
         }
+        checkSocialButterfly(player);
     }
 
     public static void checkInnerCircle(ServerPlayer player, Mob entity) {
@@ -114,7 +122,18 @@ public class AdvancementHelper {
         if (entity instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon && newFriendship == 3) {
             award(player, Advancements.LOVE_CONQUERS_ALL.id);
         }
+        if (newFriendship < 0) {
+            data.wordsmithActive = true;
+            data.wordsmithOpenedInventory = false;
+            data.wordsmithGaveItem = false;
+            data.wordsmithDamaged = false;
+        }
+        if (data.wordsmithActive && newFriendship == 3 && !data.wordsmithOpenedInventory && !data.wordsmithGaveItem && !data.wordsmithDamaged) {
+            award(player, Advancements.WORDSMITH.id);
+            data.wordsmithActive = false;
+        }
         checkInnerCircle(player, entity);
+        checkPopularOpinion(player);
     }
 
     public static void follow(ServerPlayer player) {
@@ -160,6 +179,55 @@ public class AdvancementHelper {
                 }
             }
         }
+    }
+
+    public static void checkSocialButterfly(ServerPlayer player) {
+        String playerId = player.getUUID().toString();
+        ChatDataManager manager = ChatDataManager.getServerInstance();
+        Set<String> types = new HashSet<>();
+        for (Map.Entry<String, EntityChatData> entry : manager.entityChatDataMap.entrySet()) {
+            PlayerData pd = entry.getValue().players.get(playerId);
+            if (pd != null && pd.friendship > 0 && pd.messageCount >= 2) {
+                Mob mob = (Mob) ServerEntityFinder.getEntityByUUID((ServerLevel) player.level(), UUID.fromString(entry.getKey()));
+                if (mob != null) {
+                    types.add(mob.getType().toString());
+                    if (types.size() >= 10) {
+                        award(player, Advancements.SOCIAL_BUTTERFLY.id);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    public static void checkPopularOpinion(ServerPlayer player) {
+        String playerId = player.getUUID().toString();
+        ChatDataManager manager = ChatDataManager.getServerInstance();
+        List<Mob> mobs = player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(12.0));
+        int count = 0;
+        for (Mob m : mobs) {
+            EntityChatData chat = manager.entityChatDataMap.get(m.getStringUUID());
+            if (chat == null) continue;
+            PlayerData pd = chat.players.get(playerId);
+            if (pd != null && pd.friendship >= 2) {
+                if (++count >= 10) {
+                    award(player, Advancements.POPULAR_OPINION.id);
+                    break;
+                }
+            }
+        }
+    }
+
+    public static void openSesame(ServerPlayer player) {
+        award(player, Advancements.OPEN_SESAME.id);
+    }
+
+    public static void dressedToKill(ServerPlayer player) {
+        award(player, Advancements.DRESSED_TO_KILL.id);
+    }
+
+    public static void guidedTour(ServerPlayer player) {
+        award(player, Advancements.GUIDED_TOUR.id);
     }
 
     public static void potatoPact(ServerPlayer player) {

@@ -27,6 +27,12 @@ public class PlayerData {
     public boolean pigPoisonousPotato;
     public int conversationCount;
     public boolean droppedBelowZero;
+    public boolean openedInventory;
+    public boolean wordsmithActive;
+    public boolean wordsmithOpenedInventory;
+    public boolean wordsmithGaveItem;
+    public boolean wordsmithDamaged;
+    public int messageCount;
 
     public PlayerData() {
         this.friendship = 0;
@@ -48,5 +54,11 @@ public class PlayerData {
         this.pigPoisonousPotato = false;
         this.conversationCount = 0;
         this.droppedBelowZero = false;
+        this.openedInventory = false;
+        this.wordsmithActive = false;
+        this.wordsmithOpenedInventory = false;
+        this.wordsmithGaveItem = false;
+        this.wordsmithDamaged = false;
+        this.messageCount = 0;
     }
 }

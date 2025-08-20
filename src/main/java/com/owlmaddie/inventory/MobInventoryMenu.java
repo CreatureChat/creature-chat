@@ -61,6 +61,13 @@ public class MobInventoryMenu extends AbstractContainerMenu {
             playerName = "";
         }
         this.playerData = chatData.getPlayerData(playerName);
+        if (player != null && playerData.friendship > 0 && !playerData.openedInventory) {
+            playerData.openedInventory = true;
+            AdvancementHelper.openSesame(player);
+        }
+        if (playerData.wordsmithActive) {
+            playerData.wordsmithOpenedInventory = true;
+        }
         this.mobInvSize = inventory.getContainerSize();
         this.rows = (mobInvSize + 4) / 5;
         int bottomRowStart = (rows - 1) * 5;
@@ -189,6 +196,9 @@ public class MobInventoryMenu extends AbstractContainerMenu {
                 ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
                 EntityChatData chatData = chatDataManager.getOrCreateChatData(mob.getStringUUID());
                 PlayerData pd = chatData.getPlayerData(player.getUUID().toString());
+                if (pd.wordsmithActive) {
+                    pd.wordsmithGaveItem = true;
+                }
                 String verbBase = pd.friendship >= 3 ? "borrowed" : pd.friendship == 2 ? "took" : "stole";
                 String verb = " " + verbBase + " ";
                 if (!removed.isEmpty()) {
@@ -202,6 +212,9 @@ public class MobInventoryMenu extends AbstractContainerMenu {
                         if (added.containsKey(Items.POISONOUS_POTATO)) pd.pigPoisonousPotato = true;
                     }
                     AdvancementHelper.checkSharedStash(serverPlayer);
+                }
+                if (handChanged && pd.friendship == 3) {
+                    AdvancementHelper.dressedToKill(serverPlayer);
                 }
                 if (mob.getType() == net.minecraft.world.entity.EntityType.PIG && pd.friendship == 3 && pd.pigProtect && finalOff.getItem() == Items.GOLDEN_HELMET) {
                     AdvancementHelper.hailToTheKing(serverPlayer);

@@ -8,17 +8,34 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ### Added
 - Initial Advancements for CreatureChat
-  - Ice Breaker: Start a real chat with a critter
-  - Friendly Creature: Turn a neutral into a pal
-  - Beastie Bestie: Hit the highest friendship tier
-  - Arch Nemesis: Slide all the way to the bottom
-  - Love Hate Relationship: Flip the vibe from good to bad or vice versa
-  - Drama Llama: Rocket from highs to lows in a short window
-  - Smooth Talker: Jump up the ranks purely by conversation
-  - No Hard Feelings: Make peace soon after a scuffle
-  - Squad Goals: Be surrounded by several friendly neighbors
-  - Borrowed Forever: Walk away with an item when you’re on great terms
-  - Expanding list of advancements (WIP)
+  - **Ice Breaker** – Start your first real conversation with a mob
+  - **First Impressions** – Friendship rises above neutral for the first time
+  - **No Hard Feelings** – Restore friendship to what it was before you attacked
+  - **Open Sesame** – Unlock a mob’s inventory
+  - **Tag Along** – Get a mob to FOLLOW you
+  - **Lead the Way** – Get a mob to LEAD you
+  - **Calm the Storm** – Stop a mob from ATTACKing through chat
+  - **Do Not Run** – Stop a mob from FLEEing through chat
+  - **Bodyguard Detail** – Convince a mob to PROTECT you
+  - **Wordsmith** – Raise a mob from negative to max purely with words
+  - **True Companion** – Max out friendship with a mob
+  - **Dressed to Kill** – Change a mob’s main/offhand at max friendship
+  - **Shared Stash** – Add items to 5 friendly mobs’ inventories
+  - **Social Butterfly** – Befriend 10 different mob types
+  - **Inner Circle** – Have 5 mobs near you at high friendship
+  - **Popular Opinion** – Have 10 mobs near you at high friendship
+  - **Drama Llama** – Swing a mob from friend to enemy
+  - **Love Hate Relationship** – Flip a mob’s friendship sign 4 times
+  - **Arch Nemesis** – Drive a mob to –3 friendship
+  - **Friend or Foe** – Reach both extremes with the same mob
+  - **Finder’s Keepers** – Take an item when friendship is exactly 3
+  - **Guided Tour** – Complete a LEAD journey 64+ blocks long
+  - **Long Conversation** – Exchange 50 messages with one mob without falling out
+  - **Grand Gesture** – Make a single action worth +2 friendship
+  - **Backseat Driver** – Have the same mob both FOLLOW and LEAD you
+  - **Hail to the King** *(secret)* – Pig protector crowned with gold
+  - **Potato Pact** *(secret)* – Pig follows with all potato types in inventory
+  - **Love Conquers All** – Befriend the Ender Dragon (win condition)
 
 
 ## Unreleased
