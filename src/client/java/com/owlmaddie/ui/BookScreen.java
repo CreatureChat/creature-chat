@@ -14,6 +14,7 @@ import com.owlmaddie.render.RenderPipelineHelper;
 import com.owlmaddie.utils.ClientEntityFinder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -40,8 +41,8 @@ public class BookScreen extends ScreenHelper {
     private EditBox dummyField;
     private EditBox searchField;
     private boolean searchVisible;
-    private boolean prevActive;
-    private boolean nextActive;
+    private Button prevButton;
+    private Button nextButton;
     private static final int PREV_X = 29,  PREV_Y = 156, PREV_W = 14, PREV_H = 12;
     private static final int NEXT_X = 257, NEXT_Y = 156, NEXT_W = 14, NEXT_H = 12;
     private static final int SEARCH_BTN_X = 10, SEARCH_BTN_Y = 9,  SEARCH_BTN_W = 31, SEARCH_BTN_H = 21;
@@ -117,13 +118,52 @@ public class BookScreen extends ScreenHelper {
         });
 
         addRenderableWidget(searchField);
+
+        prevButton = ButtonHelper.createImageButton(
+                bgX + PREV_X, bgY + PREV_Y,
+                PREV_W, PREV_H,
+                textures.GetUI("book/previous"),
+                textures.GetUI("book/previous-hover"),
+                w -> {
+                    index = Math.max(0, index - 2);
+                    updateButtons();
+                    requestDataForCurrentPages();
+                    LOGGER.info("BookScreen: previous page index={}", index);
+                },
+                w -> Component.empty()
+        );
+        addRenderableWidget(prevButton);
+
+        nextButton = ButtonHelper.createImageButton(
+                bgX + NEXT_X, bgY + NEXT_Y,
+                NEXT_W, NEXT_H,
+                textures.GetUI("book/next"),
+                textures.GetUI("book/next-hover"),
+                w -> {
+                    index = Math.min(ordered.size(), index + 2);
+                    updateButtons();
+                    requestDataForCurrentPages();
+                    LOGGER.info("BookScreen: next page index={}", index);
+                },
+                w -> Component.empty()
+        );
+        addRenderableWidget(nextButton);
+
         updateButtons();
         requestDataForCurrentPages();
     }
 
     private void updateButtons() {
-        prevActive = index > 0;
-        nextActive = index + 2 < ordered.size();
+        boolean prevActive = index > 0;
+        boolean nextActive = index + 2 < ordered.size();
+        if (prevButton != null) {
+            prevButton.active = prevActive;
+            prevButton.visible = prevActive;
+        }
+        if (nextButton != null) {
+            nextButton.active = nextActive;
+            nextButton.visible = nextActive;
+        }
     }
 
     private boolean inside(double mx, double my, int x, int y, int w, int h) {
@@ -133,20 +173,6 @@ public class BookScreen extends ScreenHelper {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
-            if (prevActive && inside(mouseX, mouseY, bgX + PREV_X, bgY + PREV_Y, PREV_W, PREV_H)) {
-                index = Math.max(0, index - 2);
-                updateButtons();
-                requestDataForCurrentPages();
-                LOGGER.info("BookScreen: previous page index={}", index);
-                return true;
-            }
-            if (nextActive && inside(mouseX, mouseY, bgX + NEXT_X, bgY + NEXT_Y, NEXT_W, NEXT_H)) {
-                index = Math.min(ordered.size(), index + 2);
-                updateButtons();
-                requestDataForCurrentPages();
-                LOGGER.info("BookScreen: next page index={}", index);
-                return true;
-            }
             if (inside(mouseX, mouseY, bgX + SEARCH_BTN_X, bgY + SEARCH_BTN_Y, SEARCH_BTN_W, SEARCH_BTN_H)) {
                 toggleSearch();
                 return true;
@@ -414,7 +440,7 @@ public class BookScreen extends ScreenHelper {
 
     @Override
     protected String getBackgroundTextureId() {
-        return "book";
+        return "book/book";
     }
 
     // Deterministic seed from entityId + field key (FNV-1a 64-bit)
