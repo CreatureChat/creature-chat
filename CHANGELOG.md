@@ -11,7 +11,8 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - Load client entity chat data and display friends and enemies by most recent
   - Using Fabric datagen to create book item
   - New packet types for sending / receiving all entity data (by UUID - per page)
-  - Dynamic Next/Previous buttons with hover
+  - Dynamic Next/Previous buttons with hover (hidden when no page to turn)
+  - Summary pages are displayed first, then Detail pages with more info
 
 ## Unreleased
 

@@ -35,7 +35,22 @@ public class BookScreen extends ScreenHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
 
-    private int index;
+    private enum Mode { SUMMARY, DETAIL }
+    private Mode mode = Mode.SUMMARY;
+
+    // summary state
+    private int summaryIndex;
+    private int hoveredSummary = -1;
+
+    // detail state
+    private EntityChatData detailEntity;
+    private int detailPage;            // left page index
+    private int detailTotalPages;      // total single pages for detailEntity
+    private List<Pair> detailSections; // character sheet sections
+    private List<List<Pair>> sectionPages;
+    private List<ChatMessage> detailMessages;
+    private List<List<ChatMessage>> messagePages;
+
     private final List<EntityChatData> all;
     private List<EntityChatData> ordered;
     private EditBox dummyField;
@@ -43,16 +58,27 @@ public class BookScreen extends ScreenHelper {
     private boolean searchVisible;
     private Button prevButton;
     private Button nextButton;
-    private static final int PREV_X = 29,  PREV_Y = 156, PREV_W = 14, PREV_H = 12;
-    private static final int NEXT_X = 257, NEXT_Y = 156, NEXT_W = 14, NEXT_H = 12;
+    private static final int PREV_X = 28,  PREV_Y = 170, PREV_W = 14, PREV_H = 12;
+    private static final int NEXT_X = 267, NEXT_Y = 170, NEXT_W = 14, NEXT_H = 12;
     private static final int SEARCH_BTN_X = 10, SEARCH_BTN_Y = 9,  SEARCH_BTN_W = 31, SEARCH_BTN_H = 21;
     private static final int CLOSE_X = 259, CLOSE_Y = 9,  CLOSE_W = 30, CLOSE_H = 22;
-    private static final int PAGE_CONTENT_W = 120;   // width of text block per page
-    private static final int PAGE_CONTENT_H = 120;   // height of text block (for scissor)
+    private static final int PAGE_CONTENT_W = 116;   // width of text block per page
+    private static final int PAGE_CONTENT_H = 124;   // height of text block (for scissor)
+    private static final int PAGE1_X = 28, PAGE1_Y = 46; // left page top-left
+    private static final int PAGE2_X = 157, PAGE2_Y = 46; // right page top-left
     private static final int LABEL_COLOR    = 0xFF6B4A3B; // warm brown, matches book UI
     private static final int BODY_COLOR     = 0xFF2A2A2A; // dark text
     private static final int LIGHT_GRAY     = 0xFFB0B0B0;
     private static final Random RNG         = new Random();
+
+    private static final int SUMMARY_ROWS_PER_PAGE = 4; // per single page
+    private static final int SUMMARY_ROW_H = 30;
+
+    private static class Pair {
+        final String label;
+        final String value;
+        Pair(String l, String v) { this.label = l; this.value = v; }
+    }
 
     public BookScreen() {
         super(Component.literal("Creature Log"));
@@ -67,6 +93,7 @@ public class BookScreen extends ScreenHelper {
                 .sorted(Comparator.comparingLong(BookScreen::getLastInteraction).reversed())
                 .collect(Collectors.toList());
         ordered = new ArrayList<>(all);
+        summaryIndex = 0;
     }
 
     private String resolveName(EntityChatData data) {
@@ -97,6 +124,24 @@ public class BookScreen extends ScreenHelper {
         return 0L;
     }
 
+    private String friendlyTime(long millis) {
+        long minutes = millis / 60000L;
+        if (minutes < 60) return minutes + "min";
+        long hours = minutes / 60;
+        long mins = minutes % 60;
+        if (hours < 24) {
+            String res = hours + "Hr";
+            if (hours < 4 && mins > 0) res += " " + mins + "min";
+            return res;
+        }
+        long days = hours / 24;
+        if (days < 7) return days + (days == 1 ? " day" : " days");
+        long weeks = days / 7;
+        if (weeks < 4) return weeks + (weeks == 1 ? " week" : " weeks");
+        long months = days / 30;
+        return months + (months == 1 ? " month" : " months");
+    }
+
     @Override
     protected void init() {
         super.init();
@@ -125,10 +170,19 @@ public class BookScreen extends ScreenHelper {
                 textures.GetUI("book/previous"),
                 textures.GetUI("book/previous-hover"),
                 w -> {
-                    index = Math.max(0, index - 2);
+                    if (mode == Mode.SUMMARY) {
+                        summaryIndex = Math.max(0, summaryIndex - SUMMARY_ROWS_PER_PAGE * 2);
+                    } else {
+                        if (detailPage == 0) {
+                            mode = Mode.SUMMARY;
+                            detailEntity = null;
+                        } else {
+                            detailPage = Math.max(0, detailPage - 2);
+                        }
+                    }
                     updateButtons();
                     requestDataForCurrentPages();
-                    LOGGER.info("BookScreen: previous page index={}", index);
+                    LOGGER.info("BookScreen: previous clicked mode={} summaryIndex={} detailPage={}", mode, summaryIndex, detailPage);
                 },
                 w -> Component.empty()
         );
@@ -140,10 +194,17 @@ public class BookScreen extends ScreenHelper {
                 textures.GetUI("book/next"),
                 textures.GetUI("book/next-hover"),
                 w -> {
-                    index = Math.min(ordered.size(), index + 2);
+                    if (mode == Mode.SUMMARY) {
+                        int spread = SUMMARY_ROWS_PER_PAGE * 2;
+                        int maxIndex = Math.max(0, ((ordered.size() - 1) / spread) * spread);
+                        summaryIndex = Math.min(summaryIndex + spread, maxIndex);
+                    } else {
+                        int maxLeft = ((detailTotalPages - 1) / 2) * 2;
+                        detailPage = Math.min(detailPage + 2, maxLeft);
+                    }
                     updateButtons();
                     requestDataForCurrentPages();
-                    LOGGER.info("BookScreen: next page index={}", index);
+                    LOGGER.info("BookScreen: next clicked mode={} summaryIndex={} detailPage={}", mode, summaryIndex, detailPage);
                 },
                 w -> Component.empty()
         );
@@ -154,8 +215,15 @@ public class BookScreen extends ScreenHelper {
     }
 
     private void updateButtons() {
-        boolean prevActive = index > 0;
-        boolean nextActive = index + 2 < ordered.size();
+        boolean prevActive;
+        boolean nextActive;
+        if (mode == Mode.SUMMARY) {
+            prevActive = summaryIndex > 0;
+            nextActive = summaryIndex + SUMMARY_ROWS_PER_PAGE * 2 < ordered.size();
+        } else {
+            prevActive = true; // always allow returning to summary
+            nextActive = detailPage + 2 < detailTotalPages;
+        }
         if (prevButton != null) {
             prevButton.active = prevActive;
             prevButton.visible = prevActive;
@@ -182,6 +250,10 @@ public class BookScreen extends ScreenHelper {
                 onClose();
                 return true;
             }
+            if (mode == Mode.SUMMARY && hoveredSummary >= 0) {
+                openDetail(hoveredSummary);
+                return true;
+            }
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
@@ -200,7 +272,8 @@ public class BookScreen extends ScreenHelper {
             setFocused(null);
             searchField.setValue("");
             ordered = new ArrayList<>(all);
-            index = 0;
+            summaryIndex = 0;
+            mode = Mode.SUMMARY;
             updateButtons();
             requestDataForCurrentPages();
             LOGGER.info("BookScreen: search closed");
@@ -215,112 +288,246 @@ public class BookScreen extends ScreenHelper {
                     return n != null && n.toLowerCase(Locale.ROOT).contains(q);
                 })
                 .collect(Collectors.toList());
-        index = 0;
+        summaryIndex = 0;
+        mode = Mode.SUMMARY;
         updateButtons();
         requestDataForCurrentPages();
         LOGGER.info("BookScreen: search '{}' results={}", q, ordered.size());
     }
 
-    @Override
-    protected void renderContent(net.minecraft.client.gui.GuiGraphics ctx, int mouseX, int mouseY, float delta) {
-        renderPage(ctx, bgX + 32, bgY + 51, index);
-        renderPage(ctx, bgX + 162, bgY + 51, index + 1);
+    private void openDetail(int idx) {
+        if (idx < 0 || idx >= ordered.size()) return;
+        detailEntity = ordered.get(idx);
+        detailPage = 0;
+        detailSections = new ArrayList<>();
+
+        detailSections.add(new Pair("Personality", orLoremSeeded(detailEntity.getCharacterProp("Personality"), detailEntity.entityId, "Personality", 20, 100)));
+        detailSections.add(new Pair("Speaking Style / Tone", orLoremSeeded(firstNonNull(
+                detailEntity.getCharacterProp("Speaking Style / Tone"),
+                detailEntity.getCharacterProp("Speaking Style"),
+                detailEntity.getCharacterProp("Tone")
+        ), detailEntity.entityId, "SpeakingStyle", 20, 100)));
+        detailSections.add(new Pair("Skills", orLoremSeeded(detailEntity.getCharacterProp("Skills"), detailEntity.entityId, "Skills", 20, 100)));
+        detailSections.add(new Pair("Likes", orLoremSeeded(detailEntity.getCharacterProp("Likes"), detailEntity.entityId, "Likes", 20, 100)));
+        detailSections.add(new Pair("Dislikes", orLoremSeeded(detailEntity.getCharacterProp("Dislikes"), detailEntity.entityId, "Dislikes", 20, 100)));
+        detailSections.add(new Pair("Background", orLoremSeeded(detailEntity.getCharacterProp("Background"), detailEntity.entityId, "Background", 20, 100)));
+
+        detailMessages = new ArrayList<>();
+        if (detailEntity.previousMessages != null) {
+            Player player = Minecraft.getInstance().player;
+            String pName = player != null ? player.getDisplayName().getString() : "";
+            List<ChatMessage> filtered = detailEntity.previousMessages.stream()
+                    .filter(m -> !(m.sender == ChatDataManager.ChatSender.USER && !pName.equals(m.name)))
+                    .collect(Collectors.toList());
+            for (int i = Math.max(0, filtered.size() - 4); i < filtered.size(); i++) {
+                detailMessages.add(filtered.get(i));
+            }
+            Collections.reverse(detailMessages);
+        }
+
+        paginateSections();
+        paginateMessages();
+
+        detailTotalPages = sectionPages.size() + messagePages.size();
+        mode = Mode.DETAIL;
+        updateButtons();
+        requestDataForCurrentPages();
     }
 
-    private void renderPage(net.minecraft.client.gui.GuiGraphics ctx, int x, int y, int dataIndex) {
-        if (dataIndex >= ordered.size()) return;
-
-        EntityChatData data = ordered.get(dataIndex);
-        Player player = Minecraft.getInstance().player;
-        if (player == null) return;
-
-        String playerName = player.getDisplayName().getString();
-        PlayerData pData = data.getPlayerData(playerName);
-        int friendship = pData != null ? pData.friendship : 0;
-
-        // Character-sheet props (use lorem fallback)
-        String personality = orLoremSeeded(data.getCharacterProp("Personality"),         data.entityId, "Personality", 20, 100);
-        String speaking    = orLoremSeeded(firstNonNull(
-                data.getCharacterProp("Speaking Style / Tone"),
-                data.getCharacterProp("Speaking Style"),
-                data.getCharacterProp("Tone")
-        ), data.entityId, "SpeakingStyle", 20, 100);
-        String skills      = orLoremSeeded(data.getCharacterProp("Skills"),              data.entityId, "Skills",      20, 100);
-        String likes       = orLoremSeeded(data.getCharacterProp("Likes"),               data.entityId, "Likes",       20, 100);
-        String dislikes    = orLoremSeeded(data.getCharacterProp("Dislikes"),            data.entityId, "Dislikes",    20, 100);
-        String background  = orLoremSeeded(data.getCharacterProp("Background"),          data.entityId, "Background",  20, 100);
-
-        String lastMsg = safe(data.currentMessage);
-        if (lastMsg.isEmpty()) {
-            lastMsg = loremSeeded(30, 90, seedFrom(data.entityId, "LastMessage"));
+    private void paginateSections() {
+        sectionPages = new ArrayList<>();
+        List<Pair> page = new ArrayList<>();
+        int used = 0;
+        int headerHeight = Math.round(this.font.lineHeight * 1.12f) + 6 + 35;
+        for (Pair p : detailSections) {
+            int h = this.font.lineHeight;
+            h += measureWrappedHeight(p.value, PAGE_CONTENT_W, 0.92f, 2);
+            h += 4;
+            int available = sectionPages.isEmpty() ? PAGE_CONTENT_H - headerHeight : PAGE_CONTENT_H;
+            if (used + h > available && !page.isEmpty()) {
+                sectionPages.add(page);
+                page = new ArrayList<>();
+                used = 0;
+                available = PAGE_CONTENT_H;
+            }
+            page.add(p);
+            used += h;
         }
-
-        // Name to show: custom name > sheet name > entity name
-        Entity entity = getEntity(data.entityId);
-        String displayName = resolveName(data);
-        if (displayName == null || displayName.isBlank()) {
-            displayName = (entity != null ? entity.getName().getString() : "Unknown");
+        if (!page.isEmpty()) {
+            sectionPages.add(page);
         }
-
-        // Title color by friendship
-        int titleColor = 0xFF808080;          // neutral
-        if (friendship < 0) titleColor = 0xFFFF3A3A; // red
-        else if (friendship > 0) titleColor = 0xFF2ECC40; // green
-
-        // Title (slightly larger, soft shadow)
-        PoseHelper.push(ctx.pose());
-        PoseHelper.translate(ctx.pose(), (float)x, (float)y);
-        PoseHelper.scale(ctx.pose(), 1.12f, 1.12f);
-        ctx.drawString(this.font, displayName, 1, 1, 0x66000000, false); // shadow
-        ctx.drawString(this.font, displayName, 0, 0, titleColor, false);
-        PoseHelper.pop(ctx.pose());
-
-        int offsetY = y + Math.round(this.font.lineHeight * 1.12f) + 6;
-
-        // Icon + friendship badge
-        if (entity != null) drawEntityIcon(ctx, entity, x, offsetY);
-        ResourceLocation frTex = textures.GetUI("friendship" + friendship);
-        if (frTex != null) {
-            RenderPipelineHelper.blitGuiTexture(ctx, frTex, x + 34, offsetY, 0, 0, 31, 21, 31, 21);
+        if (sectionPages.isEmpty()) {
+            sectionPages.add(Collections.emptyList());
         }
+    }
 
-        int lineY = offsetY + 35;
+    private void paginateMessages() {
+        messagePages = new ArrayList<>();
+        List<ChatMessage> page = new ArrayList<>();
+        int used = 0;
+        for (ChatMessage m : detailMessages) {
+            int h = font.lineHeight + 1;
+            h += measureWrappedHeight(safe(m.message), PAGE_CONTENT_W - 4, 0.9f, 3) + 4;
+            if (used + h > PAGE_CONTENT_H && !page.isEmpty()) {
+                messagePages.add(page);
+                page = new ArrayList<>();
+                used = 0;
+            }
+            page.add(m);
+            used += h;
+        }
+        if (!page.isEmpty()) {
+            messagePages.add(page);
+        }
+        if (messagePages.isEmpty()) {
+            messagePages.add(Collections.emptyList());
+        }
+    }
 
-        // Clip everything to the page content box so nothing bleeds outside
+    @Override
+    protected void renderContent(net.minecraft.client.gui.GuiGraphics ctx, int mouseX, int mouseY, float delta) {
+        if (mode == Mode.SUMMARY) {
+            hoveredSummary = -1;
+            renderSummaryPage(ctx, bgX + PAGE1_X, bgY + PAGE1_Y, summaryIndex, mouseX, mouseY);
+            renderSummaryPage(ctx, bgX + PAGE2_X, bgY + PAGE2_Y, summaryIndex + SUMMARY_ROWS_PER_PAGE, mouseX, mouseY);
+        } else if (detailEntity != null) {
+            renderDetailPage(ctx, bgX + PAGE1_X, bgY + PAGE1_Y, detailPage);
+            renderDetailPage(ctx, bgX + PAGE2_X, bgY + PAGE2_Y, detailPage + 1);
+        }
+    }
+
+    private void renderSummaryPage(net.minecraft.client.gui.GuiGraphics ctx, int x, int y, int startIndex, int mouseX, int mouseY) {
         ctx.enableScissor(x, y, x + PAGE_CONTENT_W, y + PAGE_CONTENT_H);
+        for (int i = 0; i < SUMMARY_ROWS_PER_PAGE; i++) {
+            int idx = startIndex + i;
+            if (idx >= ordered.size()) break;
+            int rowY = y + i * SUMMARY_ROW_H;
+            boolean hover = mouseX >= x && mouseX <= x + PAGE_CONTENT_W && mouseY >= rowY && mouseY <= rowY + SUMMARY_ROW_H;
+            if (hover) {
+                ctx.fill(x, rowY, x + PAGE_CONTENT_W, rowY + SUMMARY_ROW_H, 0x406B4A3B);
+                hoveredSummary = idx;
+            }
+            EntityChatData data = ordered.get(idx);
+            Entity entity = getEntity(data.entityId);
+            if (entity != null) {
+                PoseHelper.push(ctx.pose());
+                PoseHelper.scale(ctx.pose(), 0.6f, 0.6f);
+                drawEntityIcon(ctx, entity, (int) (x / 0.6f), (int) (rowY / 0.6f));
+                PoseHelper.pop(ctx.pose());
+            }
 
-        // Layout: label on one line (small), value below it (wrapped, slightly smaller)
-        lineY = drawPair(ctx, "Personality", personality, x, lineY, PAGE_CONTENT_W);
-        lineY = drawPair(ctx, "Speaking Style / Tone", speaking, x, lineY, PAGE_CONTENT_W);
-        lineY = drawPair(ctx, "Skills", skills, x, lineY, PAGE_CONTENT_W);
-        lineY = drawPair(ctx, "Likes", likes, x, lineY, PAGE_CONTENT_W);
-        lineY = drawPair(ctx, "Dislikes", dislikes, x, lineY, PAGE_CONTENT_W);
-        lineY = drawPair(ctx, "Background", background, x, lineY, PAGE_CONTENT_W);
+            String name = resolveName(data);
+            if (name == null) name = "Unknown";
+            name = this.font.plainSubstrByWidth(name, PAGE_CONTENT_W - 22);
+            ctx.drawString(this.font, name, x + 22, rowY + 2, BODY_COLOR, false);
 
-        // Last Message (cap to 4 lines, smaller and muted)
-        ctx.drawString(this.font, "Last Message", x, lineY, LABEL_COLOR, false);
-        lineY += this.font.lineHeight;
-        lineY = drawWrapped(ctx, lastMsg, x, lineY, PAGE_CONTENT_W, 0.9f, 4, 0xFF444444);
+            Player player = Minecraft.getInstance().player;
+            PlayerData pData = player != null ? data.getPlayerData(player.getDisplayName().getString()) : null;
+            int friendship = pData != null ? pData.friendship : 0;
+            ResourceLocation frTex = textures.GetUI("friendship" + friendship);
+            int iconW = 0;
+            if (frTex != null) {
+                PoseHelper.push(ctx.pose());
+                PoseHelper.translate(ctx.pose(), x + 22, rowY + 12);
+                PoseHelper.scale(ctx.pose(), 0.6f, 0.6f);
+                RenderPipelineHelper.blitGuiTexture(ctx, frTex, 0, 0, 0, 0, 31, 21, 31, 21);
+                PoseHelper.pop(ctx.pose());
+                iconW = Math.round(31 * 0.6f);
+            }
 
+            long last = getLastInteraction(data);
+            String time = friendlyTime(System.currentTimeMillis() - last);
+            ctx.drawString(this.font, time, x + 22 + iconW + 4, rowY + this.font.lineHeight + 4, BODY_COLOR, false);
+        }
         ctx.disableScissor();
+    }
 
-        // UUID footer (tiny light gray) aligned to page bottom
+    private void renderDetailPage(net.minecraft.client.gui.GuiGraphics ctx, int x, int y, int pageIndex) {
+        if (pageIndex >= detailTotalPages) return;
+        if (detailEntity == null) return;
+
+        Player player = Minecraft.getInstance().player;
+        String playerName = player != null ? player.getDisplayName().getString() : "";
+        PlayerData pData = detailEntity.getPlayerData(playerName);
+        int friendship = pData != null ? pData.friendship : 0;
+        Entity entity = getEntity(detailEntity.entityId);
+
+        int sectionPageCount = sectionPages.size();
+
+        if (pageIndex < sectionPageCount) { // character sheet pages
+            List<Pair> page = sectionPages.get(pageIndex);
+            int lineY = y;
+            if (pageIndex == 0) {
+                String displayName = resolveName(detailEntity);
+                if (displayName == null || displayName.isBlank()) {
+                    displayName = entity != null ? entity.getName().getString() : "Unknown";
+                }
+                int titleColor = 0xFF000000;
+                if (friendship < 0) titleColor = 0xFFFF3A3A;
+                else if (friendship > 0) titleColor = 0xFF2ECC40;
+                int availNameW = (int)Math.floor(PAGE_CONTENT_W / 1.12f);
+                displayName = this.font.plainSubstrByWidth(displayName, availNameW);
+                PoseHelper.push(ctx.pose());
+                PoseHelper.translate(ctx.pose(), (float)x, (float)y);
+                PoseHelper.scale(ctx.pose(), 1.12f, 1.12f);
+                ctx.drawString(this.font, displayName, 1, 1, 0x66000000, false);
+                ctx.drawString(this.font, displayName, 0, 0, titleColor, false);
+                PoseHelper.pop(ctx.pose());
+                lineY = y + Math.round(this.font.lineHeight * 1.12f) + 6;
+                if (entity != null) drawEntityIcon(ctx, entity, x, lineY);
+                ResourceLocation frTex = textures.GetUI("friendship" + friendship);
+                if (frTex != null) {
+                    RenderPipelineHelper.blitGuiTexture(ctx, frTex, x + 34, lineY, 0, 0, 31, 21, 31, 21);
+                }
+                lineY += 35;
+            }
+            ctx.enableScissor(x, y, x + PAGE_CONTENT_W, y + PAGE_CONTENT_H);
+            for (Pair p : page) {
+                lineY = drawPair(ctx, p.label, p.value, x, lineY, PAGE_CONTENT_W);
+            }
+            ctx.disableScissor();
+        } else { // messages pages
+            int msgPage = pageIndex - sectionPageCount;
+            List<ChatMessage> msgs = messagePages.get(msgPage);
+            int lineY = y;
+            ctx.enableScissor(x, y, x + PAGE_CONTENT_W, y + PAGE_CONTENT_H);
+            ctx.drawString(this.font, "Recent Messages", x, lineY, LABEL_COLOR, false);
+            lineY += this.font.lineHeight + 2;
+            for (ChatMessage m : msgs) {
+                String speaker = m.sender == ChatDataManager.ChatSender.USER ? "You" : resolveName(detailEntity);
+                if (speaker == null || speaker.isBlank()) speaker = "Unknown";
+                long ts = m.timestamp == null ? 0L : m.timestamp;
+                String ago = friendlyTime(System.currentTimeMillis() - ts) + " ago";
+                int timeW = this.font.width(ago);
+                speaker = this.font.plainSubstrByWidth(speaker, PAGE_CONTENT_W - timeW - 2);
+                ctx.drawString(this.font, speaker, x, lineY, LABEL_COLOR, false);
+                ctx.drawString(this.font, ago, x + PAGE_CONTENT_W - timeW, lineY, LABEL_COLOR, false);
+                lineY += this.font.lineHeight + 1;
+                lineY = drawWrapped(ctx, safe(m.message), x + 4, lineY, PAGE_CONTENT_W - 4, 0.9f, 3, BODY_COLOR);
+                lineY += 4;
+            }
+            ctx.disableScissor();
+        }
+
         int debugY = bgY + BG_HEIGHT - 6;
         PoseHelper.push(ctx.pose());
         PoseHelper.translate(ctx.pose(), (float)x, (float)debugY);
         PoseHelper.scale(ctx.pose(), 0.8f, 0.8f);
-        ctx.drawString(this.font, data.entityId, 0, 0, LIGHT_GRAY, false);
+        ctx.drawString(this.font, detailEntity.entityId, 0, 0, LIGHT_GRAY, false);
         PoseHelper.pop(ctx.pose());
     }
 
     private void requestDataForCurrentPages() {
-        if (index < ordered.size()) {
-            UUID left = UUID.fromString(ordered.get(index).entityId);
-            ClientPackets.requestEntityData(left);
-        }
-        if (index + 1 < ordered.size()) {
-            UUID right = UUID.fromString(ordered.get(index + 1).entityId);
-            ClientPackets.requestEntityData(right);
+        if (mode == Mode.SUMMARY) {
+            for (int i = 0; i < SUMMARY_ROWS_PER_PAGE * 2; i++) {
+                int idx = summaryIndex + i;
+                if (idx >= ordered.size()) break;
+                UUID id = UUID.fromString(ordered.get(idx).entityId);
+                ClientPackets.requestEntityData(id);
+            }
+        } else if (detailEntity != null) {
+            UUID id = UUID.fromString(detailEntity.entityId);
+            ClientPackets.requestEntityData(id);
         }
     }
 
@@ -363,35 +570,50 @@ public class BookScreen extends ScreenHelper {
     /** Wrapped text with scaling and maxLines, adds ellipsis if truncated. Returns next y. */
     private int drawWrapped(net.minecraft.client.gui.GuiGraphics ctx, String text, int x, int y,
                             int maxWidthPx, float scale, int maxLines, int color) {
-        int avail = (int)Math.floor(maxWidthPx / scale);
-        String rest = text;
-        int drawnPx = 0;
-
+        List<String> lines = wrapLines(text, maxWidthPx, scale, maxLines);
         PoseHelper.push(ctx.pose());
         PoseHelper.translate(ctx.pose(), (float)x, (float)y);
         PoseHelper.scale(ctx.pose(), scale, scale);
-
-        for (int line = 0; line < maxLines && !rest.isEmpty(); line++) {
-            String piece = this.font.plainSubstrByWidth(rest, avail);
-            if (piece.isEmpty()) break;
-            boolean hasMore = piece.length() < rest.length();
-            boolean lastLine = (line == maxLines - 1);
-            if (lastLine && hasMore) {
-                // ellipsize last line
-                while (!piece.isEmpty() && this.font.width(piece + "…") > avail) {
-                    piece = piece.substring(0, piece.length() - 1);
-                }
-                piece = piece + "…";
-                rest = "";
-            } else {
-                rest = rest.substring(piece.length());
-            }
-            ctx.drawString(this.font, piece, 0, drawnPx, color, false);
+        int drawnPx = 0;
+        for (String line : lines) {
+            ctx.drawString(this.font, line, 0, drawnPx, color, false);
             drawnPx += this.font.lineHeight;
         }
-
         PoseHelper.pop(ctx.pose());
         return y + Math.round(drawnPx * scale);
+    }
+
+    private int measureWrappedHeight(String text, int maxWidthPx, float scale, int maxLines) {
+        List<String> lines = wrapLines(text, maxWidthPx, scale, maxLines);
+        return Math.round(lines.size() * this.font.lineHeight * scale);
+    }
+
+    private List<String> wrapLines(String text, int maxWidthPx, float scale, int maxLines) {
+        int avail = (int)Math.floor(maxWidthPx / scale);
+        List<String> lines = new ArrayList<>();
+        String rest = text == null ? "" : text.trim();
+        while (!rest.isEmpty() && lines.size() < maxLines) {
+            String piece = this.font.plainSubstrByWidth(rest, avail);
+            int cut = piece.length();
+            if (cut <= 0) break;
+            if (cut < rest.length()) {
+                int space = piece.lastIndexOf(' ');
+                if (space > 0) {
+                    cut = space;
+                    piece = piece.substring(0, space);
+                }
+            }
+            lines.add(piece.trim());
+            rest = rest.substring(Math.min(rest.length(), cut)).trim();
+        }
+        if (!rest.isEmpty() && !lines.isEmpty()) {
+            String last = lines.get(lines.size() - 1);
+            while (!last.isEmpty() && this.font.width(last + "…") > avail) {
+                last = last.substring(0, last.length() - 1);
+            }
+            lines.set(lines.size() - 1, last + "…");
+        }
+        return lines;
     }
 
     private String safe(String s) {
