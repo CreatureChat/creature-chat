@@ -393,7 +393,7 @@ public class BookScreen extends ScreenHelper {
             h += measureWrappedHeight(p.value, PAGE_CONTENT_W, 0.92f, 3);
             h += 4;
             int available = sectionPages.isEmpty() ? PAGE_CONTENT_H - headerHeight : PAGE_CONTENT_H;
-            if (used + h > available && !page.isEmpty()) {
+            if (used + h >= available && !page.isEmpty()) {
                 sectionPages.add(page);
                 page = new ArrayList<>();
                 used = 0;
@@ -426,13 +426,13 @@ public class BookScreen extends ScreenHelper {
         for (ChatMessage m : detailMessages) {
             int h = font.lineHeight + 1;
             h += measureWrappedHeight(safe(m.message), PAGE_CONTENT_W - 4, 0.9f, 4) + 4;
-            if (used + h > available && !page.isEmpty()) {
+            if (used + h >= available && !page.isEmpty()) {
                 messagePages.add(page);
                 page = new ArrayList<>();
                 used = 0;
                 available = PAGE_CONTENT_H - headerH;
             }
-            if (used + h > available && page.isEmpty()) {
+            if (used + h >= available && page.isEmpty()) {
                 // ensure progress even if single message exceeds available
                 available = PAGE_CONTENT_H - headerH;
             }
@@ -683,7 +683,7 @@ public class BookScreen extends ScreenHelper {
 
     private int measureWrappedHeight(String text, int maxWidthPx, float scale, int maxLines) {
         List<String> lines = wrapLines(text, maxWidthPx, scale, maxLines);
-        return Math.round(lines.size() * this.font.lineHeight * scale);
+        return (int)Math.ceil(lines.size() * this.font.lineHeight * scale);
     }
 
     private List<String> wrapLines(String text, int maxWidthPx, float scale, int maxLines) {
