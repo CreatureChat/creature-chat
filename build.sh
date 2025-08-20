@@ -3,12 +3,14 @@ set -euo pipefail
 
 ONLY_VERSION=${ONLY_VERSION:-}
 DRY_RUN=${DRY_RUN:-0}
+ALLOW_GRADLE_RESTART=${ALLOW_GRADLE_RESTART:-}
 
 # Allow “pattern→empty” instead of “pattern→itself”
 shopt -s nullglob
 
 run_build() {
   ./gradlew build -x test -x validateAccessWidener --build-cache --parallel </dev/null && return 0
+  [[ -n "$ALLOW_GRADLE_RESTART" ]] || return 1
   echo "Gradle failed; attempting to clear locks and retry..."
   ./gradlew --stop >/dev/null 2>&1 || true
   find .gradle ~/.gradle -type f -name '*.lock' -delete 2>/dev/null || true
