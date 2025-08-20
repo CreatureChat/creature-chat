@@ -19,6 +19,8 @@ public class EntityChatDataLight {
     public ChatDataManager.ChatStatus status;
     public ChatDataManager.ChatSender sender;
     public Map<String, PlayerData> players;
+    public Long death;
+    public String entity_type;
 
     // Constructor to initialize the light version from the full version
     public EntityChatDataLight(EntityChatData fullData, String playerName) {
@@ -27,6 +29,8 @@ public class EntityChatDataLight {
         this.currentLineNumber = fullData.currentLineNumber;
         this.status = fullData.status;
         this.sender = fullData.sender;
+        this.death = fullData.death;
+        this.entity_type = fullData.entity_type;
 
         // Initialize the players map and add only the current player's data
         this.players = new HashMap<>();

@@ -220,6 +220,7 @@ public class ServerPackets {
                 sendData.previousMessages = source.previousMessages;
                 sendData.born = source.born;
                 sendData.death = source.death;
+                sendData.entity_type = source.entity_type;
                 String pName = player.getDisplayName().getString();
                 sendData.players.put(pName, source.getPlayerData(pName));
                 Gson gson = new Gson();
@@ -296,7 +297,12 @@ public class ServerPackets {
             String entityUUID = entity.getStringUUID();
             if (entity.getRemovalReason() == Entity.RemovalReason.KILLED && ChatDataManager.getServerInstance().entityChatDataMap.containsKey(entityUUID)) {
                 LOGGER.debug("Entity killed (" + entityUUID + "), updating death time stamp.");
-                ChatDataManager.getServerInstance().entityChatDataMap.get(entityUUID).death = System.currentTimeMillis();
+                EntityChatData data = ChatDataManager.getServerInstance().entityChatDataMap.get(entityUUID);
+                data.death = System.currentTimeMillis();
+                if (data.entity_type == null || data.entity_type.isEmpty()) {
+                    data.entity_type = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
+                }
+                BroadcastEntityMessage(data);
             }
         });
     }
@@ -335,6 +341,10 @@ public class ServerPackets {
         // Set talk to player goal (prevent entity from walking off)
         TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
         EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
+
+        if (chatData.entity_type == null || chatData.entity_type.isEmpty()) {
+            chatData.entity_type = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
+        }
 
         // Grab random adjective
         String randomAdjective = Randomizer.getRandomMessage(Randomizer.RandomType.ADJECTIVE);

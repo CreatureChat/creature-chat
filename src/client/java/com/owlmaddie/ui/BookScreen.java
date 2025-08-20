@@ -18,10 +18,15 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
+import java.time.Instant;
+import java.time.ZoneId;
+import net.minecraft.world.entity.EntitySpawnReason;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,7 +97,7 @@ public class BookScreen extends ScreenHelper {
                     String nameText = resolveName(data);
                     boolean hasName = nameText != null && !nameText.isBlank();
                     boolean hasMsg = data.currentMessage != null && !data.currentMessage.isBlank();
-                    return hasName && hasMsg;
+                    return hasName && (hasMsg || data.death != null);
                 })
                 .sorted(Comparator.comparingLong(BookScreen::getLastInteraction).reversed())
                 .collect(Collectors.toList());
@@ -326,6 +331,13 @@ public class BookScreen extends ScreenHelper {
         detailEntity = ordered.get(idx);
         detailPage = 0;
         detailSections = new ArrayList<>();
+        if (detailEntity.death != null) {
+            String deathDate = Instant.ofEpochMilli(detailEntity.death)
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate()
+                    .toString();
+            detailSections.add(new Pair("Death Date", deathDate));
+        }
 
         detailSections.add(new Pair("Personality", orLoremSeeded(detailEntity.getCharacterProp("Personality"), detailEntity.entityId, "Personality", 20, 100)));
         detailSections.add(new Pair("Speaking Style / Tone", orLoremSeeded(firstNonNull(
@@ -345,10 +357,20 @@ public class BookScreen extends ScreenHelper {
             List<ChatMessage> filtered = detailEntity.previousMessages.stream()
                     .filter(m -> !(m.sender == ChatDataManager.ChatSender.USER && !pName.equals(m.name)))
                     .collect(Collectors.toList());
-            for (int i = Math.max(0, filtered.size() - 4); i < filtered.size(); i++) {
-                detailMessages.add(filtered.get(i));
+            if (detailEntity.death != null) {
+                for (int i = filtered.size() - 1; i >= 0; i--) {
+                    ChatMessage m = filtered.get(i);
+                    if (m.sender == ChatDataManager.ChatSender.ASSISTANT) {
+                        detailMessages.add(m);
+                        break;
+                    }
+                }
+            } else {
+                for (int i = Math.max(0, filtered.size() - 4); i < filtered.size(); i++) {
+                    detailMessages.add(filtered.get(i));
+                }
+                Collections.reverse(detailMessages);
             }
-            Collections.reverse(detailMessages);
         }
 
         paginateSections();
@@ -450,6 +472,12 @@ public class BookScreen extends ScreenHelper {
             }
             EntityChatData data = ordered.get(idx);
             Entity entity = getEntity(data.entityId);
+            if (entity == null && data.entity_type != null) {
+                EntityType<?> type = EntityType.byString(data.entity_type).orElse(null);
+                if (type != null && Minecraft.getInstance().level != null) {
+                    entity = type.create(Minecraft.getInstance().level, EntitySpawnReason.TRIGGERED);
+                }
+            }
             if (entity != null) {
                 PoseHelper.push(ctx.pose());
                 PoseHelper.scale(ctx.pose(), 0.6f, 0.6f);
@@ -459,8 +487,16 @@ public class BookScreen extends ScreenHelper {
 
             String name = resolveName(data);
             if (name == null) name = "Unknown";
-            name = this.font.plainSubstrByWidth(name, PAGE_CONTENT_W - 22);
-            ctx.drawString(this.font, name, x + 22, rowY + 2, BODY_COLOR, false);
+            int avail = PAGE_CONTENT_W - 22;
+            if (data.death != null) avail -= this.font.width("RIP: ");
+            name = this.font.plainSubstrByWidth(name, avail);
+            if (data.death != null) {
+                Component comp = Component.literal("RIP: ")
+                        .append(Component.literal(name).withStyle(Style.EMPTY.withStrikethrough(true)));
+                ctx.drawString(this.font, comp, x + 22, rowY + 2, BODY_COLOR, false);
+            } else {
+                ctx.drawString(this.font, name, x + 22, rowY + 2, BODY_COLOR, false);
+            }
 
             Player player = Minecraft.getInstance().player;
             PlayerData pData = player != null ? data.getPlayerData(player.getDisplayName().getString()) : null;
@@ -492,6 +528,12 @@ public class BookScreen extends ScreenHelper {
         PlayerData pData = detailEntity.getPlayerData(playerName);
         int friendship = pData != null ? pData.friendship : 0;
         Entity entity = getEntity(detailEntity.entityId);
+        if (entity == null && detailEntity.entity_type != null) {
+            EntityType<?> type = EntityType.byString(detailEntity.entity_type).orElse(null);
+            if (type != null && Minecraft.getInstance().level != null) {
+                entity = type.create(Minecraft.getInstance().level, EntitySpawnReason.TRIGGERED);
+            }
+        }
 
         int sectionPageCount = sectionPages.size();
 
@@ -507,12 +549,16 @@ public class BookScreen extends ScreenHelper {
                 if (friendship < 0) titleColor = 0xFFFF3A3A;
                 else if (friendship > 0) titleColor = 0xFF2ECC40;
                 int availNameW = (int)Math.floor(PAGE_CONTENT_W / 1.12f);
+                if (detailEntity.death != null) availNameW -= this.font.width("RIP: ");
                 displayName = this.font.plainSubstrByWidth(displayName, availNameW);
+                Component comp = detailEntity.death != null
+                        ? Component.literal("RIP: ").append(Component.literal(displayName).withStyle(Style.EMPTY.withStrikethrough(true)))
+                        : Component.literal(displayName);
                 PoseHelper.push(ctx.pose());
                 PoseHelper.translate(ctx.pose(), (float)x, (float)y);
                 PoseHelper.scale(ctx.pose(), 1.12f, 1.12f);
-                ctx.drawString(this.font, displayName, 1, 1, 0x66000000, false);
-                ctx.drawString(this.font, displayName, 0, 0, titleColor, false);
+                ctx.drawString(this.font, comp, 1, 1, 0x66000000, false);
+                ctx.drawString(this.font, comp, 0, 0, titleColor, false);
                 PoseHelper.pop(ctx.pose());
                 lineY = y + Math.round(this.font.lineHeight * 1.12f) + 6;
                 if (entity != null) drawEntityIcon(ctx, entity, x, lineY);
@@ -549,7 +595,8 @@ public class BookScreen extends ScreenHelper {
 
     private int renderMessagesPage(net.minecraft.client.gui.GuiGraphics ctx, int x, int startY, List<ChatMessage> msgs) {
         int lineY = startY;
-        ctx.drawString(this.font, "Recent Messages", x, lineY, LABEL_COLOR, false);
+        String header = detailEntity != null && detailEntity.death != null ? "Last Words" : "Recent Messages";
+        ctx.drawString(this.font, header, x, lineY, LABEL_COLOR, false);
         lineY += this.font.lineHeight + 2;
         for (ChatMessage m : msgs) {
             String speaker = m.sender == ChatDataManager.ChatSender.USER ? "You" : resolveName(detailEntity);
