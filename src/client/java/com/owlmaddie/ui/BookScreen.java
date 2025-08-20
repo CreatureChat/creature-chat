@@ -13,15 +13,17 @@ import com.owlmaddie.render.PoseHelper;
 import com.owlmaddie.render.RenderPipelineHelper;
 import com.owlmaddie.utils.ClientEntityFinder;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Screen that displays a two-page log of recently chatted entities.
@@ -30,11 +32,20 @@ public class BookScreen extends ScreenHelper {
     private static final int BOOK_WIDTH = 300;
     private static final int BOOK_HEIGHT = 200;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+
     private int index;
-    private final List<EntityChatData> ordered;
-    private Button prevButton;
-    private Button nextButton;
+    private final List<EntityChatData> all;
+    private List<EntityChatData> ordered;
     private EditBox dummyField;
+    private EditBox searchField;
+    private boolean searchVisible;
+    private boolean prevActive;
+    private boolean nextActive;
+    private static final int PREV_X = 29,  PREV_Y = 156, PREV_W = 14, PREV_H = 12;
+    private static final int NEXT_X = 257, NEXT_Y = 156, NEXT_W = 14, NEXT_H = 12;
+    private static final int SEARCH_BTN_X = 10, SEARCH_BTN_Y = 9,  SEARCH_BTN_W = 31, SEARCH_BTN_H = 21;
+    private static final int CLOSE_X = 259, CLOSE_Y = 9,  CLOSE_W = 30, CLOSE_H = 22;
     private static final int PAGE_CONTENT_W = 120;   // width of text block per page
     private static final int PAGE_CONTENT_H = 120;   // height of text block (for scissor)
     private static final int LABEL_COLOR    = 0xFF6B4A3B; // warm brown, matches book UI
@@ -45,7 +56,7 @@ public class BookScreen extends ScreenHelper {
     public BookScreen() {
         super(Component.literal("Creature Log"));
         ChatDataManager mgr = ChatDataManager.getClientInstance();
-        ordered = mgr.entityChatDataMap.values().stream()
+        all = mgr.entityChatDataMap.values().stream()
                 .filter(data -> {
                     String nameText = resolveName(data);
                     boolean hasName = nameText != null && !nameText.isBlank();
@@ -53,7 +64,8 @@ public class BookScreen extends ScreenHelper {
                     return hasName && hasMsg;
                 })
                 .sorted(Comparator.comparingLong(BookScreen::getLastInteraction).reversed())
-                .toList();
+                .collect(Collectors.toList());
+        ordered = new ArrayList<>(all);
     }
 
     private String resolveName(EntityChatData data) {
@@ -97,54 +109,90 @@ public class BookScreen extends ScreenHelper {
 
         dummyField = new EditBox(font, bgX, bgY, 0, 0, Component.empty());
 
-        prevButton = ButtonHelper.createImageButton(
-                bgX + 29, bgY + 155,
-                14, 14,
-                textures.GetUI("arrow-left"),
-                textures.GetUI("arrow-left"),
-                b -> {
-                    index = Math.max(0, index - 2);
-                    updateButtons();
-                    requestDataForCurrentPages();
-                },
-                button -> Component.empty()
-        );
+        searchField = new EditBox(font, bgX + 46, bgY + 9, 208, 21, Component.empty());
+        searchField.visible = false;
+        searchField.active = false;
+        searchField.setResponder(text -> {
+            if (searchVisible) onSearchChanged(text);
+        });
 
-        nextButton = ButtonHelper.createImageButton(
-                bgX + 257, bgY + 155,
-                14, 14,
-                textures.GetUI("arrow-right"),
-                textures.GetUI("arrow-right"),
-                b -> {
-                    index = Math.min(ordered.size(), index + 2);
-                    updateButtons();
-                    requestDataForCurrentPages();
-                },
-                button -> Component.empty()
-        );
-
-        addRenderableWidget(prevButton);
-        addRenderableWidget(nextButton);
+        addRenderableWidget(searchField);
         updateButtons();
         requestDataForCurrentPages();
     }
 
     private void updateButtons() {
-        prevButton.active = index > 0;
-        nextButton.active = index + 2 < ordered.size();
+        prevActive = index > 0;
+        nextActive = index + 2 < ordered.size();
+    }
+
+    private boolean inside(double mx, double my, int x, int y, int w, int h) {
+        return mx >= x && mx <= x + w && my >= y && my <= y + h;
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (prevButton.active && prevButton.isMouseOver(mouseX, mouseY)) {
-            prevButton.onPress();
-            return true;
-        }
-        if (nextButton.active && nextButton.isMouseOver(mouseX, mouseY)) {
-            nextButton.onPress();
-            return true;
+        if (button == 0) {
+            if (prevActive && inside(mouseX, mouseY, bgX + PREV_X, bgY + PREV_Y, PREV_W, PREV_H)) {
+                index = Math.max(0, index - 2);
+                updateButtons();
+                requestDataForCurrentPages();
+                LOGGER.info("BookScreen: previous page index={}", index);
+                return true;
+            }
+            if (nextActive && inside(mouseX, mouseY, bgX + NEXT_X, bgY + NEXT_Y, NEXT_W, NEXT_H)) {
+                index = Math.min(ordered.size(), index + 2);
+                updateButtons();
+                requestDataForCurrentPages();
+                LOGGER.info("BookScreen: next page index={}", index);
+                return true;
+            }
+            if (inside(mouseX, mouseY, bgX + SEARCH_BTN_X, bgY + SEARCH_BTN_Y, SEARCH_BTN_W, SEARCH_BTN_H)) {
+                toggleSearch();
+                return true;
+            }
+            if (inside(mouseX, mouseY, bgX + CLOSE_X, bgY + CLOSE_Y, CLOSE_W, CLOSE_H)) {
+                LOGGER.info("BookScreen: close button pressed");
+                onClose();
+                return true;
+            }
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private void toggleSearch() {
+        searchVisible = !searchVisible;
+        searchField.visible = searchVisible;
+        searchField.active = searchVisible;
+        searchField.setFocused(searchVisible);
+        if (searchVisible) {
+            setFocused(searchField);
+            setInitialFocus(searchField);
+            searchField.setCursorPosition(searchField.getValue().length());
+            LOGGER.info("BookScreen: search opened and focused");
+        } else {
+            setFocused(null);
+            searchField.setValue("");
+            ordered = new ArrayList<>(all);
+            index = 0;
+            updateButtons();
+            requestDataForCurrentPages();
+            LOGGER.info("BookScreen: search closed");
+        }
+    }
+
+    private void onSearchChanged(String text) {
+        String q = text.toLowerCase(Locale.ROOT);
+        ordered = all.stream()
+                .filter(d -> {
+                    String n = resolveName(d);
+                    return n != null && n.toLowerCase(Locale.ROOT).contains(q);
+                })
+                .collect(Collectors.toList());
+        index = 0;
+        updateButtons();
+        requestDataForCurrentPages();
+        LOGGER.info("BookScreen: search '{}' results={}", q, ordered.size());
     }
 
     @Override
