@@ -3,11 +3,9 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.buildrec;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
-import com.google.gson.stream.JsonReader;
-import com.owlmaddie.buildrec.MobHelper;
+import com.owlmaddie.buildrec.BuildRecordIO.Action;
+import com.owlmaddie.buildrec.BuildRecordIO.Meta;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
@@ -20,16 +18,16 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
@@ -37,21 +35,18 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /**
  * Utility to record and replay player build actions.
  */
 public class BuildRecorder {
-    private static final Gson GSON = new Gson();
     private static final Map<UUID, Recording> RECORDINGS = new ConcurrentHashMap<>();
     private static final List<Replay> REPLAYS = new ArrayList<>();
     private static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
@@ -132,29 +127,14 @@ public class BuildRecorder {
             LOGGER.info("[BuildRec] replay missing file={}", file);
             return false;
         }
-        try (JsonReader reader = new JsonReader(new InputStreamReader(new GZIPInputStream(Files.newInputStream(file)), StandardCharsets.UTF_8))) {
-            List<Action> actions = new ArrayList<>();
-            reader.beginArray();
-            JsonElement first = GSON.fromJson(reader, JsonElement.class);
-            RecordingMeta meta;
-            if (first != null && first.isJsonObject() && first.getAsJsonObject().has("action") && "meta".equals(first.getAsJsonObject().get("action").getAsString())) {
-                meta = GSON.fromJson(first, RecordingMeta.class);
-            } else {
-                meta = new RecordingMeta();
-                if (first != null) {
-                    Action firstAction = GSON.fromJson(first, Action.class);
-                    if (firstAction != null) actions.add(firstAction);
-                }
-            }
-            while (reader.hasNext()) {
-                Action a = GSON.fromJson(reader, Action.class);
-                if (a != null) actions.add(a);
-            }
-            reader.endArray();
+        try {
+            BuildRecordIO.Loaded loaded = BuildRecordIO.read(file);
+            List<Action> actions = loaded.actions;
             if (actions.isEmpty()) {
                 LOGGER.info("[BuildRec] replay file={} has no actions", file);
                 return false;
             }
+            Meta meta = loaded.meta;
             double recEye = meta.eyeHeight > 0 ? meta.eyeHeight : player.getEyeHeight();
             double recWidth = meta.bbWidth;
             double recHeight = meta.bbHeight;
@@ -520,10 +500,10 @@ public class BuildRecorder {
 
             try (BufferedWriter w = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(file)), StandardCharsets.UTF_8))) {
                 w.write("[\n");
-                w.write(GSON.toJson(new RecordingMeta(eyeHeight, bbWidth, bbHeight, recipe, recipe.size(), sizeX, sizeY, sizeZ)));
+                w.write(BuildRecordIO.GSON.toJson(new Meta(eyeHeight, bbWidth, bbHeight, recipe, recipe.size(), sizeX, sizeY, sizeZ)));
                 for (Action a : actions) {
                     w.write(",\n");
-                    w.write(GSON.toJson(a));
+                    w.write(BuildRecordIO.GSON.toJson(a));
                 }
                 w.write("\n]");
             } catch (IOException e) {
@@ -568,40 +548,5 @@ public class BuildRecorder {
         }
     }
 
-    private static class RecordingMeta {
-        String action = "meta";
-        double eyeHeight;
-        double bbWidth;
-        double bbHeight;
-        Map<String, Integer> recipe = new LinkedHashMap<>();
-        int uniqueBlocks;
-        int sizeX;
-        int sizeY;
-        int sizeZ;
-
-        RecordingMeta() {}
-
-        RecordingMeta(double eyeHeight, double bbWidth, double bbHeight,
-                      Map<String, Integer> recipe, int uniqueBlocks,
-                      int sizeX, int sizeY, int sizeZ) {
-            this.eyeHeight = eyeHeight;
-            this.bbWidth = bbWidth;
-            this.bbHeight = bbHeight;
-            this.recipe = recipe;
-            this.uniqueBlocks = uniqueBlocks;
-            this.sizeX = sizeX;
-            this.sizeY = sizeY;
-            this.sizeZ = sizeZ;
-        }
-    }
-
-    private static class Action {
-        String action;
-        int stateId;
-        int bx, by, bz;
-        int dt;
-        double px, py, pz;
-        float yaw, pitch;
-    }
 }
 
