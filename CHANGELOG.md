@@ -12,6 +12,8 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - Spawns any entity type to replay build
   - Replay speeds can be adjusted (any integer, but defaults to 1X - the original speed)
   - Replay adjusts eye height (line of sight) so entities look at the same place as the player
+  - Record / Stop commands toggle (depending on if recording or not)
+  - Build types and folders are automatically managed now (type and build height: i.e. 1 block tall builds (bee) vs 3 block tall builds (enderman))
 
 ## Unreleased
 

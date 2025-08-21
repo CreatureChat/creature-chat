@@ -92,14 +92,19 @@ public class BuildRecorder {
         // Ensure static initializer runs
     }
 
-    public static boolean start(ServerPlayer player, String name) {
+    public static boolean start(ServerPlayer player, String type, String height, String name) {
         if (RECORDINGS.containsKey(player.getUUID())) {
             LOGGER.info("[BuildRec] start ignored already recording player={}", player.getGameProfile().getName());
             return false;
         }
-        RECORDINGS.put(player.getUUID(), new Recording(player, name));
-        LOGGER.info("[BuildRec] start name={} player={}", name, player.getGameProfile().getName());
+        RECORDINGS.put(player.getUUID(), new Recording(player, type, height, name));
+        LOGGER.info("[BuildRec] start type={} height={} name={} player={}", type, height, name, player.getGameProfile().getName());
+        player.getServer().getCommands().sendCommands(player);
         return true;
+    }
+
+    public static boolean isRecording(ServerPlayer player) {
+        return RECORDINGS.containsKey(player.getUUID());
     }
 
     public static Summary stop(ServerPlayer player) {
@@ -109,13 +114,15 @@ public class BuildRecorder {
             return null;
         }
         Summary summary = rec.finish(player);
-        LOGGER.info("[BuildRec] stop player={} file={} total={} additions={} destroys={}",
-                player.getGameProfile().getName(), summary.id, summary.total, summary.additions, summary.destroys);
+        LOGGER.info("[BuildRec] stop player={} file={} placed={} destroys={} unique={} size={}x{}x{}",
+                player.getGameProfile().getName(), summary.id, summary.finalBlocks, summary.destroys, summary.uniqueBlocks,
+                summary.sizeX, summary.sizeZ, summary.sizeY);
+        player.getServer().getCommands().sendCommands(player);
         return summary;
     }
 
     public static boolean startReplay(ServerPlayer player, String fileName, EntityType<? extends Mob> entityType, int speed) {
-        Path dir = buildDir();
+        Path dir = buildRootDir();
         String actual = fileName.endsWith(".json.gz") ? fileName : fileName + ".json.gz";
         Path file = dir.resolve(actual);
         LOGGER.info("[BuildRec] replay file={} entity={} speed={} player={}", actual,
@@ -339,8 +346,20 @@ public class BuildRecorder {
         }
     }
 
-    private static Path buildDir() {
+    private static Path buildRootDir() {
         Path dir = FabricLoader.getInstance().getConfigDir().resolve("creaturechat").resolve("builds");
+        try {
+            Files.createDirectories(dir);
+        } catch (IOException ignored) {
+        }
+        return dir;
+    }
+
+    private static Path buildDir(String type, String height) {
+        Path dir = buildRootDir().resolve(type);
+        if (height != null && !height.equalsIgnoreCase("any")) {
+            dir = dir.resolve(height);
+        }
         try {
             Files.createDirectories(dir);
         } catch (IOException ignored) {
@@ -355,19 +374,36 @@ public class BuildRecorder {
         public final int total;
         public final int additions;
         public final int destroys;
+        public final Map<String, Integer> recipe;
+        public final int uniqueBlocks;
+        public final int sizeX;
+        public final int sizeY;
+        public final int sizeZ;
+        public final int finalBlocks;
 
-        public Summary(String id, int total, int additions, int destroys) {
+        public Summary(String id, int total, int additions, int destroys,
+                       Map<String, Integer> recipe, int uniqueBlocks,
+                       int sizeX, int sizeY, int sizeZ, int finalBlocks) {
             this.id = id;
             this.total = total;
             this.additions = additions;
             this.destroys = destroys;
+            this.recipe = recipe;
+            this.uniqueBlocks = uniqueBlocks;
+            this.sizeX = sizeX;
+            this.sizeY = sizeY;
+            this.sizeZ = sizeZ;
+            this.finalBlocks = finalBlocks;
         }
     }
 
     private static class Recording {
         final int ox, oy, oz;
         final List<Action> actions = new ArrayList<>();
+        final Map<BlockPos, BlockState> finalBlocks = new HashMap<>();
         final String name;
+        final String type;
+        final String height;
         final double eyeHeight;
         final double bbWidth;
         final double bbHeight;
@@ -379,8 +415,10 @@ public class BuildRecorder {
         float lastYaw, lastPitch;
         boolean poseInit = false;
 
-        Recording(ServerPlayer player, String name) {
+        Recording(ServerPlayer player, String type, String height, String name) {
             this.name = name;
+            this.type = type;
+            this.height = height;
             BlockPos p = player.blockPosition();
             this.ox = p.getX();
             this.oy = p.getY();
@@ -440,27 +478,61 @@ public class BuildRecorder {
             a.yaw = yaw;
             a.pitch = pitch;
             actions.add(a);
-            if ("place".equals(type)) additions++;
-            else if ("break".equals(type)) destroys++;
+            BlockPos rel = new BlockPos(a.bx, a.by, a.bz);
+            if ("place".equals(type)) {
+                additions++;
+                finalBlocks.put(rel, state);
+            } else if ("break".equals(type)) {
+                destroys++;
+                finalBlocks.remove(rel);
+            }
         }
-
         Summary save() {
             String base = (name == null || name.isBlank()) ? UUID.randomUUID().toString().split("-")[0] : name.replaceAll("[^a-zA-Z0-9-_]", "_");
-            String id = base + ".json.gz";
-            Path file = buildDir().resolve(id);
+            String fileName = base + ".json.gz";
+            Path file = buildDir(type, height).resolve(fileName);
+
+            Map<String, Integer> recipe = new LinkedHashMap<>();
+            int minX = 0, minY = 0, minZ = 0, maxX = 0, maxY = 0, maxZ = 0;
+            boolean first = true;
+            for (Map.Entry<BlockPos, BlockState> e : finalBlocks.entrySet()) {
+                BlockPos p = e.getKey();
+                BlockState st = e.getValue();
+                String name = BuiltInRegistries.BLOCK.getKey(st.getBlock()).getPath();
+                recipe.merge(name, 1, Integer::sum);
+                if (first) {
+                    minX = maxX = p.getX();
+                    minY = maxY = p.getY();
+                    minZ = maxZ = p.getZ();
+                    first = false;
+                } else {
+                    if (p.getX() < minX) minX = p.getX();
+                    if (p.getX() > maxX) maxX = p.getX();
+                    if (p.getY() < minY) minY = p.getY();
+                    if (p.getY() > maxY) maxY = p.getY();
+                    if (p.getZ() < minZ) minZ = p.getZ();
+                    if (p.getZ() > maxZ) maxZ = p.getZ();
+                }
+            }
+            int sizeX = first ? 0 : (maxX - minX + 1);
+            int sizeY = first ? 0 : (maxY - minY + 1);
+            int sizeZ = first ? 0 : (maxZ - minZ + 1);
+
             try (BufferedWriter w = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(file)), StandardCharsets.UTF_8))) {
                 w.write("[\n");
-                w.write(GSON.toJson(new RecordingMeta(eyeHeight, bbWidth, bbHeight)));
+                w.write(GSON.toJson(new RecordingMeta(eyeHeight, bbWidth, bbHeight, recipe, recipe.size(), sizeX, sizeY, sizeZ)));
                 for (Action a : actions) {
                     w.write(",\n");
                     w.write(GSON.toJson(a));
                 }
                 w.write("\n]");
             } catch (IOException e) {
-                LOGGER.error("[BuildRec] save failed file={}", id, e);
+                LOGGER.error("[BuildRec] save failed file={}", fileName, e);
             }
-            LOGGER.info("[BuildRec] save file={} actions={} additions={} destroys={}", id, actions.size(), additions, destroys);
-            return new Summary(id, actions.size(), additions, destroys);
+            LOGGER.info("[BuildRec] save file={} actions={} additions={} destroys={}", fileName, actions.size(), additions, destroys);
+            String rel = buildRootDir().relativize(file).toString().replace('\\', '/');
+            int finalCount = finalBlocks.size();
+            return new Summary(rel, actions.size(), additions, destroys, recipe, recipe.size(), sizeX, sizeY, sizeZ, finalCount);
         }
 
         Summary finish(ServerPlayer player) {
@@ -501,13 +573,25 @@ public class BuildRecorder {
         double eyeHeight;
         double bbWidth;
         double bbHeight;
+        Map<String, Integer> recipe = new LinkedHashMap<>();
+        int uniqueBlocks;
+        int sizeX;
+        int sizeY;
+        int sizeZ;
 
         RecordingMeta() {}
 
-        RecordingMeta(double eyeHeight, double bbWidth, double bbHeight) {
+        RecordingMeta(double eyeHeight, double bbWidth, double bbHeight,
+                      Map<String, Integer> recipe, int uniqueBlocks,
+                      int sizeX, int sizeY, int sizeZ) {
             this.eyeHeight = eyeHeight;
             this.bbWidth = bbWidth;
             this.bbHeight = bbHeight;
+            this.recipe = recipe;
+            this.uniqueBlocks = uniqueBlocks;
+            this.sizeX = sizeX;
+            this.sizeY = sizeY;
+            this.sizeZ = sizeZ;
         }
     }
 

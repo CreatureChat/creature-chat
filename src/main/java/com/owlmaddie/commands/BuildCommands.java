@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -43,29 +44,40 @@ public class BuildCommands {
     public static void register() {
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
-            dispatcher.register(Commands.literal("creaturechat")
-                    .then(Commands.literal("buildrec")
-                            .then(Commands.literal("start")
-                                    .executes(ctx -> start(ctx, null))
-                                    .then(Commands.argument("name", StringArgumentType.string())
-                                            .executes(ctx -> start(ctx, StringArgumentType.getString(ctx, "name")))))
-                            .then(Commands.literal("stop")
-                                    .executes(BuildCommands::stop))
-                            .then(Commands.literal("replay")
-                                    .then(Commands.argument("id", StringArgumentType.string())
-                                            .suggests(BuildCommands::suggest)
-                                            .then(Commands.argument("entity", ResourceLocationArgument.id())
-                                                    .suggests((c, b) -> SharedSuggestionProvider.suggestResource(getLivingEntityIds(), b))
-                                                    .executes(ctx -> replay(ctx, ResourceLocationArgument.getId(ctx, "entity"), 1))
-                                                    .then(Commands.argument("speed", IntegerArgumentType.integer(1, 32))
-                                                            .executes(ctx -> replay(ctx, ResourceLocationArgument.getId(ctx, "entity"), IntegerArgumentType.getInteger(ctx, "speed")))))))));
+            dispatcher.register(
+                    Commands.literal("creaturechat")
+                            .then(Commands.literal("build")
+                                    .then(Commands.literal("record")
+                                            .requires(src -> src.getEntity() instanceof ServerPlayer sp && !BuildRecorder.isRecording(sp))
+                                            .then(Commands.argument("type", StringArgumentType.word())
+                                                    .suggests((c, b) -> SharedSuggestionProvider.suggest(Arrays.asList("house", "statue", "pond", "garden", "farm", "castle", "mine", "trap", "campfire"), b))
+                                                    .then(Commands.argument("height", StringArgumentType.word())
+                                                            .suggests((c, b) -> SharedSuggestionProvider.suggest(Arrays.asList("Any", "1", "2", "3", "4"), b))
+                                                            .then(Commands.argument("name", StringArgumentType.string())
+                                                                    .executes(ctx -> record(ctx,
+                                                                            StringArgumentType.getString(ctx, "type"),
+                                                                            StringArgumentType.getString(ctx, "height"),
+                                                                            StringArgumentType.getString(ctx, "name")))))))
+                                    .then(Commands.literal("stop")
+                                            .requires(src -> src.getEntity() instanceof ServerPlayer sp && BuildRecorder.isRecording(sp))
+                                            .executes(BuildCommands::stop))
+                                    .then(Commands.literal("replay")
+                                            .then(Commands.argument("id", StringArgumentType.string())
+                                                    .suggests(BuildCommands::suggest)
+                                                    .then(Commands.argument("entity", ResourceLocationArgument.id())
+                                                            .suggests((c, b) -> SharedSuggestionProvider.suggestResource(getLivingEntityIds(), b))
+                                                            .executes(ctx -> replay(ctx, ResourceLocationArgument.getId(ctx, "entity"), 1))
+                                                            .then(Commands.argument("speed", IntegerArgumentType.integer(1, 32))
+                                                                    .executes(ctx -> replay(ctx, ResourceLocationArgument.getId(ctx, "entity"), IntegerArgumentType.getInteger(ctx, "speed"))))))))
+            );
         });
     }
 
-    private static int start(CommandContext<CommandSourceStack> context, String name) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+    private static int record(CommandContext<CommandSourceStack> context, String type, String height, String name) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        LOGGER.info("[BuildRec] command start player={} name={}", player.getGameProfile().getName(), name);
-        if (BuildRecorder.start(player, name)) {
+        LOGGER.info("[BuildRec] command record player={} type={} height={} name={}",
+                player.getGameProfile().getName(), type, height, name);
+        if (BuildRecorder.start(player, type, height, name)) {
             context.getSource().sendSuccess(() -> Component.literal("Recording started"), false);
             return 1;
         }
@@ -77,10 +89,16 @@ public class BuildCommands {
         ServerPlayer player = context.getSource().getPlayerOrException();
         Summary s = BuildRecorder.stop(player);
         if (s != null) {
-            Component msg = Component.literal("Saved build " + s.id + ". Blocks: " + s.total + ", additions: " + s.additions + ", destroys: " + s.destroys);
+            String recipeStr = s.recipe.entrySet().stream()
+                    .map(e -> e.getValue() + " " + e.getKey())
+                    .collect(Collectors.joining(", "));
+            Component msg = Component.literal(
+                    recipeStr + " (" + s.uniqueBlocks + " Unique blocks)\n" +
+                    s.sizeX + " length x " + s.sizeZ + " width x " + s.sizeY + " height\n" +
+                    s.finalBlocks + " blocks placed, " + s.destroys + " blocks destroyed\n" +
+                    "Saved build " + s.id);
             context.getSource().sendSuccess(() -> msg, false);
-            LOGGER.info("[BuildRec] command stop player={} file={} total={} additions={} destroys={}",
-                    player.getGameProfile().getName(), s.id, s.total, s.additions, s.destroys);
+            LOGGER.info("[BuildRec] command stop player={} file={} placed={} destroys={} unique={} size={}x{}x{}", player.getGameProfile().getName(), s.id, s.finalBlocks, s.destroys, s.uniqueBlocks, s.sizeX, s.sizeZ, s.sizeY);
             return 1;
         }
         context.getSource().sendSuccess(() -> Component.literal("No active recording").withStyle(ChatFormatting.RED), false);
@@ -90,7 +108,7 @@ public class BuildCommands {
     private static int replay(CommandContext<CommandSourceStack> context, ResourceLocation entityId, int speed) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         int spd = speed;
         ServerPlayer player = context.getSource().getPlayerOrException();
-        String id = StringArgumentType.getString(context, "id");
+        String id = StringArgumentType.getString(context, "id").replace('\\', '/');
         EntityType<? extends Mob> type = null;
         if (entityId != null && !"player".equals(entityId.getPath())) {
             EntityType<?> raw = BuiltInRegistries.ENTITY_TYPE.getOptional(entityId).orElse(null);
@@ -117,8 +135,13 @@ public class BuildCommands {
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         Path dir = FabricLoader.getInstance().getConfigDir().resolve("creaturechat").resolve("builds");
-        try (Stream<Path> stream = Files.list(dir)) {
-            stream.map(p -> p.getFileName().toString().replaceFirst("\\.json\\.gz$", "")).forEach(builder::suggest);
+        try (Stream<Path> stream = Files.walk(dir)) {
+            stream.filter(Files::isRegularFile)
+                    .map(p -> dir.relativize(p)
+                            .toString()
+                            .replaceFirst("\\.json\\.gz$", "")
+                            .replace('\\', '/'))
+                    .forEach(id -> builder.suggest("\"" + id + "\""));
         } catch (Exception ignored) {
         }
         return builder.buildFuture();
