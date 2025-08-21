@@ -14,7 +14,8 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - Dynamic Next/Previous buttons with hover (hidden when no page to turn)
   - Summary pages are displayed first, then Detail pages with more info
   - Improvements to page contents, layout, pagination - and page turn sounds
-  - Integrating entity_type into chat data, and incorporating death into broadcast, login, and book pages
+  - Integrating entityType into chat data, and incorporating death into broadcast, login, and book pages
+  - Adding entityName into chat data, for dead mobs
 
 ## Unreleased
 

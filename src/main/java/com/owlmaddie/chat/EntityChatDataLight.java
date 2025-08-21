@@ -5,7 +5,6 @@ package com.owlmaddie.chat;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * The {@code EntityChatDataLight} class represents the current displayed message, and no
@@ -20,7 +19,8 @@ public class EntityChatDataLight {
     public ChatDataManager.ChatSender sender;
     public Map<String, PlayerData> players;
     public Long death;
-    public String entity_type;
+    public String entityName;
+    public String entityType;
 
     // Constructor to initialize the light version from the full version
     public EntityChatDataLight(EntityChatData fullData, String playerName) {
@@ -30,7 +30,8 @@ public class EntityChatDataLight {
         this.status = fullData.status;
         this.sender = fullData.sender;
         this.death = fullData.death;
-        this.entity_type = fullData.entity_type;
+        this.entityName = fullData.entityName;
+        this.entityType = fullData.entityType;
 
         // Initialize the players map and add only the current player's data
         this.players = new HashMap<>();

@@ -117,6 +117,11 @@ public class BookScreen extends ScreenHelper {
             nameText = entity.getName().getString();
         }
         if (nameText == null || nameText.isBlank()) {
+            if (data.entityName != null && !data.entityName.isBlank()) {
+                nameText = data.entityName;
+            }
+        }
+        if (nameText == null || nameText.isBlank()) {
             String sheetName = data.getCharacterProp("Name");
             if (sheetName != null && !sheetName.isBlank() && !"N/A".equals(sheetName)) {
                 nameText = sheetName;
@@ -472,8 +477,8 @@ public class BookScreen extends ScreenHelper {
             }
             EntityChatData data = ordered.get(idx);
             Entity entity = getEntity(data.entityId);
-            if (entity == null && data.entity_type != null) {
-                EntityType<?> type = EntityType.byString(data.entity_type).orElse(null);
+            if (entity == null && data.entityType != null) {
+                EntityType<?> type = EntityType.byString(data.entityType).orElse(null);
                 if (type != null) {
                     entity = EntityCreationHelper.create(type);
                 }
@@ -528,8 +533,8 @@ public class BookScreen extends ScreenHelper {
         PlayerData pData = detailEntity.getPlayerData(playerName);
         int friendship = pData != null ? pData.friendship : 0;
         Entity entity = getEntity(detailEntity.entityId);
-        if (entity == null && detailEntity.entity_type != null) {
-            EntityType<?> type = EntityType.byString(detailEntity.entity_type).orElse(null);
+        if (entity == null && detailEntity.entityType != null) {
+            EntityType<?> type = EntityType.byString(detailEntity.entityType).orElse(null);
             if (type != null) {
                 entity = EntityCreationHelper.create(type);
             }

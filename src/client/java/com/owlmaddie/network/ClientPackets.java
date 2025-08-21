@@ -238,7 +238,8 @@ public class ClientPackets {
                     existing.previousMessages = data.previousMessages;
                     existing.born = data.born;
                     existing.death = data.death;
-                    existing.entity_type = data.entity_type;
+                    existing.entityType = data.entityType;
+                    existing.entityName = data.entityName;
                 } else {
                     mgr.entityChatDataMap.put(entityId, data);
                 }

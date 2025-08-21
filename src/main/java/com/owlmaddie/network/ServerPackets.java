@@ -210,6 +210,11 @@ public class ServerPackets {
             String entityId = buf.readUtf();
             server.execute(() -> {
                 EntityChatData source = ChatDataManager.getServerInstance().getOrCreateChatData(entityId);
+                Mob entity = (Mob) ServerEntityFinder.getEntityByUUID((ServerLevel) player.level(), UUID.fromString(entityId));
+                if (entity != null) {
+                    source.entityType = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
+                    source.entityName = entity.getDisplayName().getString();
+                }
                 EntityChatData sendData = new EntityChatData(entityId);
                 sendData.currentMessage = source.currentMessage;
                 sendData.currentLineNumber = source.currentLineNumber;
@@ -220,7 +225,8 @@ public class ServerPackets {
                 sendData.previousMessages = source.previousMessages;
                 sendData.born = source.born;
                 sendData.death = source.death;
-                sendData.entity_type = source.entity_type;
+                sendData.entityName = source.entityName;
+                sendData.entityType = source.entityType;
                 String pName = player.getDisplayName().getString();
                 sendData.players.put(pName, source.getPlayerData(pName));
                 Gson gson = new Gson();
@@ -299,9 +305,8 @@ public class ServerPackets {
                 LOGGER.debug("Entity killed (" + entityUUID + "), updating death time stamp.");
                 EntityChatData data = ChatDataManager.getServerInstance().entityChatDataMap.get(entityUUID);
                 data.death = System.currentTimeMillis();
-                if (data.entity_type == null || data.entity_type.isEmpty()) {
-                    data.entity_type = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
-                }
+                data.entityType = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
+                data.entityName = entity.getDisplayName().getString();
                 BroadcastEntityMessage(data);
             }
         });
@@ -342,9 +347,8 @@ public class ServerPackets {
         TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
         EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
 
-        if (chatData.entity_type == null || chatData.entity_type.isEmpty()) {
-            chatData.entity_type = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
-        }
+        chatData.entityType = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
+        chatData.entityName = entity.getDisplayName().getString();
 
         // Grab random adjective
         String randomAdjective = Randomizer.getRandomMessage(Randomizer.RandomType.ADJECTIVE);
@@ -432,6 +436,9 @@ public class ServerPackets {
         // Set talk to player goal (prevent entity from walking off)
         TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
         EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
+
+        chatData.entityType = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
+        chatData.entityName = entity.getDisplayName().getString();
 
         // Add new message
         chatData.generateMessage(userLanguage, player, message, is_auto_message);
