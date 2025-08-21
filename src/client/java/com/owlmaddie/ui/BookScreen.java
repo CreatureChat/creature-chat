@@ -12,6 +12,7 @@ import com.owlmaddie.render.EntityTextureHelper;
 import com.owlmaddie.render.PoseHelper;
 import com.owlmaddie.render.RenderPipelineHelper;
 import com.owlmaddie.utils.ClientEntityFinder;
+import com.owlmaddie.utils.EntityCreationHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Button;
@@ -26,7 +27,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import java.time.Instant;
 import java.time.ZoneId;
-import net.minecraft.world.entity.EntitySpawnReason;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -474,8 +474,8 @@ public class BookScreen extends ScreenHelper {
             Entity entity = getEntity(data.entityId);
             if (entity == null && data.entity_type != null) {
                 EntityType<?> type = EntityType.byString(data.entity_type).orElse(null);
-                if (type != null && Minecraft.getInstance().level != null) {
-                    entity = type.create(Minecraft.getInstance().level, EntitySpawnReason.TRIGGERED);
+                if (type != null) {
+                    entity = EntityCreationHelper.create(type);
                 }
             }
             if (entity != null) {
@@ -530,8 +530,8 @@ public class BookScreen extends ScreenHelper {
         Entity entity = getEntity(detailEntity.entityId);
         if (entity == null && detailEntity.entity_type != null) {
             EntityType<?> type = EntityType.byString(detailEntity.entity_type).orElse(null);
-            if (type != null && Minecraft.getInstance().level != null) {
-                entity = type.create(Minecraft.getInstance().level, EntitySpawnReason.TRIGGERED);
+            if (type != null) {
+                entity = EntityCreationHelper.create(type);
             }
         }
 
