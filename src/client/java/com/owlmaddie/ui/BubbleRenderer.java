@@ -55,7 +55,7 @@ public class BubbleRenderer {
     public static long lastTick = 0;
     public static int light = 15728880;
     public static int overlay = OverlayTexture.NO_OVERLAY;
-    private static final float TEXT_Z_OFFSET = -0.005F;
+    private static final float TEXT_Z_OFFSET = -0.05F;
     public static List<String> whitelist = new ArrayList<>();
     public static List<String> blacklist = new ArrayList<>();
     private static int queryEntityDataCount = 0;
