@@ -17,6 +17,7 @@ import net.minecraft.advancements.critereon.ImpossibleTrigger;
 import net.minecraft.core.ClientAsset;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import com.owlmaddie.chat.Advancements;
 
@@ -47,7 +48,9 @@ public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
 
         AdvancementHolder parent = adv.parent == null ? null : build(out, adv.parent, built);
 
-        Optional<ClientAsset> bg = adv.background == null ? Optional.empty() : Optional.of(new ClientAsset(adv.background));
+        ResourceLocation bgLoc = adv.background;
+
+        Optional<ClientAsset> bg = bgLoc == null ? Optional.empty() : Optional.of(new ClientAsset(bgLoc));
 
         DisplayInfo display = new DisplayInfo(
                 new ItemStack(adv.icon),

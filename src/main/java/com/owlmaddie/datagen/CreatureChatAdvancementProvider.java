@@ -12,8 +12,10 @@ import net.minecraft.advancements.FrameType;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.advancements.critereon.ImpossibleTrigger;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import com.owlmaddie.chat.Advancements;
+import com.owlmaddie.utils.AdvancementBackgroundHelper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,11 +41,13 @@ public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
 
         Advancement parent = adv.parent == null ? null : build(out, adv.parent, built);
 
+        ResourceLocation bg = AdvancementBackgroundHelper.prependTextures(adv.background);
+
         DisplayInfo display = new DisplayInfo(
                 new ItemStack(adv.icon),
                 Component.literal(adv.title),
                 Component.literal(adv.description),
-                adv.background,
+                bg,
                 toFrameType(adv.type),
                 true,
                 true,

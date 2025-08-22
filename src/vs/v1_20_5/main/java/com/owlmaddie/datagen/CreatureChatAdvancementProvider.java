@@ -19,6 +19,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import com.owlmaddie.chat.Advancements;
+import com.owlmaddie.utils.AdvancementBackgroundHelper;
 
 import java.util.Optional;
 import java.util.HashMap;
@@ -47,9 +48,9 @@ public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
 
         AdvancementHolder parent = adv.parent == null ? null : build(out, adv.parent, built);
 
-        Optional<ResourceLocation> bg = adv.background == null
-                ? Optional.empty()
-                : Optional.of(adv.background);
+        ResourceLocation bgLoc = AdvancementBackgroundHelper.prependTextures(adv.background);
+
+        Optional<ResourceLocation> bg = bgLoc == null ? Optional.empty() : Optional.of(bgLoc);
 
         DisplayInfo display = new DisplayInfo(
                 new ItemStack(adv.icon),

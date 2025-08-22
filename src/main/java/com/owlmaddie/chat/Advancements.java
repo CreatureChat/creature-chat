@@ -7,6 +7,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 
+import com.owlmaddie.utils.AdvancementBackgroundHelper;
+
 /**
  * Central registry for all CreatureChat advancements.
  * Provides a single source of truth for IDs, titles, descriptions and types
@@ -15,7 +17,8 @@ import net.minecraft.world.item.Items;
  */
 public enum Advancements {
     ROOT("root", "CreatureChat", "Talk to mobs. Make friends. Start drama.", Type.TASK,
-            Items.BOOK, null, 0, false, new ResourceLocation("minecraft", "block/diamond_block")),
+            Items.BOOK, null, 0, false,
+            AdvancementBackgroundHelper.ui("text-top-friend")),
 
     ICE_BREAKER("ice_breaker", "Ice Breaker", "Send at least 2 player messages to the same mob.", Type.TASK,
             Items.WRITABLE_BOOK, ROOT, 0, false),
