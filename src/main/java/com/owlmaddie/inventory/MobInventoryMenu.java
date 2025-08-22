@@ -214,7 +214,7 @@ public class MobInventoryMenu extends AbstractContainerMenu {
                     AdvancementHelper.checkSharedStash(serverPlayer);
                 }
                 if (handChanged && pd.friendship == 3) {
-                    AdvancementHelper.dressedToKill(serverPlayer);
+                    AdvancementHelper.sleightOfHand(serverPlayer);
                 }
                 if (mob.getType() == net.minecraft.world.entity.EntityType.PIG && pd.friendship == 3 && pd.pigProtect && finalOff.getItem() == Items.GOLDEN_HELMET) {
                     AdvancementHelper.hailToTheKing(serverPlayer);

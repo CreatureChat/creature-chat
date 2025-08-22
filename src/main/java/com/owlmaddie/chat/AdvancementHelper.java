@@ -120,7 +120,7 @@ public class AdvancementHelper {
             award(player, Advancements.GRAND_GESTURE.id);
         }
         if (entity instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon && newFriendship == 3) {
-            award(player, Advancements.LOVE_CONQUERS_ALL.id);
+            award(player, Advancements.TRUE_PACIFIST.id);
         }
         if (newFriendship < 0) {
             data.wordsmithActive = true;
@@ -222,8 +222,8 @@ public class AdvancementHelper {
         award(player, Advancements.OPEN_SESAME.id);
     }
 
-    public static void dressedToKill(ServerPlayer player) {
-        award(player, Advancements.DRESSED_TO_KILL.id);
+    public static void sleightOfHand(ServerPlayer player) {
+        award(player, Advancements.SLEIGHT_OF_HAND.id);
     }
 
     public static void guidedTour(ServerPlayer player) {

@@ -8,35 +8,35 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ### Added
 - Initial Advancements for CreatureChat
-  - **Ice Breaker** — Start your first real chat with a mob
-      - **First Impressions** — Friendship rises above neutral
-          - **Open Sesame** — Unlock a mob’s inventory
-              - **Shared Stash** — Add items to 5 mobs’ inventories
-          - **Tag Along** — Get a mob to FOLLOW you
-              - **Lead the Way** — Get a mob to LEAD you
-                  - **Backseat Driver** — Same mob FOLLOWs and LEADs
-                  - **Guided Tour** — Complete a 64+ block LEAD journey
-          - **Calm the Storm** — Stop a mob from ATTACKing
-          - **Do Not Run** — Stop a mob from FLEEing
-          - **Bodyguard Detail** — Mob enters PROTECT mode
-          - **True Companion** — Reach max friendship (3)
-              - **Dressed to Kill** — Change mob’s main/offhand
-              - **Inner Circle** — 5 nearby mobs at high friendship
-                  - **Popular Opinion** — 10 nearby mobs at high friendship
-              - **Finder’s Keepers** — Take item at exactly 3
-              - **Love Conquers All** — Befriend the Ender Dragon
-              - **Hail to the King** *(secret)* — Pig crowned protector
-              - **Potato Pact** *(secret)* — Pig follows with all potatoes
-          - **Social Butterfly** — Befriend 10 different mob types
-          - **Drama Llama** — Swing from friend to enemy
-              - **Love Hate Relationship** — Flip friendship sign 4 times
-      - **No Hard Feelings** — Restore friendship to pre-attack level
-          - **Wordsmith** — From negative to max using chat only
-          - **Arch Nemesis** — Drive a mob to –3
-              - **Friend or Foe** — Same mob reaches both extremes
-      - **Long Conversation** — 50+ messages with one mob, no falling out
-      - **Grand Gesture** — One action grants +2 or more friendship
-
+  1. **CreatureChat**: Talk to mobs. Make friends. Start drama.
+  2. **Ice Breaker**: How's the weather...I guess?
+  3. **First Impressions**: Make a friend.
+  4. **No Hard Feelings**: Regain a friend after exchanging blows.
+  5. **Open Sesame**: Check out a friend's inventory.
+  6. **Tag Along**: Follow me bro.
+  7. **Lead The Way**: Where are we going anyway?
+  8. **Calm The Storm**: Talk them down.
+  9. **Do Not Run**: Stay. It’s okay.
+  10. **Bodyguard Detail**: I’ve got backup.
+  11. **Wordsmith**: Words only. From rocky start to best friends.
+  12. **True Companion**: Best friends forever.
+  13. **Sleight of Hand**: Gear swaps hands at max friendship.
+  14. **Shared Stash**: Share the loot around.
+  15. **Social Butterfly**: A little trust in many places.
+  16. **Inner Circle**: A cozy crowd of close friends.
+  17. **Popular Opinion**: The whole room leans your way.
+  18. **Drama Llama**: Best friends for never.
+  19. **Love Hate Relationship**: Flip the vibe. Again and again.
+  20. **Arch Nemesis**: Meet your worst enemy.
+  21. **Friend Or Foe**: Same mob. Both endings.
+  22. **Finder’s Keepers**: "Borrow" an item from your best friend.
+  23. **Guided Tour**: A long walk.
+  24. **Long Conversation**: 50 messages. Still talking.
+  25. **Grand Gesture**: One move. Big leap.
+  26. **Backseat Driver**: Trade the lead. Then trade it back.
+  27. **Hail to the King**: Crown a loyal hog.
+  28. **Potato Pact**: Three potatoes and a promise.
+  29. **True Pacifist**: Love conquers all.
 
 
 ## Unreleased
