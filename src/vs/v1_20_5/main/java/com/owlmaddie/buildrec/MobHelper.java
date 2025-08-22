@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
 
 /** Utility methods for creating mob instances across versions. */
 public class MobHelper {
@@ -22,8 +23,7 @@ public class MobHelper {
                 level,
                 level.getCurrentDifficultyAt(mob.blockPosition()),
                 MobSpawnType.COMMAND,
-                null,
-                null
+                (SpawnGroupData) null
             );
         }
     }
