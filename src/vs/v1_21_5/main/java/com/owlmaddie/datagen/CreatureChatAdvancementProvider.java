@@ -14,11 +14,11 @@ import net.minecraft.advancements.Criterion;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.advancements.critereon.ImpossibleTrigger;
+import net.minecraft.core.ClientAsset;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import com.owlmaddie.chat.Advancements;
-import net.minecraft.resources.ResourceLocation;
 
 import java.util.Optional;
 import java.util.HashMap;
@@ -47,7 +47,7 @@ public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
 
         AdvancementHolder parent = adv.parent == null ? null : build(out, adv.parent, built);
 
-        Optional<ResourceLocation> bg = Optional.ofNullable(adv.background);
+        Optional<ClientAsset> bg = adv.background == null ? Optional.empty() : Optional.of(new ClientAsset(adv.background));
 
         DisplayInfo display = new DisplayInfo(
                 new ItemStack(adv.icon),
@@ -90,6 +90,6 @@ public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
 
     @Override
     public String getName() {
-        return "CreatureChat Advancements (mojmap 1.21+)";
+        return "CreatureChat Advancements (mojmap 1.21.5+)";
     }
 }

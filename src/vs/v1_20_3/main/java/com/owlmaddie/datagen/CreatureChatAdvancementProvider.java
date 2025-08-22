@@ -9,31 +9,28 @@ import net.fabricmc.fabric.api.datagen.v1.provider.FabricAdvancementProvider;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementRewards;
-import net.minecraft.advancements.AdvancementType;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.advancements.DisplayInfo;
+import net.minecraft.advancements.AdvancementType;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.advancements.critereon.ImpossibleTrigger;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import com.owlmaddie.chat.Advancements;
-import net.minecraft.resources.ResourceLocation;
 
-import java.util.Optional;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
-    public CreatureChatAdvancementProvider(FabricDataOutput output,
-                                           CompletableFuture<HolderLookup.Provider> registryLookup) {
-        super(output, registryLookup);
+    public CreatureChatAdvancementProvider(FabricDataOutput output) {
+        super(output);
     }
 
     @Override
-    public void generateAdvancement(HolderLookup.Provider lookup, Consumer<AdvancementHolder> out) {
+    public void generateAdvancement(Consumer<AdvancementHolder> out) {
         Map<Advancements, AdvancementHolder> built = new HashMap<>();
         for (Advancements adv : Advancements.values()) {
             build(out, adv, built);
@@ -47,13 +44,11 @@ public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
 
         AdvancementHolder parent = adv.parent == null ? null : build(out, adv.parent, built);
 
-        Optional<ResourceLocation> bg = Optional.ofNullable(adv.background);
-
         DisplayInfo display = new DisplayInfo(
                 new ItemStack(adv.icon),
                 Component.literal(adv.title),
                 Component.literal(adv.description),
-                bg,
+                Optional.ofNullable(adv.background),
                 toAdvancementType(adv.type),
                 true,
                 true,
@@ -90,6 +85,6 @@ public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
 
     @Override
     public String getName() {
-        return "CreatureChat Advancements (mojmap 1.21+)";
+        return "CreatureChat Advancements (mojmap 1.20.3+)";
     }
 }
