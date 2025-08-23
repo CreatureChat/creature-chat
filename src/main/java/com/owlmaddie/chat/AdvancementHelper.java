@@ -49,7 +49,7 @@ public class AdvancementHelper {
             pd.droppedBelowZero = true;
         }
         if (!pd.droppedBelowZero && pd.conversationCount >= 50) {
-            award(player, Advancements.LONG_CONVERSATION.id);
+            award(player, Advancements.THE_NEVERENDING_STORY.id);
             pd.conversationCount = 0;
             pd.droppedBelowZero = false;
         }
@@ -145,19 +145,15 @@ public class AdvancementHelper {
     }
 
     public static void bodyguard(ServerPlayer player) {
-        award(player, Advancements.BODYGUARD_DETAIL.id);
+        award(player, Advancements.SWORN_OATH.id);
     }
 
     public static void calmTheStorm(ServerPlayer player) {
         award(player, Advancements.CALM_THE_STORM.id);
     }
 
-    public static void doNotRun(ServerPlayer player) {
-        award(player, Advancements.DO_NOT_RUN.id);
-    }
-
-    public static void backseatDriver(ServerPlayer player) {
-        award(player, Advancements.BACKSEAT_DRIVER.id);
+    public static void standYourGround(ServerPlayer player) {
+        award(player, Advancements.STAND_YOUR_GROUND.id);
     }
 
     public static void itemTaken(ServerPlayer player, PlayerData data) {
@@ -230,11 +226,19 @@ public class AdvancementHelper {
         award(player, Advancements.GUIDED_TOUR.id);
     }
 
-    public static void potatoPact(ServerPlayer player) {
-        award(player, Advancements.POTATO_PACT.id);
+    public static void potatoWar(ServerPlayer player) {
+        award(player, Advancements.POTATO_WAR.id);
     }
 
-    public static void hailToTheKing(ServerPlayer player) {
-        award(player, Advancements.HAIL_TO_THE_KING.id);
+    public static void aLegend(ServerPlayer player) {
+        award(player, Advancements.A_LEGEND.id);
+    }
+
+    public static void theHeist(ServerPlayer player) {
+        award(player, Advancements.THE_HEIST.id);
+    }
+
+    public static void enderEscort(ServerPlayer player) {
+        award(player, Advancements.ENDER_ESCORT.id);
     }
 }

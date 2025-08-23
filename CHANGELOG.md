@@ -31,12 +31,13 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   21. **Friend Or Foe**: Same mob. Both endings.
   22. **Finder’s Keepers**: "Borrow" an item from your best friend.
   23. **Guided Tour**: A long walk.
-  24. **Long Conversation**: 50 messages. Still talking.
+  24. **The Neverending Story**: Still talking.
   25. **Grand Gesture**: One move. Big leap.
-  26. **Backseat Driver**: Trade the lead. Then trade it back.
-  27. **Hail to the King**: Crown a loyal hog.
-  28. **Potato Pact**: Three potatoes and a promise.
-  29. **True Pacifist**: Love conquers all.
+  26. **A Legend**: Crown a loyal hog.
+  27. **Potato War**: Every slot filled with potatoes.
+  28. **The Heist**: Steal a diamond from a mob.
+  29. **Ender Escort**: Take a friend to the End.
+  30. **True Pacifist**: Love conquers all.
 
 
 ## Unreleased

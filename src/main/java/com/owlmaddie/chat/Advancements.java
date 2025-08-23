@@ -41,10 +41,10 @@ public enum Advancements {
     CALM_THE_STORM("calm_the_storm", "Calm The Storm", "Stop attacking me bro.", Type.GOAL,
             Items.WHITE_BANNER, FIRST_IMPRESSIONS, 0, false),
 
-    DO_NOT_RUN("do_not_run", "Do Not Run", "Stop. It's okay.", Type.GOAL,
+    STAND_YOUR_GROUND("stand_your_ground", "Stand Your Ground", "Stop. It's okay.", Type.GOAL,
             Items.CARROT_ON_A_STICK, FIRST_IMPRESSIONS, 0, false),
 
-    BODYGUARD_DETAIL("bodyguard_detail", "Bodyguard Detail", "I've got backup.", Type.GOAL,
+    SWORN_OATH("sworn_oath", "Sworn Oath", "I've got backup.", Type.GOAL,
             Items.SHIELD, FIRST_IMPRESSIONS, 0, false),
 
     WORDSMITH("wordsmith", "Wordsmith", "From rocky start to best friends.", Type.CHALLENGE,
@@ -86,23 +86,26 @@ public enum Advancements {
     GUIDED_TOUR("guided_tour", "Guided Tour", "A long walk.", Type.GOAL,
             Items.MAP, LEAD_THE_WAY, 0, false),
 
-    LONG_CONVERSATION("long_conversation", "Long Conversation", "50 messages. Still talking.", Type.GOAL,
+    THE_NEVERENDING_STORY("the_neverending_story", "The Neverending Story", "50 player messages. Still talking.", Type.GOAL,
             Items.CAMPFIRE, ICE_BREAKER, 0, false),
 
     GRAND_GESTURE("grand_gesture", "Grand Gesture", "One move. Big friendship.", Type.GOAL,
             Items.DIAMOND, FIRST_IMPRESSIONS, 0, false),
 
-    BACKSEAT_DRIVER("backseat_driver", "Backseat Driver", "Trade the lead. Then trade it back.", Type.GOAL,
-            Items.OAK_SIGN, LEAD_THE_WAY, 0, false),
-
-    HAIL_TO_THE_KING("hail_to_the_king", "Hail to the King", "Crown a loyal hog.", Type.CHALLENGE,
+    A_LEGEND("a_legend", "A Legend", "Crown a loyal hog.", Type.CHALLENGE,
             Items.GOLDEN_HELMET, TRUE_COMPANION, 500, true),
 
-    POTATO_PACT("potato_pact", "Potato Pact", "Three potatoes and a promise.", Type.CHALLENGE,
+    POTATO_WAR("potato_war", "Potato War", "Every slot filled with potatoes.", Type.CHALLENGE,
             Items.POTATO, TRUE_COMPANION, 400, true),
 
     TRUE_PACIFIST("true_pacifist", "True Pacifist", "Love conquers all.", Type.CHALLENGE,
-            Items.DRAGON_EGG, TRUE_COMPANION, 1000, false);
+            Items.DRAGON_EGG, TRUE_COMPANION, 1000, false),
+
+    THE_HEIST("the_heist", "The Heist", "Steal a diamond from a mob.", Type.CHALLENGE,
+            Items.DIAMOND, FINDERS_KEEPERS, 500, true),
+
+    ENDER_ESCORT("ender_escort", "Ender Escort", "Take a friend to the End.", Type.CHALLENGE,
+            Items.ENDER_PEARL, TAG_ALONG, 400, true);
 
     public final ResourceLocation id;
     public final String title;

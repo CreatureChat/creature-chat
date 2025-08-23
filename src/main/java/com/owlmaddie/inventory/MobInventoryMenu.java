@@ -203,22 +203,33 @@ public class MobInventoryMenu extends AbstractContainerMenu {
                 String verb = " " + verbBase + " ";
                 if (!removed.isEmpty()) {
                     AdvancementHelper.itemTaken(serverPlayer, pd);
+                    if (removed.containsKey(Items.DIAMOND)) {
+                        AdvancementHelper.theHeist(serverPlayer);
+                    }
                 }
                 if (!added.isEmpty() && pd.friendship > 0) {
                     pd.gaveItem = true;
-                    if (mob.getType() == net.minecraft.world.entity.EntityType.PIG && pd.friendship == 3) {
-                        if (added.containsKey(Items.POTATO)) pd.pigPotato = true;
-                        if (added.containsKey(Items.BAKED_POTATO)) pd.pigBakedPotato = true;
-                        if (added.containsKey(Items.POISONOUS_POTATO)) pd.pigPoisonousPotato = true;
-                    }
                     AdvancementHelper.checkSharedStash(serverPlayer);
                 }
                 if (handChanged && pd.friendship == 3) {
                     AdvancementHelper.sleightOfHand(serverPlayer);
                 }
                 if (mob.getType() == net.minecraft.world.entity.EntityType.PIG && pd.friendship == 3 && pd.pigProtect && finalOff.getItem() == Items.GOLDEN_HELMET) {
-                    AdvancementHelper.hailToTheKing(serverPlayer);
+                    AdvancementHelper.aLegend(serverPlayer);
                     pd.pigProtect = false;
+                }
+                if (mob.getType() == net.minecraft.world.entity.EntityType.PIG && pd.friendship == 3) {
+                    boolean allPotatoes = true;
+                    for (int i = 0; i < mobInvSize; i++) {
+                        ItemStack stack = inventory.getItem(i);
+                        if (stack.isEmpty() || stack.getItem() != Items.POTATO || stack.getCount() < stack.getMaxStackSize()) {
+                            allPotatoes = false;
+                            break;
+                        }
+                    }
+                    if (allPotatoes) {
+                        AdvancementHelper.potatoWar(serverPlayer);
+                    }
                 }
                 StringBuilder msg = new StringBuilder("<" + player.getName().getString());
                 boolean first = true;

@@ -414,20 +414,7 @@ public class EntityChatData {
                                     playerData.attacking = false;
                                 }
                                 playerData.fleeing = false;
-                                playerData.hasFollowed = true;
                                 AdvancementHelper.follow(player);
-                                if (playerData.hasLed) {
-                                    AdvancementHelper.backseatDriver(player);
-                                    playerData.hasFollowed = false;
-                                    playerData.hasLed = false;
-                                }
-                                if (entity.getType() == net.minecraft.world.entity.EntityType.PIG && playerData.friendship == 3
-                                        && playerData.pigPotato && playerData.pigBakedPotato && playerData.pigPoisonousPotato) {
-                                    AdvancementHelper.potatoPact(player);
-                                    playerData.pigPotato = false;
-                                    playerData.pigBakedPotato = false;
-                                    playerData.pigPoisonousPotato = false;
-                                }
                                 if (playerData.friendship >= 0) {
                                     ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FOLLOW_FRIEND_PARTICLE, 0.5, 1);
                                 } else {
@@ -456,7 +443,7 @@ public class EntityChatData {
                             } else if (behavior.getName().equals("UNFLEE")) {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 if (playerData.fleeing) {
-                                    AdvancementHelper.doNotRun(player);
+                                    AdvancementHelper.standYourGround(player);
                                     playerData.fleeing = false;
                                 }
 
@@ -506,13 +493,7 @@ public class EntityChatData {
                                     playerData.attacking = false;
                                 }
                                 playerData.fleeing = false;
-                                playerData.hasLed = true;
                                 AdvancementHelper.lead(player);
-                                if (playerData.hasFollowed) {
-                                    AdvancementHelper.backseatDriver(player);
-                                    playerData.hasFollowed = false;
-                                    playerData.hasLed = false;
-                                }
                                 if (playerData.friendship >= 0) {
                                     ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) LEAD_FRIEND_PARTICLE, 0.5, 1);
                                 } else {

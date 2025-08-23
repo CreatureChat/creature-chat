@@ -19,12 +19,7 @@ public class PlayerData {
     public boolean attacking;
     public boolean fleeing;
     public boolean gaveItem;
-    public boolean hasFollowed;
-    public boolean hasLed;
     public boolean pigProtect;
-    public boolean pigPotato;
-    public boolean pigBakedPotato;
-    public boolean pigPoisonousPotato;
     public int conversationCount;
     public boolean droppedBelowZero;
     public boolean openedInventory;
@@ -33,6 +28,7 @@ public class PlayerData {
     public boolean wordsmithGaveItem;
     public boolean wordsmithDamaged;
     public int messageCount;
+    public boolean wasInOverworld;
 
     public PlayerData() {
         this.friendship = 0;
@@ -46,12 +42,7 @@ public class PlayerData {
         this.attacking = false;
         this.fleeing = false;
         this.gaveItem = false;
-        this.hasFollowed = false;
-        this.hasLed = false;
         this.pigProtect = false;
-        this.pigPotato = false;
-        this.pigBakedPotato = false;
-        this.pigPoisonousPotato = false;
         this.conversationCount = 0;
         this.droppedBelowZero = false;
         this.openedInventory = false;
@@ -60,5 +51,6 @@ public class PlayerData {
         this.wordsmithGaveItem = false;
         this.wordsmithDamaged = false;
         this.messageCount = 0;
+        this.wasInOverworld = false;
     }
 }
