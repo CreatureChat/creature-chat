@@ -11,7 +11,9 @@ import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
+import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,9 +27,11 @@ import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
@@ -42,6 +46,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPOutputStream;
+
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 /**
  * Utility to record and replay player build actions.
@@ -138,6 +145,17 @@ public class BuildRecorder {
             double recEye = meta.eyeHeight > 0 ? meta.eyeHeight : player.getEyeHeight();
             double recWidth = meta.bbWidth;
             double recHeight = meta.bbHeight;
+            List<BlockState> palette = new ArrayList<>();
+            var lookup = player.level().registryAccess().lookupOrThrow(Registries.BLOCK);
+            for (String s : meta.palette) {
+                try {
+                    var res = BlockStateParser.parseForBlock(lookup, new StringReader(s), false);
+                    palette.add(res.blockState());
+                } catch (CommandSyntaxException e) {
+                    LOGGER.error("[BuildRec] invalid block state {}", s, e);
+                    palette.add(Blocks.AIR.defaultBlockState());
+                }
+            }
             ServerLevel level = (ServerLevel) player.level();
             Mob actor;
             if (entityType == null) {
@@ -160,7 +178,7 @@ public class BuildRecorder {
             actor.setInvulnerable(true);
             actor.setPersistenceRequired();
             level.addFreshEntity(actor);
-            REPLAYS.add(new Replay(actor, actions, speed, recEye, recWidth, recHeight));
+            REPLAYS.add(new Replay(actor, actions, speed, recEye, recWidth, recHeight, palette));
             LOGGER.info("[BuildRec] replay loaded actions={} eyeHeight={} bbW={} bbH={}", actions.size(), recEye, recWidth, recHeight);
             return true;
         } catch (IOException | JsonParseException e) {
@@ -280,7 +298,7 @@ public class BuildRecorder {
                         BlockPos bpos = new BlockPos(Mth.floor(r.baseX + r.action.bx), Mth.floor(r.baseY + r.action.by), Mth.floor(r.baseZ + r.action.bz));
                         r.actor.level().getChunkAt(bpos);
                         if ("place".equals(r.action.action)) {
-                            BlockState state = Block.stateById(r.action.stateId);
+                            BlockState state = r.palette.get(r.action.blockId);
                             boolean upper = state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF) && state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER;
                             r.actor.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(state.getBlock()));
                             r.actor.level().setBlock(bpos, state, 3);
@@ -298,7 +316,7 @@ public class BuildRecorder {
                             r.actor.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
                             r.actor.level().removeBlock(bpos, false);
                         } else {
-                            BlockState state = Block.stateById(r.action.stateId);
+                            BlockState state = r.palette.get(r.action.blockId);
                             boolean upper = state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF) && state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER;
                             r.actor.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
                             r.actor.level().setBlock(bpos, state, 3);
@@ -381,6 +399,8 @@ public class BuildRecorder {
         final int ox, oy, oz;
         final List<Action> actions = new ArrayList<>();
         final Map<BlockPos, BlockState> finalBlocks = new HashMap<>();
+        final Map<BlockState, Integer> stateIds = new LinkedHashMap<>();
+        final List<String> statePalette = new ArrayList<>();
         final String name;
         final String type;
         final String height;
@@ -448,7 +468,12 @@ public class BuildRecorder {
             a.action = type;
             a.dt = (int)(tick - lastTick);
             lastTick = tick;
-            a.stateId = Block.getId(state);
+            int id = stateIds.computeIfAbsent(state, s -> {
+                int idx = statePalette.size();
+                statePalette.add(encodeState(s));
+                return idx;
+            });
+            a.blockId = id;
             a.bx = pos.getX() - ox;
             a.by = pos.getY() - oy;
             a.bz = pos.getZ() - oz;
@@ -466,6 +491,24 @@ public class BuildRecorder {
                 destroys++;
                 finalBlocks.remove(rel);
             }
+        }
+
+        private static String encodeState(BlockState state) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(BuiltInRegistries.BLOCK.getKey(state.getBlock()));
+            Map<Property<?>, Comparable<?>> props = state.getValues();
+            if (!props.isEmpty()) {
+                sb.append('[');
+                boolean first = true;
+                for (Map.Entry<Property<?>, Comparable<?>> e : props.entrySet()) {
+                    if (!first) sb.append(',');
+                    @SuppressWarnings("rawtypes") Property p = (Property) e.getKey();
+                    sb.append(p.getName()).append('=').append(p.getName(e.getValue()));
+                    first = false;
+                }
+                sb.append(']');
+            }
+            return sb.toString();
         }
         Summary save() {
             String base = (name == null || name.isBlank()) ? UUID.randomUUID().toString().split("-")[0] : name.replaceAll("[^a-zA-Z0-9-_]", "_");
@@ -498,9 +541,10 @@ public class BuildRecorder {
             int sizeY = first ? 0 : (maxY - minY + 1);
             int sizeZ = first ? 0 : (maxZ - minZ + 1);
 
+            int unique = stateIds.size();
             try (BufferedWriter w = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(file)), StandardCharsets.UTF_8))) {
                 w.write("[\n");
-                w.write(BuildRecordIO.GSON.toJson(new Meta(eyeHeight, bbWidth, bbHeight, recipe, recipe.size(), sizeX, sizeY, sizeZ)));
+                w.write(BuildRecordIO.GSON.toJson(new Meta(eyeHeight, bbWidth, bbHeight, recipe, unique, sizeX, sizeY, sizeZ, statePalette)));
                 for (Action a : actions) {
                     w.write(",\n");
                     w.write(BuildRecordIO.GSON.toJson(a));
@@ -512,7 +556,7 @@ public class BuildRecorder {
             LOGGER.info("[BuildRec] save file={} actions={} additions={} destroys={}", fileName, actions.size(), additions, destroys);
             String rel = buildRootDir().relativize(file).toString().replace('\\', '/');
             int finalCount = finalBlocks.size();
-            return new Summary(rel, actions.size(), additions, destroys, recipe, recipe.size(), sizeX, sizeY, sizeZ, finalCount);
+            return new Summary(rel, actions.size(), additions, destroys, recipe, unique, sizeX, sizeY, sizeZ, finalCount);
         }
 
         Summary finish(ServerPlayer player) {
@@ -523,6 +567,7 @@ public class BuildRecorder {
     private static class Replay {
         final Mob actor;
         final List<Action> actions;
+        final List<BlockState> palette;
         final double baseX, baseY, baseZ;
         final int speed;
         final double recordEyeHeight;
@@ -534,13 +579,14 @@ public class BuildRecorder {
         double sx, sy, sz, tx, ty, tz;
         float syaw, spitch, tyaw, tpitch;
 
-        Replay(Mob actor, List<Action> actions, int speed, double recordEyeHeight, double recordBbWidth, double recordBbHeight) {
+        Replay(Mob actor, List<Action> actions, int speed, double recordEyeHeight, double recordBbWidth, double recordBbHeight, List<BlockState> palette) {
             this.actor = actor;
             this.actions = actions;
             this.speed = speed;
             this.recordEyeHeight = recordEyeHeight;
             this.recordBbWidth = recordBbWidth;
             this.recordBbHeight = recordBbHeight;
+            this.palette = palette;
             BlockPos p = actor.blockPosition();
             this.baseX = p.getX();
             this.baseY = p.getY();

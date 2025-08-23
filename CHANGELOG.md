@@ -15,6 +15,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - Record / Stop commands toggle (depending on if recording or not)
   - Build types and folders are automatically managed now (type and build height: i.e. 1 block tall builds (bee) vs 3 block tall builds (enderman))
   - New datagen provider to create index of builds (and calculates build score)
+  - New block palette to support builds in any version, and replays in any version
 
 ## Unreleased
 

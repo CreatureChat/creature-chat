@@ -70,8 +70,9 @@ public final class BuildRecordIO {
         public int sizeX;
         public int sizeY;
         public int sizeZ;
+        public List<String> palette = new ArrayList<>();
         public Meta() {}
-        public Meta(double eyeHeight, double bbWidth, double bbHeight, Map<String, Integer> recipe, int uniqueBlocks, int sizeX, int sizeY, int sizeZ) {
+        public Meta(double eyeHeight, double bbWidth, double bbHeight, Map<String, Integer> recipe, int uniqueBlocks, int sizeX, int sizeY, int sizeZ, List<String> palette) {
             this.eyeHeight = eyeHeight;
             this.bbWidth = bbWidth;
             this.bbHeight = bbHeight;
@@ -80,12 +81,13 @@ public final class BuildRecordIO {
             this.sizeX = sizeX;
             this.sizeY = sizeY;
             this.sizeZ = sizeZ;
+            this.palette = palette;
         }
     }
 
     public static class Action {
         public String action;
-        public int stateId;
+        public int blockId;
         public int bx, by, bz;
         public int dt;
         public double px, py, pz;
