@@ -57,6 +57,7 @@ public class BuildRecorder {
     private static final Map<UUID, Recording> RECORDINGS = new ConcurrentHashMap<>();
     private static final List<Replay> REPLAYS = new ArrayList<>();
     private static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    private static final int MAX_IDLE_TICKS = 20; // 1 second
 
     static {
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
@@ -452,7 +453,8 @@ public class BuildRecorder {
         void addPose(long tick, double px, double py, double pz, float yaw, float pitch) {
             Action a = new Action();
             a.action = "pose";
-            a.dt = (int)(tick - lastTick);
+            int dt = (int)(tick - lastTick);
+            a.dt = dt > MAX_IDLE_TICKS ? MAX_IDLE_TICKS : dt;
             lastTick = tick;
             a.px = px - ox;
             a.py = py - oy;
@@ -466,7 +468,8 @@ public class BuildRecorder {
                        double px, double py, double pz, float yaw, float pitch) {
             Action a = new Action();
             a.action = type;
-            a.dt = (int)(tick - lastTick);
+            int dt = (int)(tick - lastTick);
+            a.dt = dt > MAX_IDLE_TICKS ? MAX_IDLE_TICKS : dt;
             lastTick = tick;
             int id = stateIds.computeIfAbsent(state, s -> {
                 int idx = statePalette.size();
