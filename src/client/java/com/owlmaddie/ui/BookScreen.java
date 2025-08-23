@@ -45,6 +45,18 @@ public class BookScreen extends ScreenHelper {
     private enum Mode { SUMMARY, DETAIL }
     private Mode mode = Mode.SUMMARY;
 
+    // remember last opened state
+    private static Mode lastMode = Mode.SUMMARY;
+    private static int lastSummaryIndex = 0;
+    private static int lastDetailPage = 0;
+    private static String lastDetailEntityId = null;
+    private static String lastSearchQuery = "";
+    private static boolean lastSearchVisible = false;
+
+    // detail state restoration
+    private int pendingDetailIndex = -1;
+    private int pendingDetailPage;
+
     // summary state
     private int summaryIndex;
     private int hoveredSummary = -1;
@@ -53,10 +65,10 @@ public class BookScreen extends ScreenHelper {
     private EntityChatData detailEntity;
     private int detailPage;            // left page index
     private int detailTotalPages;      // total single pages for detailEntity
-    private List<Pair> detailSections; // character sheet sections
+    private List<Pair> detailSections = Collections.emptyList(); // character sheet sections
     private List<List<Pair>> sectionPages;
     private List<ChatMessage> detailMessages;
-    private List<List<ChatMessage>> messagePages;
+    private List<List<MessageChunk>> messagePages;
     private int sectionRemainingSpace;
     private boolean messagesOnSectionPage;
 
@@ -89,6 +101,17 @@ public class BookScreen extends ScreenHelper {
         Pair(String l, String v) { this.label = l; this.value = v; }
     }
 
+    private static class MessageChunk {
+        final ChatMessage msg;
+        final List<String> lines;
+        final boolean showSpeaker;
+        MessageChunk(ChatMessage m, List<String> lines, boolean showSpeaker) {
+            this.msg = m;
+            this.lines = lines;
+            this.showSpeaker = showSpeaker;
+        }
+    }
+
     public BookScreen() {
         super(Component.literal("Creature Log"));
         ChatDataManager mgr = ChatDataManager.getClientInstance();
@@ -103,7 +126,34 @@ public class BookScreen extends ScreenHelper {
                 .collect(Collectors.toList());
         ordered = new ArrayList<>(all);
         sortOrdered();
-        summaryIndex = 0;
+
+        // restore prior search filtering
+        summaryIndex = lastSummaryIndex;
+        mode = lastMode;
+        if (lastSearchQuery != null && !lastSearchQuery.isEmpty()) {
+            String q = lastSearchQuery.toLowerCase(Locale.ROOT);
+            ordered = ordered.stream()
+                    .filter(d -> {
+                        String n = resolveName(d);
+                        return n != null && n.toLowerCase(Locale.ROOT).contains(q);
+                    })
+                    .collect(Collectors.toList());
+            sortOrdered();
+        }
+
+        // attempt to restore detail view after initialization
+        if (mode == Mode.DETAIL && lastDetailEntityId != null) {
+            pendingDetailPage = lastDetailPage;
+            for (int i = 0; i < ordered.size(); i++) {
+                if (ordered.get(i).entityId.equals(lastDetailEntityId)) {
+                    pendingDetailIndex = i;
+                    break;
+                }
+            }
+            if (pendingDetailIndex < 0) {
+                mode = Mode.SUMMARY;
+            }
+        }
     }
 
     private String resolveName(EntityChatData data) {
@@ -171,13 +221,20 @@ public class BookScreen extends ScreenHelper {
         dummyField = new EditBox(font, bgX, bgY, 0, 0, Component.empty());
 
         searchField = new EditBox(font, bgX + 46, bgY + 9, 208, 21, Component.empty());
-        searchField.visible = false;
-        searchField.active = false;
+        searchField.visible = lastSearchVisible;
+        searchField.active = lastSearchVisible;
+        searchVisible = lastSearchVisible;
+        searchField.setValue(lastSearchQuery);
         searchField.setResponder(text -> {
             if (searchVisible) onSearchChanged(text);
         });
 
         addRenderableWidget(searchField);
+        if (searchVisible) {
+            setFocused(searchField);
+            setInitialFocus(searchField);
+            searchField.setCursorPosition(searchField.getValue().length());
+        }
 
         prevButton = createPageButton(
                 bgX + PREV_X, bgY + PREV_Y,
@@ -225,6 +282,14 @@ public class BookScreen extends ScreenHelper {
 
         updateButtons();
         requestDataForCurrentPages();
+
+        if (pendingDetailIndex >= 0) {
+            openDetail(pendingDetailIndex);
+            detailPage = Math.min(pendingDetailPage, detailTotalPages - 1);
+            updateButtons();
+            requestDataForCurrentPages();
+            pendingDetailIndex = -1;
+        }
     }
 
     private void updateButtons() {
@@ -371,10 +436,7 @@ public class BookScreen extends ScreenHelper {
                     }
                 }
             } else {
-                for (int i = Math.max(0, filtered.size() - 4); i < filtered.size(); i++) {
-                    detailMessages.add(filtered.get(i));
-                }
-                Collections.reverse(detailMessages);
+                detailMessages.addAll(filtered);
             }
         }
 
@@ -388,24 +450,43 @@ public class BookScreen extends ScreenHelper {
     }
 
     private void paginateSections() {
+        if (detailSections == null) {
+            detailSections = Collections.emptyList();
+        }
         sectionPages = new ArrayList<>();
         sectionRemainingSpace = 0;
         List<Pair> page = new ArrayList<>();
-        int used = 0;
         int headerHeight = Math.round(this.font.lineHeight * 1.12f) + 6 + 35;
-        for (Pair p : detailSections) {
-            int h = this.font.lineHeight;
-            h += measureWrappedHeight(p.value, PAGE_CONTENT_W, 0.92f, 3);
-            h += 4;
-            int available = sectionPages.isEmpty() ? PAGE_CONTENT_H - headerHeight : PAGE_CONTENT_H;
-            if (used + h >= available && !page.isEmpty()) {
-                sectionPages.add(page);
-                page = new ArrayList<>();
-                used = 0;
-                available = PAGE_CONTENT_H;
+        int available = PAGE_CONTENT_H - headerHeight;
+        int used = 0;
+        for (Pair orig : detailSections) {
+            List<String> lines = wrapLines(orig.value, PAGE_CONTENT_W, 0.92f);
+            int lineH = Math.round(this.font.lineHeight * 0.92f);
+            int idx = 0;
+            boolean first = true;
+            while (idx < lines.size()) {
+                if (used >= available) {
+                    sectionPages.add(page);
+                    page = new ArrayList<>();
+                    available = PAGE_CONTENT_H;
+                    used = 0;
+                }
+                int labelH = first ? this.font.lineHeight : 0;
+                int maxLines = (available - used - labelH - 4) / lineH;
+                if (maxLines <= 0) {
+                    sectionPages.add(page);
+                    page = new ArrayList<>();
+                    available = PAGE_CONTENT_H;
+                    used = 0;
+                    continue;
+                }
+                int end = Math.min(idx + maxLines, lines.size());
+                String valChunk = String.join(" ", lines.subList(idx, end));
+                page.add(new Pair(first ? orig.label : null, valChunk));
+                used += labelH + (end - idx) * lineH + 4;
+                idx = end;
+                first = false;
             }
-            page.add(p);
-            used += h;
         }
         if (!page.isEmpty()) {
             sectionPages.add(page);
@@ -414,35 +495,46 @@ public class BookScreen extends ScreenHelper {
             sectionPages.add(Collections.emptyList());
             sectionRemainingSpace = PAGE_CONTENT_H - headerHeight;
         } else {
-            int available = sectionPages.size() == 1 ? PAGE_CONTENT_H - headerHeight : PAGE_CONTENT_H;
-            sectionRemainingSpace = Math.max(0, available - used);
+            int availLast = sectionPages.size() == 1 ? PAGE_CONTENT_H - headerHeight : PAGE_CONTENT_H;
+            sectionRemainingSpace = Math.max(0, availLast - used);
         }
     }
 
     private void paginateMessages() {
         messagePages = new ArrayList<>();
         int headerH = this.font.lineHeight + 2;
-        int minMsgH = this.font.lineHeight + 1 + Math.round(this.font.lineHeight * 0.9f) + 4;
+        int lineH = Math.round(this.font.lineHeight * 0.9f);
+        int minMsgH = this.font.lineHeight + 1 + lineH + 4;
         messagesOnSectionPage = sectionRemainingSpace >= headerH + minMsgH && !detailMessages.isEmpty();
         int available = messagesOnSectionPage ? sectionRemainingSpace - headerH : PAGE_CONTENT_H - headerH;
         if (available < 0) available = 0;
-        List<ChatMessage> page = new ArrayList<>();
-        int used = 0;
+        List<MessageChunk> page = new ArrayList<>();
+        int remaining = available;
         for (ChatMessage m : detailMessages) {
-            int h = font.lineHeight + 1;
-            h += measureWrappedHeight(safe(m.message), PAGE_CONTENT_W - 4, 0.9f, 4) + 4;
-            if (used + h >= available && !page.isEmpty()) {
-                messagePages.add(page);
-                page = new ArrayList<>();
-                used = 0;
-                available = PAGE_CONTENT_H - headerH;
+            List<String> lines = wrapLines(safe(m.message), PAGE_CONTENT_W - 4, 0.9f);
+            boolean first = true;
+            int idx = 0;
+            while (idx < lines.size()) {
+                if (remaining <= 0) {
+                    messagePages.add(page);
+                    page = new ArrayList<>();
+                    remaining = PAGE_CONTENT_H - headerH;
+                }
+                int metaH = first ? this.font.lineHeight + 1 : 0;
+                int maxLines = (remaining - metaH - 4) / lineH;
+                if (maxLines <= 0) {
+                    messagePages.add(page);
+                    page = new ArrayList<>();
+                    remaining = PAGE_CONTENT_H - headerH;
+                    continue;
+                }
+                int end = Math.min(idx + maxLines, lines.size());
+                List<String> chunkLines = new ArrayList<>(lines.subList(idx, end));
+                page.add(new MessageChunk(m, chunkLines, first));
+                remaining -= metaH + (end - idx) * lineH + 4;
+                idx = end;
+                first = false;
             }
-            if (used + h >= available && page.isEmpty()) {
-                // ensure progress even if single message exceeds available
-                available = PAGE_CONTENT_H - headerH;
-            }
-            page.add(m);
-            used += h;
         }
         if (!page.isEmpty()) {
             messagePages.add(page);
@@ -579,41 +671,39 @@ public class BookScreen extends ScreenHelper {
             }
             // append messages on same page if space was reserved
             if (messagesOnSectionPage && pageIndex == sectionPageCount - 1) {
-                lineY = renderMessagesPage(ctx, x, lineY, messagePages.get(0));
+                lineY = renderMessagesPage(ctx, x, lineY, messagePages.get(0), true);
             }
             ctx.disableScissor();
         } else { // messages pages
             int msgPage = pageIndex - sectionPageCount + (messagesOnSectionPage ? 1 : 0);
-            List<ChatMessage> msgs = messagePages.get(msgPage);
+            List<MessageChunk> msgs = messagePages.get(msgPage);
             ctx.enableScissor(x, y, x + PAGE_CONTENT_W, y + PAGE_CONTENT_H);
-            renderMessagesPage(ctx, x, y, msgs);
+            renderMessagesPage(ctx, x, y, msgs, msgPage == 0 && !messagesOnSectionPage);
             ctx.disableScissor();
         }
 
-        int debugY = bgY + BG_HEIGHT - 6;
-        PoseHelper.push(ctx.pose());
-        PoseHelper.translate(ctx.pose(), (float)x, (float)debugY);
-        PoseHelper.scale(ctx.pose(), 0.8f, 0.8f);
-        ctx.drawString(this.font, detailEntity.entityId, 0, 0, LIGHT_GRAY, false);
-        PoseHelper.pop(ctx.pose());
     }
 
-    private int renderMessagesPage(net.minecraft.client.gui.GuiGraphics ctx, int x, int startY, List<ChatMessage> msgs) {
+    private int renderMessagesPage(net.minecraft.client.gui.GuiGraphics ctx, int x, int startY, List<MessageChunk> chunks, boolean showHeader) {
         int lineY = startY;
-        String header = detailEntity != null && detailEntity.death != null ? "Last Words" : "Recent Messages";
-        ctx.drawString(this.font, header, x, lineY, LABEL_COLOR, false);
-        lineY += this.font.lineHeight + 2;
-        for (ChatMessage m : msgs) {
-            String speaker = m.sender == ChatDataManager.ChatSender.USER ? "You" : resolveName(detailEntity);
-            if (speaker == null || speaker.isBlank()) speaker = "Unknown";
-            long ts = m.timestamp == null ? 0L : m.timestamp;
-            String ago = friendlyTime(System.currentTimeMillis() - ts) + " ago";
-            int timeW = this.font.width(ago);
-            speaker = this.font.plainSubstrByWidth(speaker, PAGE_CONTENT_W - timeW - 2);
-            ctx.drawString(this.font, speaker, x, lineY, LABEL_COLOR, false);
-            ctx.drawString(this.font, ago, x + PAGE_CONTENT_W - timeW, lineY, LABEL_COLOR, false);
-            lineY += this.font.lineHeight + 1;
-            lineY = drawWrapped(ctx, safe(m.message), x + 4, lineY, PAGE_CONTENT_W - 4, 0.9f, 4, BODY_COLOR);
+        if (showHeader) {
+            String header = detailEntity != null && detailEntity.death != null ? "Last Words" : "Recent Messages";
+            ctx.drawString(this.font, header, x, lineY, LABEL_COLOR, false);
+            lineY += this.font.lineHeight + 2;
+        }
+        for (MessageChunk mc : chunks) {
+            if (mc.showSpeaker) {
+                String speaker = mc.msg.sender == ChatDataManager.ChatSender.USER ? "You" : resolveName(detailEntity);
+                if (speaker == null || speaker.isBlank()) speaker = "Unknown";
+                long ts = mc.msg.timestamp == null ? 0L : mc.msg.timestamp;
+                String ago = friendlyTime(System.currentTimeMillis() - ts) + " ago";
+                int timeW = this.font.width(ago);
+                speaker = this.font.plainSubstrByWidth(speaker, PAGE_CONTENT_W - timeW - 2);
+                ctx.drawString(this.font, speaker, x, lineY, LABEL_COLOR, false);
+                ctx.drawString(this.font, ago, x + PAGE_CONTENT_W - timeW, lineY, LABEL_COLOR, false);
+                lineY += this.font.lineHeight + 1;
+            }
+            lineY = drawLines(ctx, mc.lines, x + 4, lineY, 0.9f, BODY_COLOR);
             lineY += 4;
         }
         return lineY;
@@ -665,15 +755,22 @@ public class BookScreen extends ScreenHelper {
 
     /** Draw a label then a wrapped value; returns next y. */
     private int drawPair(net.minecraft.client.gui.GuiGraphics ctx, String label, String value, int x, int y, int widthPx) {
-        ctx.drawString(this.font, label, x, y, LABEL_COLOR, false);
-        y += this.font.lineHeight;
-        return drawWrapped(ctx, value, x, y, widthPx, 0.92f, 3, BODY_COLOR) + 4; // slight gap after pair
+        if (label != null) {
+            ctx.drawString(this.font, label, x, y, LABEL_COLOR, false);
+            y += this.font.lineHeight;
+        }
+        return drawWrapped(ctx, value, x, y, widthPx, 0.92f, BODY_COLOR) + 4;
     }
 
-    /** Wrapped text with scaling and maxLines, adds ellipsis if truncated. Returns next y. */
+    /** Wrapped text with scaling. Returns next y. */
     private int drawWrapped(net.minecraft.client.gui.GuiGraphics ctx, String text, int x, int y,
-                            int maxWidthPx, float scale, int maxLines, int color) {
-        List<String> lines = wrapLines(text, maxWidthPx, scale, maxLines);
+                            int maxWidthPx, float scale, int color) {
+        List<String> lines = wrapLines(text, maxWidthPx, scale);
+        return drawLines(ctx, lines, x, y, scale, color);
+    }
+
+    private int drawLines(net.minecraft.client.gui.GuiGraphics ctx, List<String> lines, int x, int y,
+                          float scale, int color) {
         PoseHelper.push(ctx.pose());
         PoseHelper.translate(ctx.pose(), (float)x, (float)y);
         PoseHelper.scale(ctx.pose(), scale, scale);
@@ -686,16 +783,16 @@ public class BookScreen extends ScreenHelper {
         return y + Math.round(drawnPx * scale);
     }
 
-    private int measureWrappedHeight(String text, int maxWidthPx, float scale, int maxLines) {
-        List<String> lines = wrapLines(text, maxWidthPx, scale, maxLines);
+    private int measureWrappedHeight(String text, int maxWidthPx, float scale) {
+        List<String> lines = wrapLines(text, maxWidthPx, scale);
         return (int)Math.ceil(lines.size() * this.font.lineHeight * scale);
     }
 
-    private List<String> wrapLines(String text, int maxWidthPx, float scale, int maxLines) {
+    private List<String> wrapLines(String text, int maxWidthPx, float scale) {
         int avail = (int)Math.floor(maxWidthPx / scale);
         List<String> lines = new ArrayList<>();
         String rest = text == null ? "" : text.trim();
-        while (!rest.isEmpty() && lines.size() < maxLines) {
+        while (!rest.isEmpty()) {
             String piece = this.font.plainSubstrByWidth(rest, avail);
             int cut = piece.length();
             if (cut <= 0) break;
@@ -709,13 +806,7 @@ public class BookScreen extends ScreenHelper {
             lines.add(piece.trim());
             rest = rest.substring(Math.min(rest.length(), cut)).trim();
         }
-        if (!rest.isEmpty() && !lines.isEmpty()) {
-            String last = lines.get(lines.size() - 1);
-            while (!last.isEmpty() && this.font.width(last + "…") > avail) {
-                last = last.substring(0, last.length() - 1);
-            }
-            lines.set(lines.size() - 1, last + "…");
-        }
+        if (lines.isEmpty()) lines.add("");
         return lines;
     }
 
@@ -746,6 +837,17 @@ public class BookScreen extends ScreenHelper {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    @Override
+    public void onClose() {
+        lastMode = mode;
+        lastSummaryIndex = summaryIndex;
+        lastDetailPage = detailPage;
+        lastDetailEntityId = detailEntity != null ? detailEntity.entityId : null;
+        lastSearchQuery = searchField != null ? searchField.getValue() : "";
+        lastSearchVisible = searchVisible;
+        super.onClose();
     }
 
     @Override

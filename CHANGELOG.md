@@ -16,6 +16,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - Improvements to page contents, layout, pagination - and page turn sounds
   - Integrating entityType into chat data, and incorporating death into broadcast, login, and book pages
   - Adding entityName into chat data, for dead mobs
+  - Remember book screen state when exiting (so book resumes exactly where you left it)
 
 ## Unreleased
 
