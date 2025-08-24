@@ -207,7 +207,7 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
                 String giveItemMessage = "<" + serverPlayer.getName().getString() +
                         action_verb + "you " + itemCount + " " + itemName + ">";
 
-                if (!entityData.characterSheet.isEmpty() && entityData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
+                if (!entityData.characterSheet.isEmpty()) {
                     ServerPackets.generate_chat("N/A", entityData, serverPlayer, thisEntity, giveItemMessage, true);
                 }
 
