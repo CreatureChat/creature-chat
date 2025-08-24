@@ -83,13 +83,12 @@ public class BookScreen extends ScreenHelper {
     private static final int NEXT_X = 267, NEXT_Y = 170, NEXT_W = 14, NEXT_H = 12;
     private static final int SEARCH_BTN_X = 10, SEARCH_BTN_Y = 9,  SEARCH_BTN_W = 31, SEARCH_BTN_H = 21;
     private static final int CLOSE_X = 259, CLOSE_Y = 9,  CLOSE_W = 30, CLOSE_H = 22;
-    private static final int PAGE_CONTENT_W = 116;   // width of text block per page
-    private static final int PAGE_CONTENT_H = 124;   // height of text block (for scissor)
-    private static final int PAGE1_X = 28, PAGE1_Y = 46; // left page top-left
-    private static final int PAGE2_X = 157, PAGE2_Y = 46; // right page top-left
+    private static final int PAGE_CONTENT_W = 106;   // width of text block per page
+    private static final int PAGE_CONTENT_H = 122;   // height of text block (for scissor)
+    private static final int PAGE1_X = 32, PAGE1_Y = 51; // left page top-left
+    private static final int PAGE2_X = 162, PAGE2_Y = 51; // right page top-left
     private static final int LABEL_COLOR    = 0xFF6B4A3B; // warm brown, matches book UI
     private static final int BODY_COLOR     = 0xFF2A2A2A; // dark text
-    private static final int LIGHT_GRAY     = 0xFFB0B0B0;
     private static final Random RNG         = new Random();
 
     private static final int SUMMARY_ROWS_PER_PAGE = 4; // per single page
