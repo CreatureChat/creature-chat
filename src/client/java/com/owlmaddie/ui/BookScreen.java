@@ -79,10 +79,15 @@ public class BookScreen extends ScreenHelper {
     private boolean searchVisible;
     private Button prevButton;
     private Button nextButton;
-    private static final int PREV_X = 28,  PREV_Y = 170, PREV_W = 14, PREV_H = 12;
-    private static final int NEXT_X = 267, NEXT_Y = 170, NEXT_W = 14, NEXT_H = 12;
-    private static final int SEARCH_BTN_X = 10, SEARCH_BTN_Y = 9,  SEARCH_BTN_W = 31, SEARCH_BTN_H = 21;
-    private static final int CLOSE_X = 259, CLOSE_Y = 9,  CLOSE_W = 30, CLOSE_H = 22;
+    private static final int PREV_X = 20,  PREV_Y = 164, PREV_W = 32, PREV_H = 22;
+    private static final int NEXT_X = 244, NEXT_Y = 164, NEXT_W = 32, NEXT_H = 22;
+    private static final int INDEX_BTN_X = 10,  INDEX_BTN_Y = 8,  INDEX_BTN_W = 32, INDEX_BTN_H = 22;
+    private static final int SEARCH_BTN_X = 46, SEARCH_BTN_Y = 8,  SEARCH_BTN_W = 32, SEARCH_BTN_H = 22;
+    private static final int EXIT_BTN_X = 258,  EXIT_BTN_Y = 8,  EXIT_BTN_W = 32, EXIT_BTN_H = 22;
+    private static final int SEARCH_FIELD_X = SEARCH_BTN_X + SEARCH_BTN_W + 5;
+    private static final int SEARCH_FIELD_Y = 9;
+    private static final int SEARCH_FIELD_W = EXIT_BTN_X - 5 - SEARCH_FIELD_X;
+    private static final int SEARCH_FIELD_H = 21;
     private static final int PAGE_CONTENT_W = 106;   // width of text block per page
     private static final int PAGE_CONTENT_H = 122;   // height of text block (for scissor)
     private static final int PAGE1_X = 32, PAGE1_Y = 51; // left page top-left
@@ -219,7 +224,12 @@ public class BookScreen extends ScreenHelper {
 
         dummyField = new EditBox(font, bgX, bgY, 0, 0, Component.empty());
 
-        searchField = new EditBox(font, bgX + 46, bgY + 9, 208, 21, Component.empty());
+        searchField = new EditBox(font,
+                bgX + SEARCH_FIELD_X,
+                bgY + SEARCH_FIELD_Y,
+                SEARCH_FIELD_W,
+                SEARCH_FIELD_H,
+                Component.empty());
         searchField.visible = lastSearchVisible;
         searchField.active = lastSearchVisible;
         searchVisible = lastSearchVisible;
@@ -345,12 +355,22 @@ public class BookScreen extends ScreenHelper {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
+            if (inside(mouseX, mouseY, bgX + INDEX_BTN_X, bgY + INDEX_BTN_Y, INDEX_BTN_W, INDEX_BTN_H)) {
+                mode = Mode.SUMMARY;
+                detailEntity = null;
+                detailPage = 0;
+                summaryIndex = 0;
+                updateButtons();
+                requestDataForCurrentPages();
+                LOGGER.info("BookScreen: index button pressed");
+                return true;
+            }
             if (inside(mouseX, mouseY, bgX + SEARCH_BTN_X, bgY + SEARCH_BTN_Y, SEARCH_BTN_W, SEARCH_BTN_H)) {
                 toggleSearch();
                 return true;
             }
-            if (inside(mouseX, mouseY, bgX + CLOSE_X, bgY + CLOSE_Y, CLOSE_W, CLOSE_H)) {
-                LOGGER.info("BookScreen: close button pressed");
+            if (inside(mouseX, mouseY, bgX + EXIT_BTN_X, bgY + EXIT_BTN_Y, EXIT_BTN_W, EXIT_BTN_H)) {
+                LOGGER.info("BookScreen: exit button pressed");
                 onClose();
                 return true;
             }
@@ -559,6 +579,24 @@ public class BookScreen extends ScreenHelper {
             renderDetailPage(ctx, bgX + PAGE1_X, bgY + PAGE1_Y, detailPage);
             renderDetailPage(ctx, bgX + PAGE2_X, bgY + PAGE2_Y, detailPage + 1);
         }
+
+        renderTopButtons(ctx, mouseX, mouseY);
+    }
+
+    private void renderTopButtons(net.minecraft.client.gui.GuiGraphics ctx, int mouseX, int mouseY) {
+        blitButton(ctx, mouseX, mouseY, INDEX_BTN_X, INDEX_BTN_Y, INDEX_BTN_W, INDEX_BTN_H,
+                "book/index", "book/index-hover");
+        blitButton(ctx, mouseX, mouseY, SEARCH_BTN_X, SEARCH_BTN_Y, SEARCH_BTN_W, SEARCH_BTN_H,
+                "book/search", "book/search-hover");
+        blitButton(ctx, mouseX, mouseY, EXIT_BTN_X, EXIT_BTN_Y, EXIT_BTN_W, EXIT_BTN_H,
+                "book/exit", "book/exit-hover");
+    }
+
+    private void blitButton(net.minecraft.client.gui.GuiGraphics ctx, int mouseX, int mouseY,
+                             int x, int y, int w, int h, String normal, String hover) {
+        boolean hov = inside(mouseX, mouseY, bgX + x, bgY + y, w, h);
+        ResourceLocation tex = textures.GetUI(hov ? hover : normal);
+        RenderPipelineHelper.blitGuiTexture(ctx, tex, bgX + x, bgY + y, 0, 0, w, h, w, h);
     }
 
     private void renderSummaryPage(net.minecraft.client.gui.GuiGraphics ctx, int x, int y, int startIndex, int mouseX, int mouseY) {

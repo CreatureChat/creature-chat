@@ -17,7 +17,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - Integrating entityType into chat data, and incorporating death into broadcast, login, and book pages
   - Adding entityName into chat data, for dead mobs
   - Remember book screen state when exiting (so book resumes exactly where you left it)
-  - Adding top buttons + hover states
+  - Adding top buttons + hover states - integrated hover assets and new arrow buttons
 
 ## Unreleased
 
