@@ -71,6 +71,8 @@ public class BookScreen extends ScreenHelper {
     private List<List<MessageChunk>> messagePages;
     private int sectionRemainingSpace;
     private boolean messagesOnSectionPage;
+    private int lastPrevMsgCount;
+    private String lastCurrentMsg;
 
     private final List<EntityChatData> all;
     private List<EntityChatData> ordered;
@@ -185,11 +187,8 @@ public class BookScreen extends ScreenHelper {
     }
 
     private static long getLastInteraction(EntityChatData data) {
-        List<ChatMessage> msgs = data.previousMessages;
-        if (msgs != null && !msgs.isEmpty()) {
-            Long t = msgs.get(msgs.size() - 1).timestamp;
-            return t == null ? 0L : t;
-        }
+        if (data.lastMessage != null) return data.lastMessage;
+        if (data.death != null) return data.death;
         return 0L;
     }
 
@@ -346,6 +345,15 @@ public class BookScreen extends ScreenHelper {
     public void tick() {
         super.tick();
         sortOrdered();
+        if (mode == Mode.DETAIL && detailEntity != null) {
+            int count = detailEntity.previousMessages == null ? 0 : detailEntity.previousMessages.size();
+            String current = detailEntity.currentMessage;
+            if (count != lastPrevMsgCount || !Objects.equals(current, lastCurrentMsg)) {
+                int prevPage = detailPage;
+                buildDetailContent();
+                detailPage = Math.min(prevPage, detailTotalPages - 1);
+            }
+        }
     }
 
     private boolean inside(double mx, double my, int x, int y, int w, int h) {
@@ -425,6 +433,13 @@ public class BookScreen extends ScreenHelper {
         if (idx < 0 || idx >= ordered.size()) return;
         detailEntity = ordered.get(idx);
         detailPage = 0;
+        buildDetailContent();
+        mode = Mode.DETAIL;
+        updateButtons();
+        requestDataForCurrentPages();
+    }
+
+    private void buildDetailContent() {
         detailSections = new ArrayList<>();
         if (detailEntity.death != null) {
             String deathDate = Instant.ofEpochMilli(detailEntity.death)
@@ -467,11 +482,9 @@ public class BookScreen extends ScreenHelper {
 
         paginateSections();
         paginateMessages();
-
         detailTotalPages = sectionPages.size() + messagePages.size() - (messagesOnSectionPage ? 1 : 0);
-        mode = Mode.DETAIL;
-        updateButtons();
-        requestDataForCurrentPages();
+        lastPrevMsgCount = detailEntity.previousMessages == null ? 0 : detailEntity.previousMessages.size();
+        lastCurrentMsg = detailEntity.currentMessage;
     }
 
     private void paginateSections() {
@@ -754,14 +767,7 @@ public class BookScreen extends ScreenHelper {
 
     private void requestDataForCurrentPages() {
         sortOrdered();
-        if (mode == Mode.SUMMARY) {
-            for (int i = 0; i < SUMMARY_ROWS_PER_PAGE * 2; i++) {
-                int idx = summaryIndex + i;
-                if (idx >= ordered.size()) break;
-                UUID id = UUID.fromString(ordered.get(idx).entityId);
-                ClientPackets.requestEntityData(id);
-            }
-        } else if (detailEntity != null) {
+        if (mode == Mode.DETAIL && detailEntity != null) {
             UUID id = UUID.fromString(detailEntity.entityId);
             ClientPackets.requestEntityData(id);
         }

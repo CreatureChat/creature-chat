@@ -125,6 +125,7 @@ public class ClientPackets {
             String sender_name = buffer.readUtf(32767);
             ChatDataManager.ChatSender sender = ChatDataManager.ChatSender.valueOf(sender_name);
             Map<String, PlayerData> players = readPlayerDataMap(buffer);
+            long lastTs = buffer.readLong();
 
             // Update the chat data manager on the client-side
             client.execute(() -> { // Make sure to run on the client thread
@@ -146,6 +147,7 @@ public class ClientPackets {
                 chatData.status = status;
                 chatData.sender = sender;
                 chatData.players = players;
+                chatData.lastMessage = lastTs;
 
                 // Play sound with volume based on distance (from player or entity)
                 Mob entity = ClientEntityFinder.getEntityByUUID(client.level, entityId);
@@ -238,6 +240,7 @@ public class ClientPackets {
                     existing.previousMessages = data.previousMessages;
                     existing.born = data.born;
                     existing.death = data.death;
+                    existing.lastMessage = data.lastMessage;
                     existing.entityType = data.entityType;
                     existing.entityName = data.entityName;
                 } else {

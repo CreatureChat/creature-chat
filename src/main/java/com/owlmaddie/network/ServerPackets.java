@@ -489,6 +489,7 @@ public class ServerPackets {
                     buffer.writeUtf(chatData.status.toString());
                     buffer.writeUtf(chatData.sender.toString());
                     writePlayerDataMap(buffer, chatData.players);
+                    buffer.writeLong(chatData.lastMessage != null ? chatData.lastMessage : 0L);
 
                     // Send message to player
                     PacketHelper.send(player, PACKET_S2C_ENTITY_MESSAGE, buffer);

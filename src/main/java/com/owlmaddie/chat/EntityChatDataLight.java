@@ -19,6 +19,7 @@ public class EntityChatDataLight {
     public ChatDataManager.ChatSender sender;
     public Map<String, PlayerData> players;
     public Long death;
+    public Long lastMessage;
     public String entityName;
     public String entityType;
 
@@ -30,6 +31,7 @@ public class EntityChatDataLight {
         this.status = fullData.status;
         this.sender = fullData.sender;
         this.death = fullData.death;
+        this.lastMessage = fullData.lastMessage;
         this.entityName = fullData.entityName;
         this.entityType = fullData.entityType;
 
