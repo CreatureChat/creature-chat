@@ -24,7 +24,7 @@ public enum Advancements {
             Items.SNOWBALL, ROOT, 0, false),
 
     FIRST_IMPRESSIONS("first_impressions", "First Impressions", "Make a friend.", Type.TASK,
-            Items.DANDELION, ICE_BREAKER, 0, false),
+            Items.APPLE, ICE_BREAKER, 0, false),
 
     NO_HARD_FEELINGS("no_hard_feelings", "No Hard Feelings", "Regain a friend.", Type.TASK,
             Items.CAKE, FIRST_IMPRESSIONS, 0, false),
@@ -66,7 +66,7 @@ public enum Advancements {
             Items.BELL, INNER_CIRCLE, 0, false),
 
     ARCH_NEMESIS("arch_nemesis", "Arch Nemesis", "Keep your enemies closer.", Type.TASK,
-            Items.CROSSBOW, NO_HARD_FEELINGS, 0, false),
+            Items.CROSSBOW, FIRST_IMPRESSIONS, 0, false),
 
     FRIEND_OR_FOE("friend_or_foe", "Friend Or Foe", "Remember the good times?", Type.TASK,
             Items.TNT, ARCH_NEMESIS, 0, false),
