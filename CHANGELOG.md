@@ -9,34 +9,34 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ### Added
 - Initial Advancements for CreatureChat
   1. **CreatureChat**: Talk to mobs. Make friends. Start drama.
-  2. **Ice Breaker**: How's the weather...I guess?
+  2. **Ice Breaker**: Cold Open.
   3. **First Impressions**: Make a friend.
-  4. **No Hard Feelings**: Regain a friend after exchanging blows.
-  5. **Open Sesame**: Check out a friend's inventory.
-  6. **Tag Along**: Follow me bro.
-  7. **Lead The Way**: Where are we going anyway?
+  4. **No Hard Feelings**: Regain a friend.
+  5. **Open Sesame**: Your stuff is my stuff.
+  6. **Tag Along**: Follow me, bro.
+  7. **Lead The Way**: Where are we going?
   8. **Calm The Storm**: Talk them down.
-  9. **Do Not Run**: Stay. It’s okay.
-  10. **Bodyguard Detail**: I’ve got backup.
-  11. **Wordsmith**: Words only. From rocky start to best friends.
+  9. **Stand Your Ground**: Stop. It's okay.
+  10. **Sworn Oath**: I will protect you.
+  11. **Wordsmith**: From rocky start to best friends.
   12. **True Companion**: Best friends forever.
-  13. **Sleight of Hand**: Gear swaps hands at max friendship.
-  14. **Shared Stash**: Share the loot around.
-  15. **Social Butterfly**: A little trust in many places.
-  16. **Inner Circle**: A cozy crowd of close friends.
-  17. **Popular Opinion**: The whole room leans your way.
+  13. **Sleight of Hand**: Try my sword.
+  14. **Shared Stash**: Share the loot.
+  15. **Social Butterfly**: Trust blooms everywhere.
+  16. **Inner Circle**: Gathered round the fire.
+  17. **Popular Opinion**: Sway the Crowd.
   18. **Drama Llama**: Best friends for never.
-  19. **Love Hate Relationship**: Flip the vibe. Again and again.
+  19. **Love Hate Relationship**: It’s Complicated.
   20. **Arch Nemesis**: Meet your worst enemy.
-  21. **Friend Or Foe**: Same mob. Both endings.
-  22. **Finder’s Keepers**: "Borrow" an item from your best friend.
-  23. **Guided Tour**: A long walk.
-  24. **The Neverending Story**: Still talking.
-  25. **Grand Gesture**: One move. Big leap.
-  26. **A Legend**: Crown a loyal hog.
-  27. **Potato War**: Every slot filled with potatoes.
-  28. **The Heist**: Steal a diamond from a mob.
-  29. **Ender Escort**: Take a friend to the End.
+  21. **Friend Or Foe**: Remember the good times.
+  22. **Finder’s Keepers**: Borrowed forever.
+  23. **Guided Tour**: Lost, together.
+  24. **The NeverEnding Story**: The book is still open.
+  25. **Grand Gesture**: A little effort, a big return.
+  26. **A Legend**: Blood for the crown.
+  27. **Potato War**: Fields of Glory.
+  28. **The Heist**: The jewel of betrayal.
+  29. **Ender Escort**: Together to the End.
   30. **True Pacifist**: Love conquers all.
 
 
