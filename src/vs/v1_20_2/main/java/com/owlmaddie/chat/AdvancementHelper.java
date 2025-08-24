@@ -107,7 +107,7 @@ public class AdvancementHelper {
         if (newFriendship <= -2) {
             data.seenLow = true;
         }
-        if (data.seenHigh && data.seenLow) {
+        if (entity.getType() == net.minecraft.world.entity.EntityType.LLAMA && data.seenHigh && data.seenLow) {
             award(player, Advancements.DRAMA_LLAMA.id);
             data.seenHigh = false;
             data.seenLow = false;

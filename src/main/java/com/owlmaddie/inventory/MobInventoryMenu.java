@@ -214,7 +214,9 @@ public class MobInventoryMenu extends AbstractContainerMenu {
                 if (handChanged && pd.friendship == 3) {
                     AdvancementHelper.sleightOfHand(serverPlayer);
                 }
-                if (mob.getType() == net.minecraft.world.entity.EntityType.PIG && pd.friendship == 3 && pd.pigProtect && finalOff.getItem() == Items.GOLDEN_HELMET) {
+                if (mob.getType() == net.minecraft.world.entity.EntityType.PIG && pd.friendship == 3 && pd.pigProtect &&
+                        (finalMain.getItem() == Items.DIAMOND_SWORD || finalMain.getItem() == Items.NETHERITE_SWORD ||
+                         finalOff.getItem() == Items.DIAMOND_SWORD || finalOff.getItem() == Items.NETHERITE_SWORD)) {
                     AdvancementHelper.aLegend(serverPlayer);
                     pd.pigProtect = false;
                 }
