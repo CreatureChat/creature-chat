@@ -332,6 +332,12 @@ public class BookScreen extends ScreenHelper {
         ordered.sort(Comparator.comparingLong(BookScreen::getLastInteraction).reversed());
     }
 
+    @Override
+    public void tick() {
+        super.tick();
+        sortOrdered();
+    }
+
     private boolean inside(double mx, double my, int x, int y, int w, int h) {
         return mx >= x && mx <= x + w && my >= y && my <= y + h;
     }
