@@ -22,7 +22,6 @@ public class CreatureChatDataGenerator implements DataGeneratorEntrypoint {
         // Load the client-side model provider reflectively so the common
         // sources don't depend on client-only classes at compile time.
         pack.addProvider((FabricDataOutput out) -> createModelProvider(out));
-        pack.addProvider(CreatureChatEnglishLangProvider::new);
     }
 
     private DataProvider createModelProvider(FabricDataOutput output) {
