@@ -68,6 +68,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Fixed "entity is null" errors when killing mobs (usually when killing lots of mobs)
 - Fixed names that were not appearing in the End and the Nether.
 - Fixed Z-fighting on message text and entity name (on chat bubble)
+- Fixed PlayerData from using UUID (changed back to PlayerName - to allow for role playing)
 
 ## [2.5.0] - 2025-07-07
 

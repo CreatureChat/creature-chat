@@ -54,9 +54,9 @@ public class MobInventoryMenu extends AbstractContainerMenu {
         EntityChatData chatData = chatDataManager.getOrCreateChatData(mob.getStringUUID());
         String playerName;
         if (player != null) {
-            playerName = player.getUUID().toString();
+            playerName = player.getName().toString();
         } else if (playerInventory.player != null) {
-            playerName = playerInventory.player.getUUID().toString();
+            playerName = playerInventory.player.getName().toString();
         } else {
             playerName = "";
         }
@@ -195,7 +195,7 @@ public class MobInventoryMenu extends AbstractContainerMenu {
             if (!added.isEmpty() || !removed.isEmpty() || !disarmedToInventory.isEmpty() || !disarmedTaken.isEmpty() || swapped || handChanged) {
                 ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
                 EntityChatData chatData = chatDataManager.getOrCreateChatData(mob.getStringUUID());
-                PlayerData pd = chatData.getPlayerData(player.getUUID().toString());
+                PlayerData pd = chatData.getPlayerData(player.getName().toString());
                 if (pd.wordsmithActive) {
                     pd.wordsmithGaveItem = true;
                 }

@@ -201,7 +201,7 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
         // Get chat data for entity
         ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
         EntityChatData entityData = chatDataManager.getOrCreateChatData(thisEntity.getStringUUID());
-        PlayerData playerData = entityData.getPlayerData(player.getUUID().toString());
+        PlayerData playerData = entityData.getPlayerData(player.getName().toString());
 
         // Check if the player successfully interacts with an item
         if (player instanceof ServerPlayer) {

@@ -45,7 +45,7 @@ public class MixinLivingEntity {
         if (target instanceof Player) {
             LivingEntity thisEntity = (LivingEntity) (Object) this;
             EntityChatData entityData = getChatData(thisEntity);
-            PlayerData playerData = entityData.getPlayerData(target.getUUID().toString());
+            PlayerData playerData = entityData.getPlayerData(target.getName().toString());
             if (playerData.friendship > 0) {
                 // Friendly creatures can't target a player
                 cir.setReturnValue(false);
@@ -81,7 +81,7 @@ public class MixinLivingEntity {
                     .getServerInstance()
                     .getOrCreateChatData(mob.getStringUUID());
 
-            PlayerData pd = data.getPlayerData(serverPlayer.getUUID().toString());
+            PlayerData pd = data.getPlayerData(serverPlayer.getName().toString());
             pd.lastDamageFriendship = pd.friendship;
             pd.wordsmithDamaged = true;
             if (!data.characterSheet.isEmpty()) {
