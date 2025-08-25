@@ -62,6 +62,7 @@ public class EntityChatData {
     public List<ChatMessage> previousMessages;
     public Long born;
     public Long death;
+    public transient AutoMessageBucket autoBucket;
 
     @SerializedName("playerId")
     @Expose(serialize = false)
@@ -85,6 +86,7 @@ public class EntityChatData {
         this.auto_generated = 0;
         this.previousMessages = new ArrayList<>();
         this.born = System.currentTimeMillis();;
+        this.autoBucket = null;
 
         // Old, unused migrated properties
         this.legacyPlayerId = null;

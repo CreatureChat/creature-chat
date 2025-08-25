@@ -60,10 +60,12 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ### Changed
 - Adding specific error messages for specific LLM request status codes (i.e. more helpful)
+- Output more detailed error message from LLM APIs
 - Leaving HTTP connection open (better connection pooling)
 - Expanded 'no response' messages
 - build.gradle now includes running Fabric datagen (for generating the JSON loot tables)
 - Increasing max auto-generated messages to 12 (up from 3)
+- Improved Auto rate-limits for automatic LLM requests (show item, inventory, attack)
 
 ### Fixed
 - Fixed constant death messages which appeared on each attack (for Minecraft 1.21.2+)

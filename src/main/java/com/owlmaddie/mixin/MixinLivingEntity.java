@@ -69,9 +69,8 @@ public class MixinLivingEntity {
             PlayerData playerData = chatData.getPlayerData(player.getUUID().toString());
             playerData.lastDamageFriendship = playerData.friendship;
             playerData.wordsmithDamaged = true;
-            if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < ChatDataManager.MAX_AUTOGENERATE_RESPONSES) {
-                // Only auto-generate a response to being attacked if chat data already exists
-                // and this is the first attack event.
+            if (!chatData.characterSheet.isEmpty()) {
+
                 ItemStack weapon = player.getMainHandItem();
                 String weaponName = weapon.isEmpty() ? "with fists" : "with " + weapon.getItem().toString();
 
