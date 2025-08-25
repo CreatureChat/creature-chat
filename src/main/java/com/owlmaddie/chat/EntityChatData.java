@@ -277,7 +277,7 @@ public class EntityChatData {
             contextData.put("entity_maturity", "Adult");
         }
 
-        PlayerData playerData = this.getPlayerData(player.getName().toString());
+        PlayerData playerData = this.getPlayerData(player.getDisplayName().getString());
         if (playerData != null) {
             contextData.put("entity_friendship", String.valueOf(playerData.friendship));
         } else {
@@ -391,7 +391,7 @@ public class EntityChatData {
         Map<String, String> contextData = getPlayerContext(player, userLanguage, config);
 
         // Get messages for player
-        PlayerData playerData = this.getPlayerData(player.getName().toString());
+        PlayerData playerData = this.getPlayerData(player.getDisplayName().getString());
         if (previousMessages.size() == 1) {
             // No messages exist yet for this player (start with normal greeting)
             String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");

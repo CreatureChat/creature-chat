@@ -57,7 +57,7 @@ public abstract class MobInventoryScreenBase extends AbstractContainerScreen<Mob
         if (mob != null && this.minecraft.player != null) {
             int friendship = ChatDataManager.getClientInstance()
                     .getOrCreateChatData(mob.getStringUUID())
-                    .getPlayerData(this.minecraft.player.getName().toString())
+                    .getPlayerData(this.minecraft.player.getDisplayName().getString())
                     .friendship;
             if (friendship <= 0) {
                 background = ENEMY_TEXTURE;
