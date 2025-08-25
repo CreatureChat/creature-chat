@@ -18,6 +18,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - Adding entityName into chat data, for dead mobs
   - Remember book screen state when exiting (so book resumes exactly where you left it)
   - Adding top buttons + hover states - integrated hover assets and new arrow buttons
+  - Adding deterministic random stickers to pages (based on UUID and page #)
 
 ## Unreleased
 

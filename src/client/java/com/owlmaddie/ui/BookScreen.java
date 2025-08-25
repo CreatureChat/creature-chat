@@ -27,9 +27,12 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import java.time.Instant;
 import java.time.ZoneId;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.server.packs.resources.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -115,6 +118,53 @@ public class BookScreen extends ScreenHelper {
             this.msg = m;
             this.lines = lines;
             this.showSpeaker = showSpeaker;
+        }
+    }
+
+    private static class Sticker {
+        final ResourceLocation tex;
+        final int w;
+        final int h;
+        Sticker(ResourceLocation t, int w, int h) {
+            this.tex = t;
+            this.w = w;
+            this.h = h;
+        }
+    }
+
+    private static class Rect {
+        final int x, y, w, h;
+        Rect(int x, int y, int w, int h) {
+            this.x = x;
+            this.y = y;
+            this.w = w;
+            this.h = h;
+        }
+        boolean intersects(Rect o, int pad) {
+            return x < o.x + o.w + pad && x + w + pad > o.x && y < o.y + o.h + pad && y + h + pad > o.y;
+        }
+    }
+
+    private static final Rect LEFT_TOP_AREA_REL     = new Rect(117, 43, 30, 24);
+    private static final Rect LEFT_BOTTOM_AREA_REL  = new Rect(44, 154, 100, 27);
+    private static final Rect RIGHT_TOP_AREA_REL    = new Rect(240, 42, 30, 24);
+    private static final Rect RIGHT_BOTTOM_AREA_REL = new Rect(156, 154, 100, 27);
+
+    private static final List<Sticker> STICKERS = new ArrayList<>();
+
+    private static void loadStickers() {
+        if (!STICKERS.isEmpty()) return;
+        var rm = Minecraft.getInstance().getResourceManager();
+        try {
+            rm.listResources("textures/ui/book/stickers", loc -> loc.getPath().endsWith(".png"))
+                    .forEach((loc, res) -> {
+                        try (var in = res.open()) {
+                            NativeImage img = NativeImage.read(in);
+                            STICKERS.add(new Sticker(loc, img.getWidth(), img.getHeight()));
+                        } catch (IOException ignored) {
+                        }
+                    });
+        } catch (Exception ignored) {
         }
     }
 
@@ -589,8 +639,9 @@ public class BookScreen extends ScreenHelper {
             renderSummaryPage(ctx, bgX + PAGE1_X, bgY + PAGE1_Y, summaryIndex, mouseX, mouseY);
             renderSummaryPage(ctx, bgX + PAGE2_X, bgY + PAGE2_Y, summaryIndex + SUMMARY_ROWS_PER_PAGE, mouseX, mouseY);
         } else if (detailEntity != null) {
-            renderDetailPage(ctx, bgX + PAGE1_X, bgY + PAGE1_Y, detailPage);
-            renderDetailPage(ctx, bgX + PAGE2_X, bgY + PAGE2_Y, detailPage + 1);
+            Set<ResourceLocation> used = new HashSet<>();
+            renderDetailPage(ctx, bgX + PAGE1_X, bgY + PAGE1_Y, detailPage, used);
+            renderDetailPage(ctx, bgX + PAGE2_X, bgY + PAGE2_Y, detailPage + 1, used);
         }
 
         renderTopButtons(ctx, mouseX, mouseY);
@@ -672,9 +723,75 @@ public class BookScreen extends ScreenHelper {
         ctx.disableScissor();
     }
 
-    private void renderDetailPage(net.minecraft.client.gui.GuiGraphics ctx, int x, int y, int pageIndex) {
+    private void renderStickers(net.minecraft.client.gui.GuiGraphics ctx, int x, int y, int pageIndex, Set<ResourceLocation> used) {
+        loadStickers();
+        if (STICKERS.isEmpty() || detailEntity == null) return;
+
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(detailEntity.entityId);
+        } catch (Exception e) {
+            return;
+        }
+        long seed = uuid.getMostSignificantBits() ^ uuid.getLeastSignificantBits() ^ (long) (pageIndex + 1);
+        Random rand = new Random(seed);
+
+        List<Rect> placed = new ArrayList<>();
+        List<Rect> blocked = List.of(
+                new Rect(bgX + PREV_X, bgY + PREV_Y, PREV_W, PREV_H),
+                new Rect(bgX + NEXT_X, bgY + NEXT_Y, NEXT_W, NEXT_H),
+                new Rect(bgX + INDEX_BTN_X, bgY + INDEX_BTN_Y, INDEX_BTN_W, INDEX_BTN_H),
+                new Rect(bgX + SEARCH_BTN_X, bgY + SEARCH_BTN_Y, SEARCH_BTN_W, SEARCH_BTN_H),
+                new Rect(bgX + EXIT_BTN_X, bgY + EXIT_BTN_Y, EXIT_BTN_W, EXIT_BTN_H)
+        );
+
+        Rect content = new Rect(x, y, PAGE_CONTENT_W, PAGE_CONTENT_H);
+        Rect[] areaRels = (pageIndex % 2 == 0)
+                ? new Rect[]{LEFT_TOP_AREA_REL, LEFT_BOTTOM_AREA_REL}
+                : new Rect[]{RIGHT_TOP_AREA_REL, RIGHT_BOTTOM_AREA_REL};
+
+        for (Rect rel : areaRels) {
+            Rect area = new Rect(bgX + rel.x, bgY + rel.y, rel.w, rel.h);
+            int count = rand.nextInt(2); // 0-1 sticker per area
+            for (int i = 0; i < count; i++) {
+                Sticker st = null;
+                for (int attempt = 0; attempt < 20 && st == null; attempt++) {
+                    Sticker cand = STICKERS.get(rand.nextInt(STICKERS.size()));
+                    if (!used.contains(cand.tex)) {
+                        st = cand;
+                    }
+                }
+                if (st == null || st.w > area.w || st.h > area.h) continue;
+                boolean done = false;
+                for (int attempt = 0; attempt < 20 && !done; attempt++) {
+                    int sx = area.x + rand.nextInt(area.w - st.w + 1);
+                    int sy = area.y + rand.nextInt(area.h - st.h + 1);
+                    Rect r = new Rect(sx, sy, st.w, st.h);
+                    boolean collide = false;
+                    for (Rect p : placed) {
+                        if (r.intersects(p, 4)) { collide = true; break; }
+                    }
+                    if (!collide) {
+                        for (Rect b : blocked) {
+                            if (r.intersects(b, 0)) { collide = true; break; }
+                        }
+                    }
+                    if (!collide && !(r.x >= content.x && r.x + r.w <= content.x + content.w && r.y >= content.y && r.y + r.h <= content.y + content.h)) {
+                        RenderPipelineHelper.blitGuiTexture(ctx, st.tex, sx, sy, 0, 0, st.w, st.h, st.w, st.h);
+                        placed.add(r);
+                        used.add(st.tex);
+                        done = true;
+                    }
+                }
+            }
+        }
+    }
+
+    private void renderDetailPage(net.minecraft.client.gui.GuiGraphics ctx, int x, int y, int pageIndex, Set<ResourceLocation> used) {
         if (pageIndex >= detailTotalPages) return;
         if (detailEntity == null) return;
+
+        renderStickers(ctx, x, y, pageIndex, used);
 
         Player player = Minecraft.getInstance().player;
         String playerName = player != null ? player.getDisplayName().getString() : "";
