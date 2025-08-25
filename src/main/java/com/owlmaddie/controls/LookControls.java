@@ -10,7 +10,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Squid;
-import net.minecraft.world.entity.monster.Ghast;
+import com.owlmaddie.controls.LookControlsHelper;
 import net.minecraft.world.entity.monster.Vex;
 import net.minecraft.world.phys.Vec3;
 
@@ -33,7 +33,7 @@ public class LookControls {
             handleSlimeLook((Slime) entity, targetPos);
         } else if (entity instanceof Squid) {
             handleSquidLook((Squid) entity, targetPos);
-        } else if (entity instanceof Ghast) {
+        } else if (LookControlsHelper.isGhast(entity)) {
             handleFlyingEntity(entity, targetPos, 10F);
         } else if (entity instanceof FlyingAnimal || entity instanceof Vex || entity instanceof Phantom) {
             handleFlyingEntity(entity, targetPos, 4F);

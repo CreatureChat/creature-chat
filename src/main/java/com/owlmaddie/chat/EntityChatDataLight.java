@@ -5,7 +5,6 @@ package com.owlmaddie.chat;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * The {@code EntityChatDataLight} class represents the current displayed message, and no

@@ -81,9 +81,10 @@ public class MixinLivingEntity {
                     .getServerInstance()
                     .getOrCreateChatData(mob.getStringUUID());
 
-            if (!data.characterSheet.isEmpty()
-                    && data.auto_generated < ChatDataManager.MAX_AUTOGENERATE_RESPONSES) {
-
+            PlayerData pd = data.getPlayerData(serverPlayer.getDisplayName().getString());
+            pd.lastDamageFriendship = pd.friendship;
+            pd.wordsmithDamaged = true;
+            if (!data.characterSheet.isEmpty()) {
                 ItemStack weapon = serverPlayer.getMainHandItem();
                 String weaponName = weapon.isEmpty()
                         ? "with fists"
@@ -92,7 +93,7 @@ public class MixinLivingEntity {
                 boolean indirect = source.getDirectEntity() != attacker;
                 String directness = indirect ? "indirectly" : "directly";
 
-                String msg = "<" + player.getName().getString()
+                String msg = "<" + player.getDisplayName().getString()
                         + " attacked you " + directness
                         + " " + weaponName + ">";
                 ServerPackets.generate_chat("N/A", data, serverPlayer, mob, msg, true);
