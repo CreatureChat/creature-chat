@@ -81,8 +81,7 @@ public class MixinLivingEntity {
                     .getServerInstance()
                     .getOrCreateChatData(mob.getStringUUID());
 
-            if (!data.characterSheet.isEmpty()
-                    && data.auto_generated < ChatDataManager.MAX_AUTOGENERATE_RESPONSES) {
+            if (!data.characterSheet.isEmpty()) {
 
                 ItemStack weapon = serverPlayer.getMainHandItem();
                 String weaponName = weapon.isEmpty()
