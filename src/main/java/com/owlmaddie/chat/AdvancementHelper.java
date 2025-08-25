@@ -42,7 +42,7 @@ public class AdvancementHelper {
         if (data.previousMessages.size() >= 2) {
             award(player, Advancements.ICE_BREAKER.id);
         }
-        PlayerData pd = data.getPlayerData(player.getUUID().toString());
+        PlayerData pd = data.getPlayerData(player.getName().toString());
         pd.conversationCount++;
         pd.messageCount++;
         if (pd.friendship < 0) {
@@ -57,7 +57,7 @@ public class AdvancementHelper {
     }
 
     public static void checkInnerCircle(ServerPlayer player, Mob entity) {
-        String playerId = player.getUUID().toString();
+        String playerName = player.getName().toString();
         ChatDataManager manager = ChatDataManager.getServerInstance();
         List<Mob> mobs = player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(8.0));
         int count = 0;
@@ -65,7 +65,7 @@ public class AdvancementHelper {
             if (m == entity) continue;
             EntityChatData other = manager.entityChatDataMap.get(m.getStringUUID());
             if (other == null) continue;
-            PlayerData pd = other.getPlayerData(playerId);
+            PlayerData pd = other.getPlayerData(playerName);
             if (pd != null && pd.friendship >= 2) {
                 if (++count >= 5) {
                     award(player, Advancements.INNER_CIRCLE.id);
@@ -163,11 +163,11 @@ public class AdvancementHelper {
     }
 
     public static void checkSharedStash(ServerPlayer player) {
-        String playerId = player.getUUID().toString();
+        String playerName = player.getName().toString();
         ChatDataManager manager = ChatDataManager.getServerInstance();
         int count = 0;
         for (EntityChatData chat : manager.entityChatDataMap.values()) {
-            PlayerData pd = chat.players.get(playerId);
+            PlayerData pd = chat.players.get(playerName);
             if (pd != null && pd.gaveItem && pd.friendship > 0) {
                 if (++count >= 5) {
                     award(player, Advancements.SHARED_STASH.id);
@@ -178,11 +178,11 @@ public class AdvancementHelper {
     }
 
     public static void checkSocialButterfly(ServerPlayer player) {
-        String playerId = player.getUUID().toString();
+        String playerName = player.getName().toString();
         ChatDataManager manager = ChatDataManager.getServerInstance();
         Set<String> types = new HashSet<>();
         for (Map.Entry<String, EntityChatData> entry : manager.entityChatDataMap.entrySet()) {
-            PlayerData pd = entry.getValue().players.get(playerId);
+            PlayerData pd = entry.getValue().players.get(playerName);
             if (pd != null && pd.friendship > 0 && pd.messageCount >= 2) {
                 Mob mob = (Mob) ServerEntityFinder.getEntityByUUID((ServerLevel) player.level(), UUID.fromString(entry.getKey()));
                 if (mob != null) {
@@ -197,14 +197,14 @@ public class AdvancementHelper {
     }
 
     public static void checkPopularOpinion(ServerPlayer player) {
-        String playerId = player.getUUID().toString();
+        String playerName = player.getName().toString();
         ChatDataManager manager = ChatDataManager.getServerInstance();
         List<Mob> mobs = player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(12.0));
         int count = 0;
         for (Mob m : mobs) {
             EntityChatData chat = manager.entityChatDataMap.get(m.getStringUUID());
             if (chat == null) continue;
-            PlayerData pd = chat.players.get(playerId);
+            PlayerData pd = chat.players.get(playerName);
             if (pd != null && pd.friendship >= 2) {
                 if (++count >= 10) {
                     award(player, Advancements.POPULAR_OPINION.id);

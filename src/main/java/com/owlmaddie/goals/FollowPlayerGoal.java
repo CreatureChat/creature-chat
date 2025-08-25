@@ -59,7 +59,7 @@ public class FollowPlayerGoal extends PlayerBaseGoal {
         if (this.targetEntity instanceof ServerPlayer player) {
             ChatDataManager manager = ChatDataManager.getServerInstance();
             EntityChatData data = manager.getOrCreateChatData(this.entity.getStringUUID());
-            PlayerData pd = data.getPlayerData(player.getUUID().toString());
+            PlayerData pd = data.getPlayerData(player.getName().toString());
             if (this.entity.level().dimension() == Level.OVERWORLD) {
                 pd.wasInOverworld = true;
             }
