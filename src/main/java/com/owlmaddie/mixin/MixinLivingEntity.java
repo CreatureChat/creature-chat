@@ -41,7 +41,7 @@ public class MixinLivingEntity {
         if (target instanceof Player) {
             LivingEntity thisEntity = (LivingEntity) (Object) this;
             EntityChatData entityData = getChatData(thisEntity);
-            PlayerData playerData = entityData.getPlayerData(target.getDisplayName().getString());
+            PlayerData playerData = entityData.getPlayerData(target.getUUID().toString());
             if (playerData.friendship > 0) {
                 // Friendly creatures can't target a player
                 cir.setReturnValue(false);
@@ -66,7 +66,11 @@ public class MixinLivingEntity {
             // We don't want to constantly generate messages during a prolonged, multi-damage event
             ServerPlayer player = (ServerPlayer) attacker;
             EntityChatData chatData = getChatData(thisEntity);
+            PlayerData playerData = chatData.getPlayerData(player.getUUID().toString());
+            playerData.lastDamageFriendship = playerData.friendship;
+            playerData.wordsmithDamaged = true;
             if (!chatData.characterSheet.isEmpty()) {
+
                 ItemStack weapon = player.getMainHandItem();
                 String weaponName = weapon.isEmpty() ? "with fists" : "with " + weapon.getItem().toString();
 
