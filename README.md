@@ -9,9 +9,8 @@
 - **Friendship:** Track your relationships from friends to foes.
 - **Multi-Player:** Share the experience; conversations sync across server & players.
 - **Memory:** Creatures remember your past interactions, making each chat more personal.
-- **Inventory:** Every mob has an inventory with random loot. Borrow gear from friends or swipe items from enemies.
-- **Advancements:** Earn unique CreatureChat milestones as your relationships deepen.
-- **Rate Limits:** Built-in safeguards prevent excessive LLM requests (saving tokens).
+- **Inventory:** Every mob has an inventory with random loot. Give items to your friends or take items to create enemies.
+- **Advancements:** Earn unique CreatureChat milestones as your friendships progress.
 
 ### Create meaningful conversations and enduring friendships? A betrayal perhaps?
 
