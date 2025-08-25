@@ -13,6 +13,7 @@ import com.owlmaddie.render.PoseHelper;
 import com.owlmaddie.render.RenderPipelineHelper;
 import com.owlmaddie.utils.ClientEntityFinder;
 import com.owlmaddie.utils.EntityCreationHelper;
+import com.owlmaddie.message.MessageParser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Button;
@@ -526,7 +527,23 @@ public class BookScreen extends ScreenHelper {
                     }
                 }
             } else {
-                detailMessages.addAll(filtered);
+                List<ChatMessage> last = new ArrayList<>();
+                ChatDataManager.ChatSender expected = null;
+                for (int i = filtered.size() - 1; i >= 0 && last.size() < 4; i--) {
+                    ChatMessage m = filtered.get(i);
+                    if (last.isEmpty()) {
+                        if (m.sender != ChatDataManager.ChatSender.ASSISTANT) continue;
+                        expected = ChatDataManager.ChatSender.USER;
+                        last.add(m);
+                    } else {
+                        if (m.sender != expected) continue;
+                        last.add(m);
+                        expected = expected == ChatDataManager.ChatSender.USER
+                                ? ChatDataManager.ChatSender.ASSISTANT
+                                : ChatDataManager.ChatSender.USER;
+                    }
+                }
+                detailMessages.addAll(last);
             }
         }
 
@@ -599,7 +616,8 @@ public class BookScreen extends ScreenHelper {
         List<MessageChunk> page = new ArrayList<>();
         int remaining = available;
         for (ChatMessage m : detailMessages) {
-            List<String> lines = wrapLines(safe(m.message), PAGE_CONTENT_W - 4, 0.9f);
+            String cleaned = MessageParser.parseMessage(safe(m.message)).getCleanedMessage();
+            List<String> lines = wrapLines(cleaned, PAGE_CONTENT_W - 4, 0.9f);
             boolean first = true;
             int idx = 0;
             while (idx < lines.size()) {
@@ -870,11 +888,17 @@ public class BookScreen extends ScreenHelper {
                 if (speaker == null || speaker.isBlank()) speaker = "Unknown";
                 long ts = mc.msg.timestamp == null ? 0L : mc.msg.timestamp;
                 String ago = friendlyTime(System.currentTimeMillis() - ts) + " ago";
-                int timeW = this.font.width(ago);
-                speaker = this.font.plainSubstrByWidth(speaker, PAGE_CONTENT_W - timeW - 2);
-                ctx.drawString(this.font, speaker, x, lineY, LABEL_COLOR, false);
-                ctx.drawString(this.font, ago, x + PAGE_CONTENT_W - timeW, lineY, LABEL_COLOR, false);
-                lineY += this.font.lineHeight + 1;
+                float metaScale = 0.8f;
+                int timeW = Math.round(this.font.width(ago) * metaScale);
+                int availSpeaker = (int)Math.floor((PAGE_CONTENT_W - timeW - 2) / metaScale);
+                speaker = this.font.plainSubstrByWidth(speaker, availSpeaker);
+                PoseHelper.push(ctx.pose());
+                PoseHelper.translate(ctx.pose(), x, lineY);
+                PoseHelper.scale(ctx.pose(), metaScale, metaScale);
+                ctx.drawString(this.font, speaker, 0, 0, LABEL_COLOR, false);
+                ctx.drawString(this.font, ago, Math.round(PAGE_CONTENT_W / metaScale) - this.font.width(ago), 0, LABEL_COLOR, false);
+                PoseHelper.pop(ctx.pose());
+                lineY += Math.round(this.font.lineHeight * metaScale) + 1;
             }
             lineY = drawLines(ctx, mc.lines, x + 4, lineY, 0.9f, BODY_COLOR);
             lineY += 4;

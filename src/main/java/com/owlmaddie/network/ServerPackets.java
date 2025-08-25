@@ -503,6 +503,7 @@ public class ServerPackets {
                     buffer.writeUtf(chatData.sender.toString());
                     writePlayerDataMap(buffer, chatData.players);
                     buffer.writeLong(chatData.lastMessage != null ? chatData.lastMessage : 0L);
+                    buffer.writeLong(chatData.death != null ? chatData.death : 0L);
 
                     // Send message to player
                     PacketHelper.send(player, PACKET_S2C_ENTITY_MESSAGE, buffer);
