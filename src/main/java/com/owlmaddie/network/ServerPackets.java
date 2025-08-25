@@ -113,7 +113,7 @@ public class ServerPackets {
                 if (entity != null) {
                     EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getStringUUID());
                     if (chatData.characterSheet.isEmpty()) {
-                        generate_character(userLanguage, chatData, player, entity);
+                        generate_character(userLanguage, chatData, player, entity, false);
                     }
                 }
             });
@@ -198,7 +198,7 @@ public class ServerPackets {
                 if (entity != null) {
                     EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getStringUUID());
                     if (chatData.characterSheet.isEmpty()) {
-                        generate_character(userLanguage, chatData, player, entity);
+                        generate_character(userLanguage, chatData, player, entity, false);
                     } else {
                         generate_chat(userLanguage, chatData, player, entity, message, false);
                     }
@@ -251,7 +251,7 @@ public class ServerPackets {
 
             LOGGER.info("Server send compressed, chunked login message packets to player: " + player.getName().getString());
             // Get lite JSON data & compress to byte array
-            String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData(player.getDisplayName().getString());
+            String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData(player.getUUID().toString());
             byte[] compressedData = Compression.compressString(chatDataJSON);
             if (compressedData == null) {
                 LOGGER.error("Failed to compress chat data.");
@@ -291,8 +291,10 @@ public class ServerPackets {
         });
         ServerWorldEvents.UNLOAD.register((server, world) -> {
             String world_name = world.dimension().location().getPath();
-            if (world_name == "overworld") {
-                ChatDataManager.getServerInstance().saveChatData(server);
+            if (world_name.equals("overworld")) {
+                ChatDataManager manager = ChatDataManager.getServerInstance();
+                manager.saveChatData(server);
+                manager.clearData();
                 serverInstance = null;
 
                 // Shutdown auto scheduler
@@ -342,7 +344,12 @@ public class ServerPackets {
         }
     }
 
-    public static void generate_character(String userLanguage, EntityChatData chatData, ServerPlayer player, Mob entity) {
+    public static void generate_character(String userLanguage, EntityChatData chatData, ServerPlayer player, Mob entity, boolean is_auto_message) {
+        ConfigurationHandler.Config config = new ConfigurationHandler(serverInstance).loadConfig();
+        ChatDataManager manager = ChatDataManager.getServerInstance();
+        if (!manager.handleAutoResponse(chatData, player, is_auto_message, config)) {
+            return;
+        }
         // Set talk to player goal (prevent entity from walking off)
         TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
         EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
@@ -373,9 +380,9 @@ public class ServerPackets {
         userMessageBuilder.append("They speak in '").append(userLanguage).append("' with a ").append(randomSpeakingStyle).append(" style.");
 
         // Generate new character
-        chatData.generateCharacter(userLanguage, player, userMessageBuilder.toString(), false);
+        chatData.generateCharacter(userLanguage, player, userMessageBuilder.toString(), is_auto_message);
 
-// Populate inventory with some simple starter items if empty
+        // Populate inventory with some simple starter items if empty
         if (entity instanceof ChatInventory chatInv) {
             Container inv = chatInv.creaturechat$getInventory();
 
@@ -433,6 +440,12 @@ public class ServerPackets {
     }
 
     public static void generate_chat(String userLanguage, EntityChatData chatData, ServerPlayer player, Mob entity, String message, boolean is_auto_message) {
+        ConfigurationHandler.Config config = new ConfigurationHandler(serverInstance).loadConfig();
+        ChatDataManager manager = ChatDataManager.getServerInstance();
+        if (!manager.handleAutoResponse(chatData, player, is_auto_message, config)) {
+            return;
+        }
+
         // Set talk to player goal (prevent entity from walking off)
         TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
         EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);

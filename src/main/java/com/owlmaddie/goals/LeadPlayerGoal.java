@@ -5,6 +5,7 @@ package com.owlmaddie.goals;
 
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
+import com.owlmaddie.chat.AdvancementHelper;
 import com.owlmaddie.controls.LookControls;
 import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.particle.LeadParticleEffect;
@@ -36,6 +37,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
     private Vec3 currentTarget = null;
     private boolean foundWaypoint = false;
     private int ticksSinceLastWaypoint = 0;
+    private final Vec3 startPos;
 
     public LeadPlayerGoal(ServerPlayer player, Mob entity, double speed) {
         super(player);
@@ -43,6 +45,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
         this.speed = speed;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         this.totalWaypoints = random.nextInt(14) + 6;
+        this.startPos = player.position();
     }
 
     @Override
@@ -67,6 +70,10 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
         // Are we there yet?
         if (currentWaypoint >= totalWaypoints && !foundWaypoint) {
             foundWaypoint = true;
+            double distance = this.startPos.distanceTo(this.targetEntity.position());
+            if (distance >= 64) {
+                AdvancementHelper.guidedTour((ServerPlayer) this.targetEntity);
+            }
             LOGGER.info("Tick: You have ARRIVED at your destination");
 
             ServerPackets.scheduler.scheduleTask(() -> {
@@ -75,7 +82,7 @@ public class LeadPlayerGoal extends PlayerBaseGoal {
 
                 ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
                 EntityChatData chatData = chatDataManager.getOrCreateChatData(this.entity.getStringUUID());
-                if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
+                if (!chatData.characterSheet.isEmpty()) {
                     ServerPackets.generate_chat("N/A", chatData, (ServerPlayer) this.targetEntity, this.entity, arrivedMessage, true);
                 }
             });

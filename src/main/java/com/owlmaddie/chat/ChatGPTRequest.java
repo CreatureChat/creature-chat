@@ -93,14 +93,26 @@ public class ChatGPTRequest {
         try {
             ErrorResponse response = GSON.fromJson(errorResponse, ErrorResponse.class);
 
-            if (response.error != null) {
+            if (response != null && response.error != null) {
                 LOGGER.error("Error Message: " + response.error.message);
                 LOGGER.error("Error Type: " + response.error.type);
                 LOGGER.error("Error Code: " + response.error.code);
-                return response.error.message;
+                return response.error.message != null ? response.error.message : "Unknown error";
             } else {
+                // Some gateways return {"message":"Internal server error"} or similar
+                try {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> m = GSON.fromJson(errorResponse, Map.class);
+                    Object msg = (m != null) ? m.get("message") : null;
+                    if (msg instanceof String && !((String) msg).isEmpty()) {
+                        LOGGER.error("Gateway error message: " + msg);
+                        return (String) msg;
+                    }
+                } catch (Exception ignore) {
+                    // fall through to generic handling below
+                }
                 LOGGER.error("Unknown error response: " + errorResponse);
-                return "Unknown: " + errorResponse;
+                return "Unknown error";
             }
         } catch (JsonSyntaxException e) {
             LOGGER.warn("Failed to parse error response as JSON, falling back to plain text");
@@ -145,24 +157,24 @@ public class ChatGPTRequest {
         return CompletableFuture.supplyAsync(() -> {
             lastErrorCode = 0;
             HttpURLConnection connection = null;
-                try {
-                    // Replace placeholders
-                    String systemMessage = replacePlaceholders(systemPrompt, contextData);
+            try {
+                // Replace placeholders
+                String systemMessage = replacePlaceholders(systemPrompt, contextData);
 
-                    URL url = new URL(apiUrl);
-                    connection = (HttpURLConnection) url.openConnection();
-                    connection.setRequestMethod("POST");
-                    connection.setRequestProperty("Content-Type", "application/json");
-                    connection.setRequestProperty("Authorization", "Bearer " + apiKey);
-                    connection.setRequestProperty("Connection", "keep-alive");
-                    connection.setRequestProperty("Accept", "application/json");
-                    connection.setRequestProperty("Accept-Encoding", "gzip");
-                    connection.setDoOutput(true);
-                    connection.setConnectTimeout(timeout);
-                    connection.setReadTimeout(timeout);
+                URL url = new URL(apiUrl);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setRequestProperty("Authorization", "Bearer " + apiKey);
+                connection.setRequestProperty("Connection", "keep-alive");
+                connection.setRequestProperty("Accept", "application/json");
+                connection.setRequestProperty("Accept-Encoding", "gzip");
+                connection.setDoOutput(true);
+                connection.setConnectTimeout(timeout);
+                connection.setReadTimeout(timeout);
 
-                    // Create messages list (for chat history)
-                    List<ChatGPTRequestMessage> messages = new ArrayList<>();
+                // Create messages list (for chat history)
+                List<ChatGPTRequestMessage> messages = new ArrayList<>();
 
                 // Don't exceed a specific % of total context window (to limit message history in request)
                 int remainingContextTokens = (int) ((maxContextTokens - maxOutputTokens) * percentOfContext);
@@ -192,86 +204,119 @@ public class ChatGPTRequest {
                 Collections.reverse(messages);
 
                 // Convert JSON to String
-                ChatGPTRequestPayload payload = new ChatGPTRequestPayload(modelName, messages, jsonMode, 1.0f, maxOutputTokens);
-                    Gson gsonInput = new Gson();
-                    String jsonInputString = gsonInput.toJson(payload);
+                ChatGPTRequestPayload payload = new ChatGPTRequestPayload(
+                        modelName, messages, jsonMode, 1.0f, maxOutputTokens);
 
-                    byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
-                    connection.setFixedLengthStreamingMode(input.length);
-                    try (OutputStream os = connection.getOutputStream()) {
-                        os.write(input);
+                Gson gsonInput = new Gson();
+                String jsonInputString = gsonInput.toJson(payload);
+
+                byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
+                connection.setFixedLengthStreamingMode(input.length);
+                try (OutputStream os = connection.getOutputStream()) {
+                    os.write(input);
+                }
+
+                // Check for error message in response
+                int statusCode = connection.getResponseCode();
+                if (statusCode >= HttpURLConnection.HTTP_BAD_REQUEST) {
+                    lastErrorCode = statusCode;
+                    final String reason = connection.getResponseMessage() != null ? connection.getResponseMessage() : "";
+
+                    // Try to capture helpful IDs for tracing through AWS and OpenAI
+                    final String awsRequestId    = connection.getHeaderField("x-amzn-RequestId");
+                    final String awsErrorType    = connection.getHeaderField("x-amzn-ErrorType");
+                    final String openaiRequestId = connection.getHeaderField("x-request-id");
+
+                    InputStream errStream = connection.getErrorStream();
+                    if (errStream == null) {
+                        try {
+                            errStream = connection.getInputStream();
+                        } catch (Exception ex) {
+                            LOGGER.error("Failed to obtain error stream", ex);
+                            String msg = reason != null ? reason : ("HTTP error " + statusCode);
+                            StringBuilder base = new StringBuilder();
+                            base.append("HTTP ").append(statusCode);
+                            if (msg != null && !msg.isEmpty()) base.append(" ").append(msg);
+                            if (awsRequestId != null)    base.append(" [x-amzn-RequestId ").append(awsRequestId).append("]");
+                            if (awsErrorType != null)    base.append(" [x-amzn-ErrorType ").append(awsErrorType).append("]");
+                            if (openaiRequestId != null) base.append(" [x-request-id ").append(openaiRequestId).append("]");
+
+                            lastErrorMessage = sanitizeApiKey(base + ": " + ex.getMessage(), apiKey);
+                            return null;
+                        }
                     }
-
-                    // Check for error message in response
-                    int statusCode = connection.getResponseCode();
-                    if (statusCode >= HttpURLConnection.HTTP_BAD_REQUEST) {
-                        lastErrorCode = statusCode;
-                        InputStream errStream = connection.getErrorStream();
-                        if (errStream == null) {
-                            try {
-                                errStream = connection.getInputStream();
-                            } catch (Exception ex) {
-                                LOGGER.error("Failed to obtain error stream", ex);
-                                String msg = connection.getResponseMessage();
-                                if (msg == null) {
-                                    msg = "HTTP error " + statusCode;
-                                }
-                                lastErrorMessage = sanitizeApiKey(msg + ": " + ex.getMessage(), apiKey);
-                                return null;
-                            }
-                        }
-                        if ("gzip".equalsIgnoreCase(connection.getContentEncoding())) {
-                            errStream = new GZIPInputStream(errStream);
-                        }
-                        try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(errStream, StandardCharsets.UTF_8))) {
-                            String errorLine;
-                            StringBuilder errorResponse = new StringBuilder();
-                            while ((errorLine = errorReader.readLine()) != null) {
-                                errorResponse.append(errorLine.trim());
-                            }
-
-                        // Parse and log the error response using Gson
-                        String cleanError = parseAndLogErrorResponse(errorResponse.toString());
-                        lastErrorMessage = sanitizeApiKey(cleanError, apiKey);
-                        } catch (Exception e) {
-                            LOGGER.error("Failed to read error response", e);
-                            lastErrorMessage = sanitizeApiKey("Failed to read error response: " + e.getMessage(), apiKey);
-                        }
-                        return null;
-                    } else {
-                        lastErrorMessage = null;
-                        lastErrorCode = 0;
-                    }
-
-                    InputStream inStream = connection.getInputStream();
                     if ("gzip".equalsIgnoreCase(connection.getContentEncoding())) {
-                        inStream = new GZIPInputStream(inStream);
+                        errStream = new GZIPInputStream(errStream);
                     }
-                    try (BufferedReader br = new BufferedReader(new InputStreamReader(inStream, StandardCharsets.UTF_8))) {
-                        StringBuilder response = new StringBuilder();
-                        String responseLine;
-                        while ((responseLine = br.readLine()) != null) {
-                            response.append(responseLine.trim());
+                    try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(errStream, StandardCharsets.UTF_8))) {
+                        String line;
+                        StringBuilder errorResponse = new StringBuilder();
+                        while ((line = errorReader.readLine()) != null) {
+                            errorResponse.append(line.trim());
                         }
 
-                        ChatGPTResponse chatGPTResponse = GSON.fromJson(response.toString(), ChatGPTResponse.class);
-                        if (chatGPTResponse != null && chatGPTResponse.choices != null && !chatGPTResponse.choices.isEmpty()) {
-                            return chatGPTResponse.choices.get(0).message.content;
+                        // Try known shapes first
+                        String cleanError = parseAndLogErrorResponse(errorResponse.toString());
+
+                        // Build a richer message (status + reason + IDs + short body preview)
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("HTTP ").append(statusCode);
+                        if (!reason.isEmpty()) sb.append(" ").append(reason);
+                        if (awsRequestId != null)    sb.append(" [x-amzn-RequestId ").append(awsRequestId).append("]");
+                        if (awsErrorType != null)    sb.append(" [x-amzn-ErrorType ").append(awsErrorType).append("]");
+                        if (openaiRequestId != null) sb.append(" [x-request-id ").append(openaiRequestId).append("]");
+
+                        if (cleanError != null && !cleanError.isEmpty() && !"Unknown error".equals(cleanError)) {
+                            sb.append(": ").append(cleanError);
+                        } else if (errorResponse.length() > 0) {
+                            String bodyPreview = errorResponse.length() > 300
+                                    ? errorResponse.substring(0, 300) + "..."
+                                    : errorResponse.toString();
+                            sb.append(": ").append(bodyPreview);
                         }
-                        lastErrorMessage = "Failed to parse response";
-                        return null;
+
+                        String finalMsg = sb.toString();
+                        LOGGER.error(finalMsg);
+                        lastErrorMessage = sanitizeApiKey(finalMsg, apiKey);
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to read error response", e);
+                        lastErrorMessage = sanitizeApiKey("Failed to read error response: " + e.getMessage(), apiKey);
                     }
-                } catch (SocketException | SocketTimeoutException ce) {
-                    LOGGER.warn("Connection failed", ce);
-                    lastErrorMessage = "No Internet or Blocked Request: " + ce.getMessage();
-                    lastErrorCode = -1;
                     return null;
-                } catch (Exception e) {
-                    LOGGER.error("Failed to request message", e);
-                    lastErrorMessage = sanitizeApiKey("Failed to request message: " + e.getMessage(), apiKey);
+                } else {
+                    lastErrorMessage = null;
                     lastErrorCode = 0;
+                }
+
+                InputStream inStream = connection.getInputStream();
+                if ("gzip".equalsIgnoreCase(connection.getContentEncoding())) {
+                    inStream = new GZIPInputStream(inStream);
+                }
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(inStream, StandardCharsets.UTF_8))) {
+                    StringBuilder response = new StringBuilder();
+                    String responseLine;
+                    while ((responseLine = br.readLine()) != null) {
+                        response.append(responseLine.trim());
+                    }
+
+                    ChatGPTResponse chatGPTResponse = GSON.fromJson(response.toString(), ChatGPTResponse.class);
+                    if (chatGPTResponse != null && chatGPTResponse.choices != null && !chatGPTResponse.choices.isEmpty()) {
+                        return chatGPTResponse.choices.get(0).message.content;
+                    }
+                    lastErrorMessage = "Failed to parse response";
                     return null;
                 }
+            } catch (SocketException | SocketTimeoutException ce) {
+                LOGGER.warn("Connection failed", ce);
+                lastErrorMessage = "No Internet or Blocked Request: " + ce.getMessage();
+                lastErrorCode = -1;
+                return null;
+            } catch (Exception e) {
+                LOGGER.error("Failed to request message", e);
+                lastErrorMessage = sanitizeApiKey("Failed to request message: " + e.getMessage(), apiKey);
+                lastErrorCode = 0;
+                return null;
+            }
         });
     }
 }

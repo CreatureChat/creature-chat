@@ -3,6 +3,10 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.goals;
 
+import com.owlmaddie.chat.AdvancementHelper;
+import com.owlmaddie.chat.ChatDataManager;
+import com.owlmaddie.chat.EntityChatData;
+import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.controls.LookControls;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
@@ -12,6 +16,7 @@ import net.minecraft.world.entity.ai.util.LandRandomPos;
 import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.monster.Endermite;
 import net.minecraft.world.entity.monster.Shulker;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
@@ -51,6 +56,18 @@ public class FollowPlayerGoal extends PlayerBaseGoal {
 
     @Override
     public void tick() {
+        if (this.targetEntity instanceof ServerPlayer player) {
+            ChatDataManager manager = ChatDataManager.getServerInstance();
+            EntityChatData data = manager.getOrCreateChatData(this.entity.getStringUUID());
+            PlayerData pd = data.getPlayerData(player.getUUID().toString());
+            if (this.entity.level().dimension() == Level.OVERWORLD) {
+                pd.wasInOverworld = true;
+            }
+            if (this.entity.level().dimension() == Level.END && pd.friendship > 0 && pd.wasInOverworld) {
+                AdvancementHelper.enderEscort(player);
+                pd.wasInOverworld = false;
+            }
+        }
         if (this.entity instanceof EnderMan || this.entity instanceof Endermite || this.entity instanceof Shulker) {
             // Certain entities should teleport to the player if they get too far
             if (this.entity.distanceToSqr(this.targetEntity) > 256) {

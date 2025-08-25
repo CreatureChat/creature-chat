@@ -187,7 +187,7 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
         // Get chat data for entity
         ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
         EntityChatData entityData = chatDataManager.getOrCreateChatData(thisEntity.getStringUUID());
-        PlayerData playerData = entityData.getPlayerData(player.getDisplayName().getString());
+        PlayerData playerData = entityData.getPlayerData(player.getUUID().toString());
 
         // Check if the player successfully interacts with an item
         if (player instanceof ServerPlayer) {
@@ -207,7 +207,7 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
                 String giveItemMessage = "<" + serverPlayer.getName().getString() +
                         action_verb + "you " + itemCount + " " + itemName + ">";
 
-                if (!entityData.characterSheet.isEmpty() && entityData.auto_generated < chatDataManager.MAX_AUTOGENERATE_RESPONSES) {
+                if (!entityData.characterSheet.isEmpty()) {
                     ServerPackets.generate_chat("N/A", entityData, serverPlayer, thisEntity, giveItemMessage, true);
                 }
 

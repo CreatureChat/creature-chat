@@ -45,7 +45,7 @@ public class MixinLivingEntity {
         if (target instanceof Player) {
             LivingEntity thisEntity = (LivingEntity) (Object) this;
             EntityChatData entityData = getChatData(thisEntity);
-            PlayerData playerData = entityData.getPlayerData(target.getDisplayName().getString());
+            PlayerData playerData = entityData.getPlayerData(target.getUUID().toString());
             if (playerData.friendship > 0) {
                 // Friendly creatures can't target a player
                 cir.setReturnValue(false);
@@ -81,9 +81,10 @@ public class MixinLivingEntity {
                     .getServerInstance()
                     .getOrCreateChatData(mob.getStringUUID());
 
-            if (!data.characterSheet.isEmpty()
-                    && data.auto_generated < ChatDataManager.MAX_AUTOGENERATE_RESPONSES) {
-
+            PlayerData pd = data.getPlayerData(serverPlayer.getUUID().toString());
+            pd.lastDamageFriendship = pd.friendship;
+            pd.wordsmithDamaged = true;
+            if (!data.characterSheet.isEmpty()) {
                 ItemStack weapon = serverPlayer.getMainHandItem();
                 String weaponName = weapon.isEmpty()
                         ? "with fists"

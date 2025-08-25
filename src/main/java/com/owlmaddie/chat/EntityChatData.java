@@ -38,6 +38,7 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
@@ -64,6 +65,7 @@ public class EntityChatData {
     public Long lastMessage;
     public String entityName;
     public String entityType;
+    public transient AutoMessageBucket autoBucket;
 
     @SerializedName("playerId")
     @Expose(serialize = false)
@@ -90,6 +92,7 @@ public class EntityChatData {
         this.lastMessage = null;
         this.entityName = "";
         this.entityType = null;
+        this.autoBucket = null;
 
         // Old, unused migrated properties
         this.legacyPlayerId = null;
@@ -423,6 +426,12 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
+                                if (playerData.attacking) {
+                                    AdvancementHelper.calmTheStorm(player);
+                                    playerData.attacking = false;
+                                }
+                                playerData.fleeing = false;
+                                AdvancementHelper.follow(player);
                                 if (playerData.friendship >= 0) {
                                     ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FOLLOW_FRIEND_PARTICLE, 0.5, 1);
                                 } else {
@@ -442,9 +451,18 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
                                 ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FLEE_PARTICLE, 0.5, 1);
+                                playerData.fleeing = true;
+                                if (playerData.attacking) {
+                                    AdvancementHelper.calmTheStorm(player);
+                                    playerData.attacking = false;
+                                }
 
                             } else if (behavior.getName().equals("UNFLEE")) {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                                if (playerData.fleeing) {
+                                    AdvancementHelper.standYourGround(player);
+                                    playerData.fleeing = false;
+                                }
 
                             } else if (behavior.getName().equals("ATTACK")) {
                                 AttackPlayerGoal attackGoal = new AttackPlayerGoal(player, entity, entitySpeedFast);
@@ -455,6 +473,7 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
                                 ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FLEE_PARTICLE, 0.5, 1);
+                                playerData.attacking = true;
 
                             } else if (behavior.getName().equals("PROTECT")) {
                                 if (playerData.friendship <= 0) {
@@ -466,6 +485,22 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, protectGoal, GoalPriority.PROTECT_PLAYER);
+                                if (playerData.attacking) {
+                                    AdvancementHelper.calmTheStorm(player);
+                                    playerData.attacking = false;
+                                }
+                                playerData.fleeing = false;
+                                AdvancementHelper.bodyguard(player);
+                                if (entity.getType() == net.minecraft.world.entity.EntityType.PIG && playerData.friendship == 3) {
+                                    playerData.pigProtect = true;
+                                    ItemStack main = entity.getMainHandItem();
+                                    ItemStack off = entity.getOffhandItem();
+                                    if (main.getItem() == Items.DIAMOND_SWORD || main.getItem() == Items.NETHERITE_SWORD ||
+                                            off.getItem() == Items.DIAMOND_SWORD || off.getItem() == Items.NETHERITE_SWORD) {
+                                        AdvancementHelper.aLegend(player);
+                                        playerData.pigProtect = false;
+                                    }
+                                }
                                 ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) PROTECT_PARTICLE, 0.5, 1);
 
                             } else if (behavior.getName().equals("UNPROTECT")) {
@@ -477,6 +512,12 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, leadGoal, GoalPriority.LEAD_PLAYER);
+                                if (playerData.attacking) {
+                                    AdvancementHelper.calmTheStorm(player);
+                                    playerData.attacking = false;
+                                }
+                                playerData.fleeing = false;
+                                AdvancementHelper.lead(player);
                                 if (playerData.friendship >= 0) {
                                     ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) LEAD_FRIEND_PARTICLE, 0.5, 1);
                                 } else {
@@ -487,6 +528,7 @@ public class EntityChatData {
 
                             } else if (behavior.getName().equals("FRIENDSHIP")) {
                                 int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
+                                int old_friendship = playerData.friendship;
 
                                 // Does friendship improve?
                                 if (new_friendship > playerData.friendship) {
@@ -604,6 +646,16 @@ public class EntityChatData {
                                 }
 
                                 playerData.friendship = new_friendship;
+                                if (playerData.attacking) {
+                                    EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                                    AdvancementHelper.calmTheStorm(player);
+                                    playerData.attacking = false;
+                                }
+                                if (playerData.fleeing && new_friendship >= 0) {
+                                    EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                                    playerData.fleeing = false;
+                                }
+                                AdvancementHelper.friendshipChanged(player, playerData, old_friendship, new_friendship, entity);
                             }
                         }
                     }
@@ -736,6 +788,14 @@ public class EntityChatData {
 
         // Broadcast new entity message status (i.e. pending)
         ServerPackets.BroadcastEntityMessage(this);
+
+        if (sender == ChatDataManager.ChatSender.ASSISTANT) {
+            AdvancementHelper.chatExchange(player, this);
+            Mob entity = (Mob) ServerEntityFinder.getEntityByUUID((ServerLevel) player.level(), UUID.fromString(entityId));
+            if (entity != null) {
+                AdvancementHelper.checkInnerCircle(player, entity);
+            }
+        }
     }
 
     // Get wrapped lines

@@ -5,8 +5,10 @@ package com.owlmaddie.chat;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,7 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.UUID;
 
 /**
  * The {@code ChatDataManager} class manages chat data for all entities. This class also helps
@@ -47,15 +50,18 @@ public class ChatDataManager {
 
     // HashMap to associate unique entity IDs with their chat data
     public ConcurrentHashMap<String, EntityChatData> entityChatDataMap;
+    public ConcurrentHashMap<UUID, AutoMessageBucket> autoResponseBuckets;
 
     public void clearData() {
         // Clear the chat data for the previous session
         entityChatDataMap.clear();
+        autoResponseBuckets.clear();
     }
 
     private ChatDataManager(Boolean server_only) {
         // Constructor
         entityChatDataMap = new ConcurrentHashMap<>();
+        autoResponseBuckets = new ConcurrentHashMap<>();
 
         if (server_only) {
             // Generate initial quest
@@ -77,6 +83,41 @@ public class ChatDataManager {
     // Retrieve chat data for a specific entity, or create it if it doesn't exist
     public EntityChatData getOrCreateChatData(String entityId) {
         return entityChatDataMap.computeIfAbsent(entityId, k -> new EntityChatData(entityId));
+    }
+
+    private AutoMessageBucket getPlayerBucket(UUID playerId, ConfigurationHandler.Config config) {
+        return autoResponseBuckets.computeIfAbsent(playerId,
+                k -> new AutoMessageBucket(config.getMaxPlayerAutoResponses(), config.getPlayerAutoCooldownSeconds()));
+    }
+
+    private AutoMessageBucket getEntityBucket(EntityChatData chatData, ConfigurationHandler.Config config) {
+        if (chatData.autoBucket == null) {
+            chatData.autoBucket = new AutoMessageBucket(config.getMaxEntityAutoResponses(), config.getEntityAutoCooldownSeconds());
+        }
+        return chatData.autoBucket;
+    }
+
+    public boolean handleAutoResponse(EntityChatData chatData, ServerPlayer player, boolean isAuto, ConfigurationHandler.Config config) {
+        AutoMessageBucket entityBucket = getEntityBucket(chatData, config);
+        AutoMessageBucket playerBucket = getPlayerBucket(player.getUUID(), config);
+
+        if (!isAuto) {
+            playerBucket.reset();
+            return true;
+        }
+
+        if (!entityBucket.hasTokens()) {
+            LOGGER.info("Auto response skipped for entity {}: entity cooldown active", chatData.entityId);
+            return false;
+        }
+        if (!playerBucket.hasTokens()) {
+            LOGGER.info("Auto response skipped for player {}: player cooldown active", player.getName().getString());
+            return false;
+        }
+
+        entityBucket.consume();
+        playerBucket.consume();
+        return true;
     }
 
     // Update the UUID in the map (i.e. bucketed entity and then released, changes their UUID)
