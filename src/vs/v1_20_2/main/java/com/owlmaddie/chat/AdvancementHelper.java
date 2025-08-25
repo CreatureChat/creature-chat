@@ -42,7 +42,7 @@ public class AdvancementHelper {
         if (data.previousMessages.size() >= 2) {
             award(player, Advancements.ICE_BREAKER.id);
         }
-        PlayerData pd = data.getPlayerData(player.getUUID().toString());
+        PlayerData pd = data.getPlayerData(player.getName().toString());
         pd.conversationCount++;
         pd.messageCount++;
         if (pd.friendship < 0) {

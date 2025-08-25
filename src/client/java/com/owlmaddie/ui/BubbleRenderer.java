@@ -532,7 +532,7 @@ public class BubbleRenderer {
             if (entity instanceof Mob) {
                 chatData = ChatDataManager.getClientInstance().getOrCreateChatData(entity.getStringUUID());
                 if (chatData != null) {
-                    playerData = chatData.getPlayerData(player.getUUID().toString());
+                    playerData = chatData.getPlayerData(player.getName().toString());
                 }
             } else if (entity instanceof Player) {
                 chatData = PlayerMessageManager.getMessage(entity.getUUID());

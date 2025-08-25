@@ -195,7 +195,7 @@ public class MobInventoryMenu extends AbstractContainerMenu {
             if (!added.isEmpty() || !removed.isEmpty() || !disarmedToInventory.isEmpty() || !disarmedTaken.isEmpty() || swapped || handChanged) {
                 ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
                 EntityChatData chatData = chatDataManager.getOrCreateChatData(mob.getStringUUID());
-                PlayerData pd = chatData.getPlayerData(player.getUUID().toString());
+                PlayerData pd = chatData.getPlayerData(player.getName().toString());
                 if (pd.wordsmithActive) {
                     pd.wordsmithGaveItem = true;
                 }
