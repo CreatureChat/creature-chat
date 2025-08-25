@@ -211,9 +211,9 @@ public class ServerPackets {
             // Send entire whitelist / blacklist to logged in player
             send_whitelist_blacklist(player);
 
-            LOGGER.info("Server send compressed, chunked login message packets to player: " + player.getName().getString());
+            LOGGER.info("Server send compressed, chunked login message packets to player: " + player.getDisplayName().getString());
             // Get lite JSON data & compress to byte array
-            String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData(player.getName().toString());
+            String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData(player.getDisplayName().getString());
             byte[] compressedData = Compression.compressString(chatDataJSON);
             if (compressedData == null) {
                 LOGGER.error("Failed to compress chat data.");
@@ -292,7 +292,7 @@ public class ServerPackets {
 
         if (player != null) {
             // Send packet to specific player
-            LOGGER.info("Sending whitelist / blacklist packet to player: " + player.getName().getString());
+            LOGGER.info("Sending whitelist / blacklist packet to player: " + player.getDisplayName().getString());
             PacketHelper.send(player, PACKET_S2C_WHITELIST, buffer);
         } else {
             // Iterate over all players and send the packet
@@ -493,7 +493,7 @@ public class ServerPackets {
 
         // Iterate over all players and send the packet
         for (ServerPlayer serverPlayer : serverInstance.getPlayerList().getPlayers()) {
-            LOGGER.debug("Server broadcast " + player.getName().getString() + " player status to client: " + serverPlayer.getName().getString() + " | isChatOpen: " + isChatOpen);
+            LOGGER.debug("Server broadcast " + player.getDisplayName().getString() + " player status to client: " + serverPlayer.getDisplayName().getString() + " | isChatOpen: " + isChatOpen);
             PacketHelper.send(serverPlayer, PACKET_S2C_PLAYER_STATUS, buffer);
         }
     }

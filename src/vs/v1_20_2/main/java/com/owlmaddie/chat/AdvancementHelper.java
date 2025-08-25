@@ -42,7 +42,7 @@ public class AdvancementHelper {
         if (data.previousMessages.size() >= 2) {
             award(player, Advancements.ICE_BREAKER.id);
         }
-        PlayerData pd = data.getPlayerData(player.getName().toString());
+        PlayerData pd = data.getPlayerData(player.getDisplayName().getString());
         pd.conversationCount++;
         pd.messageCount++;
         if (pd.friendship < 0) {
@@ -57,7 +57,7 @@ public class AdvancementHelper {
     }
 
     public static void checkInnerCircle(ServerPlayer player, Mob entity) {
-        String playerName = player.getName().toString();
+        String playerName = player.getDisplayName().getString();
         ChatDataManager manager = ChatDataManager.getServerInstance();
         List<Mob> mobs = player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(8.0));
         int count = 0;
@@ -163,7 +163,7 @@ public class AdvancementHelper {
     }
 
     public static void checkSharedStash(ServerPlayer player) {
-        String playerName = player.getName().toString();
+        String playerName = player.getDisplayName().getString();
         ChatDataManager manager = ChatDataManager.getServerInstance();
         int count = 0;
         for (EntityChatData chat : manager.entityChatDataMap.values()) {
@@ -178,7 +178,7 @@ public class AdvancementHelper {
     }
 
     public static void checkSocialButterfly(ServerPlayer player) {
-        String playerName = player.getName().toString();
+        String playerName = player.getDisplayName().getString();
         ChatDataManager manager = ChatDataManager.getServerInstance();
         Set<String> types = new HashSet<>();
         for (Map.Entry<String, EntityChatData> entry : manager.entityChatDataMap.entrySet()) {
@@ -197,7 +197,7 @@ public class AdvancementHelper {
     }
 
     public static void checkPopularOpinion(ServerPlayer player) {
-        String playerName = player.getName().toString();
+        String playerName = player.getDisplayName().getString();
         ChatDataManager manager = ChatDataManager.getServerInstance();
         List<Mob> mobs = player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(12.0));
         int count = 0;

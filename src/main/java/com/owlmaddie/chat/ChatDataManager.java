@@ -110,7 +110,7 @@ public class ChatDataManager {
             return false;
         }
         if (!playerBucket.hasTokens()) {
-            LOGGER.info("Auto response skipped for player {}: player cooldown active", player.getName().getString());
+            LOGGER.info("Auto response skipped for player {}: player cooldown active", player.getDisplayName().getString());
             return false;
         }
 

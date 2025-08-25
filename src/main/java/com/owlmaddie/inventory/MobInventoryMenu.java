@@ -54,9 +54,9 @@ public class MobInventoryMenu extends AbstractContainerMenu {
         EntityChatData chatData = chatDataManager.getOrCreateChatData(mob.getStringUUID());
         String playerName;
         if (player != null) {
-            playerName = player.getName().toString();
+            playerName = player.getDisplayName().getString();
         } else if (playerInventory.player != null) {
-            playerName = playerInventory.player.getName().toString();
+            playerName = playerInventory.player.getDisplayName().getString();
         } else {
             playerName = "";
         }
@@ -195,7 +195,7 @@ public class MobInventoryMenu extends AbstractContainerMenu {
             if (!added.isEmpty() || !removed.isEmpty() || !disarmedToInventory.isEmpty() || !disarmedTaken.isEmpty() || swapped || handChanged) {
                 ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
                 EntityChatData chatData = chatDataManager.getOrCreateChatData(mob.getStringUUID());
-                PlayerData pd = chatData.getPlayerData(player.getName().toString());
+                PlayerData pd = chatData.getPlayerData(player.getDisplayName().getString());
                 if (pd.wordsmithActive) {
                     pd.wordsmithGaveItem = true;
                 }
@@ -233,7 +233,7 @@ public class MobInventoryMenu extends AbstractContainerMenu {
                         AdvancementHelper.potatoWar(serverPlayer);
                     }
                 }
-                StringBuilder msg = new StringBuilder("<" + player.getName().getString());
+                StringBuilder msg = new StringBuilder("<" + player.getDisplayName().getString());
                 boolean first = true;
                 if (swapped) {
                     msg.append(" swapped the items in your hands");

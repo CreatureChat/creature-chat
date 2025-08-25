@@ -41,7 +41,7 @@ public class MixinLivingEntity {
         if (target instanceof Player) {
             LivingEntity thisEntity = (LivingEntity) (Object) this;
             EntityChatData entityData = getChatData(thisEntity);
-            PlayerData playerData = entityData.getPlayerData(target.getName().toString());
+            PlayerData playerData = entityData.getPlayerData(target.getDisplayName().getString());
             if (playerData.friendship > 0) {
                 // Friendly creatures can't target a player
                 cir.setReturnValue(false);
@@ -66,7 +66,7 @@ public class MixinLivingEntity {
             // We don't want to constantly generate messages during a prolonged, multi-damage event
             ServerPlayer player = (ServerPlayer) attacker;
             EntityChatData chatData = getChatData(thisEntity);
-            PlayerData playerData = chatData.getPlayerData(player.getName().toString());
+            PlayerData playerData = chatData.getPlayerData(player.getDisplayName().getString());
             playerData.lastDamageFriendship = playerData.friendship;
             playerData.wordsmithDamaged = true;
             if (!chatData.characterSheet.isEmpty()) {
@@ -78,7 +78,7 @@ public class MixinLivingEntity {
                 boolean isIndirect = attacker != null && attacker != source.getDirectEntity();
                 String directness = isIndirect ? "indirectly" : "directly";
 
-                String attackedMessage = "<" + player.getName().getString() + " attacked you " + directness + " with " + weaponName + ">";
+                String attackedMessage = "<" + player.getDisplayName().getString() + " attacked you " + directness + " with " + weaponName + ">";
                 ServerPackets.generate_chat("N/A", chatData, player, (Mob) thisEntity, attackedMessage, true);
             }
         }
