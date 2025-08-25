@@ -7,55 +7,50 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ## Unreleased
 
 ### Added
-- Initial Advancements for CreatureChat
-  1. **CreatureChat**: Talk to mobs. Make friends. Start drama.
-  2. **Ice Breaker**: Cold Open.
-  3. **First Impressions**: Make a friend.
-  4. **No Hard Feelings**: Regain a friend.
-  5. **Open Sesame**: Your stuff is my stuff.
-  6. **Tag Along**: Follow me, bro.
-  7. **Lead The Way**: Where are we going?
-  8. **Calm The Storm**: Talk them down.
-  9. **Stand Your Ground**: Stop. It's okay.
-  10. **Sworn Oath**: I will protect you.
-  11. **Wordsmith**: From rocky start to best friends.
-  12. **True Companion**: Best friends forever.
-  13. **Sleight of Hand**: Try my sword.
-  14. **Shared Stash**: Share the loot.
-  15. **Social Butterfly**: Trust blooms everywhere.
-  16. **Inner Circle**: Gathered round the fire.
-  17. **Popular Opinion**: Sway the Crowd.
-  18. **Drama Llama**: Best friends for never.
-  19. **Love Hate Relationship**: It’s Complicated.
-  20. **Arch Nemesis**: Meet your worst enemy.
-  21. **Friend Or Foe**: Remember the good times.
-  22. **Finder’s Keepers**: Borrowed forever.
-  23. **Guided Tour**: Lost, together.
-  24. **The NeverEnding Story**: The book is still open.
-  25. **Grand Gesture**: A little effort, a big return.
-  26. **A Legend**: Blood for the crown.
-  27. **Potato War**: Fields of Glory.
-  28. **The Heist**: The jewel of betrayal.
-  29. **Ender Escort**: Together to the End.
-  30. **True Pacifist**: Love conquers all.
-
-
-## Unreleased
-
-### Added
 - Inventories for all entities with chat data (Shift+Right Click, or Press 'E' while riding)
-    - Random items added to inventory on character creation (biome-specific loot tables for inventories)
+    - Random loot added to inventory on character creation (biome-specific loot tables for inventories)
     - You can borrow items from friends, or steel items from enemies
     - Entities will react to changes in inventory
     - Integrates with existing inventories for Piglin, Pillager, Allay, and Villager
     - Press 'E' while riding a mob with max friendship to show inventory
     - Imports chest-based mobs (horse with chest, donkey with chest, llama with chest)
-    - Added Fabric DataGen for building compatible loot-tables (1.20 to 1.21.7 support)
-    - Randomly assign inventory loot items into random slots
+    - Integrated Fabric DataGen for building compatible loot-tables (1.20 to 1.21.7 support)
+    - Randomly assign inventory into random slots
     - Main/Off hand support for max friendship (uses bottom left 2 slots for main/off hand)
+- Advancements
+    - **CreatureChat**: Your world just got way more alive.
+    - **Ice Breaker**: Cold Open.
+    - **First Impressions**: Make a friend.
+    - **No Hard Feelings**: Regain a friend.
+    - **Open Sesame**: Your stuff is my stuff.
+    - **Tag Along**: Follow me, bro.
+    - **Lead The Way**: Where are we going?
+    - **Calm The Storm**: Chill out, man.
+    - **Stand Your Ground**: Why are you running?
+    - **Sworn Oath**: I will protect you.
+    - **Wordsmith**: From rocky start to best friends.
+    - **True Companion**: Did we just become best friends?
+    - **Sleight of Hand**: Try my sword.
+    - **Shared Stash**: Share the loot.
+    - **Social Butterfly**: Love conquers all.
+    - **Inner Circle**: Gathered round the fire.
+    - **Popular Opinion**: Sway the Crowd.
+    - **Drama Llama**: Best friends for never.
+    - **Love Hate Relationship**: It’s Complicated.
+    - **Arch Nemesis**: Keep your enemies closer.
+    - **Friend Or Foe**: Remember the good times?
+    - **Finder’s Keepers**: Borrowed forever.
+    - **Guided Tour**: Lost, together.
+    - **The NeverEnding Story**: Every real story is a never ending story.
+    - **Grand Gesture**: You got rizz.
+    - **A Legend**: Legends never die.
+    - **Potato War**: All war is deception.
+    - **The Heist**: The perfect crime.
+    - **Ender Escort**: Together to the End.
+    - **Pacifist Route**: The best ending.
 - Validation of mixin targets (on build script)
 - Solutions to common errors are now displayed on screen (i.e. more helpful)
-- New keep alive and accept HTTP headers
+- New HTTP keep alive and accept HTTP headers
 - Unit tests for all LLM request failure scenarios + solutions
 
 ### Changed
@@ -63,9 +58,9 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Output more detailed error message from LLM APIs
 - Leaving HTTP connection open (better connection pooling)
 - Expanded 'no response' messages
-- build.gradle now includes running Fabric datagen (for generating the JSON loot tables)
-- Increasing max auto-generated messages to 12 (up from 3)
-- Improved Auto rate-limits for automatic LLM requests (show item, inventory, attack)
+- Improved rate-limits for automatic LLM requests (show item, inventory, attack)
+  - 10 automatic LLM messages per user, cooldown +1 every 6 seconds
+  - 1 automatic LLM message per entity, cooldown +1 every 4 seconds
 
 ### Fixed
 - Fixed constant death messages which appeared on each attack (for Minecraft 1.21.2+)
