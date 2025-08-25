@@ -66,9 +66,11 @@ public class MixinLivingEntity {
             // We don't want to constantly generate messages during a prolonged, multi-damage event
             ServerPlayer player = (ServerPlayer) attacker;
             EntityChatData chatData = getChatData(thisEntity);
-            if (!chatData.characterSheet.isEmpty() && chatData.auto_generated < ChatDataManager.MAX_AUTOGENERATE_RESPONSES) {
-                // Only auto-generate a response to being attacked if chat data already exists
-                // and this is the first attack event.
+            PlayerData playerData = chatData.getPlayerData(player.getDisplayName().getString());
+            playerData.lastDamageFriendship = playerData.friendship;
+            playerData.wordsmithDamaged = true;
+            if (!chatData.characterSheet.isEmpty()) {
+
                 ItemStack weapon = player.getMainHandItem();
                 String weaponName = weapon.isEmpty() ? "with fists" : "with " + weapon.getItem().toString();
 
@@ -76,7 +78,7 @@ public class MixinLivingEntity {
                 boolean isIndirect = attacker != null && attacker != source.getDirectEntity();
                 String directness = isIndirect ? "indirectly" : "directly";
 
-                String attackedMessage = "<" + player.getName().getString() + " attacked you " + directness + " with " + weaponName + ">";
+                String attackedMessage = "<" + player.getDisplayName().getString() + " attacked you " + directness + " with " + weaponName + ">";
                 ServerPackets.generate_chat("N/A", chatData, player, (Mob) thisEntity, attackedMessage, true);
             }
         }

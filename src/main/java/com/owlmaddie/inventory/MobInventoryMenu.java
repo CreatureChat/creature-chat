@@ -6,6 +6,7 @@ package com.owlmaddie.inventory;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
+import com.owlmaddie.chat.AdvancementHelper;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,6 +20,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,6 +61,13 @@ public class MobInventoryMenu extends AbstractContainerMenu {
             playerName = "";
         }
         this.playerData = chatData.getPlayerData(playerName);
+        if (player != null && playerData.friendship > 0 && !playerData.openedInventory) {
+            playerData.openedInventory = true;
+            AdvancementHelper.openSesame(player);
+        }
+        if (playerData.wordsmithActive) {
+            playerData.wordsmithOpenedInventory = true;
+        }
         this.mobInvSize = inventory.getContainerSize();
         this.rows = (mobInvSize + 4) / 5;
         int bottomRowStart = (rows - 1) * 5;
@@ -187,9 +196,44 @@ public class MobInventoryMenu extends AbstractContainerMenu {
                 ChatDataManager chatDataManager = ChatDataManager.getServerInstance();
                 EntityChatData chatData = chatDataManager.getOrCreateChatData(mob.getStringUUID());
                 PlayerData pd = chatData.getPlayerData(player.getDisplayName().getString());
+                if (pd.wordsmithActive) {
+                    pd.wordsmithGaveItem = true;
+                }
                 String verbBase = pd.friendship >= 3 ? "borrowed" : pd.friendship == 2 ? "took" : "stole";
                 String verb = " " + verbBase + " ";
-                StringBuilder msg = new StringBuilder("<" + player.getName().getString());
+                if (!removed.isEmpty()) {
+                    AdvancementHelper.itemTaken(serverPlayer, pd);
+                    if (removed.containsKey(Items.DIAMOND)) {
+                        AdvancementHelper.theHeist(serverPlayer);
+                    }
+                }
+                if (!added.isEmpty() && pd.friendship > 0) {
+                    pd.gaveItem = true;
+                    AdvancementHelper.checkSharedStash(serverPlayer);
+                }
+                if (handChanged && pd.friendship == 3) {
+                    AdvancementHelper.sleightOfHand(serverPlayer);
+                }
+                if (mob.getType() == net.minecraft.world.entity.EntityType.PIG && pd.friendship == 3 && pd.pigProtect &&
+                        (finalMain.getItem() == Items.DIAMOND_SWORD || finalMain.getItem() == Items.NETHERITE_SWORD ||
+                         finalOff.getItem() == Items.DIAMOND_SWORD || finalOff.getItem() == Items.NETHERITE_SWORD)) {
+                    AdvancementHelper.aLegend(serverPlayer);
+                    pd.pigProtect = false;
+                }
+                if (mob.getType() == net.minecraft.world.entity.EntityType.PIG && pd.friendship == 3) {
+                    boolean allPotatoes = true;
+                    for (int i = 0; i < mobInvSize; i++) {
+                        ItemStack stack = inventory.getItem(i);
+                        if (stack.isEmpty() || stack.getItem() != Items.POTATO || stack.getCount() < stack.getMaxStackSize()) {
+                            allPotatoes = false;
+                            break;
+                        }
+                    }
+                    if (allPotatoes) {
+                        AdvancementHelper.potatoWar(serverPlayer);
+                    }
+                }
+                StringBuilder msg = new StringBuilder("<" + player.getDisplayName().getString());
                 boolean first = true;
                 if (swapped) {
                     msg.append(" swapped the items in your hands");

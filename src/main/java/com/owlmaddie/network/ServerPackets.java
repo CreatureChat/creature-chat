@@ -110,7 +110,7 @@ public class ServerPackets {
                 if (entity != null) {
                     EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getStringUUID());
                     if (chatData.characterSheet.isEmpty()) {
-                        generate_character(userLanguage, chatData, player, entity);
+                        generate_character(userLanguage, chatData, player, entity, false);
                     }
                 }
             });
@@ -195,7 +195,7 @@ public class ServerPackets {
                 if (entity != null) {
                     EntityChatData chatData = ChatDataManager.getServerInstance().getOrCreateChatData(entity.getStringUUID());
                     if (chatData.characterSheet.isEmpty()) {
-                        generate_character(userLanguage, chatData, player, entity);
+                        generate_character(userLanguage, chatData, player, entity, false);
                     } else {
                         generate_chat(userLanguage, chatData, player, entity, message, false);
                     }
@@ -211,7 +211,7 @@ public class ServerPackets {
             // Send entire whitelist / blacklist to logged in player
             send_whitelist_blacklist(player);
 
-            LOGGER.info("Server send compressed, chunked login message packets to player: " + player.getName().getString());
+            LOGGER.info("Server send compressed, chunked login message packets to player: " + player.getDisplayName().getString());
             // Get lite JSON data & compress to byte array
             String chatDataJSON = ChatDataManager.getServerInstance().GetLightChatData(player.getDisplayName().getString());
             byte[] compressedData = Compression.compressString(chatDataJSON);
@@ -253,8 +253,10 @@ public class ServerPackets {
         });
         ServerWorldEvents.UNLOAD.register((server, world) -> {
             String world_name = world.dimension().location().getPath();
-            if (world_name == "overworld") {
-                ChatDataManager.getServerInstance().saveChatData(server);
+            if (world_name.equals("overworld")) {
+                ChatDataManager manager = ChatDataManager.getServerInstance();
+                manager.saveChatData(server);
+                manager.clearData();
                 serverInstance = null;
 
                 // Shutdown auto scheduler
@@ -290,7 +292,7 @@ public class ServerPackets {
 
         if (player != null) {
             // Send packet to specific player
-            LOGGER.info("Sending whitelist / blacklist packet to player: " + player.getName().getString());
+            LOGGER.info("Sending whitelist / blacklist packet to player: " + player.getDisplayName().getString());
             PacketHelper.send(player, PACKET_S2C_WHITELIST, buffer);
         } else {
             // Iterate over all players and send the packet
@@ -300,7 +302,12 @@ public class ServerPackets {
         }
     }
 
-    public static void generate_character(String userLanguage, EntityChatData chatData, ServerPlayer player, Mob entity) {
+    public static void generate_character(String userLanguage, EntityChatData chatData, ServerPlayer player, Mob entity, boolean is_auto_message) {
+        ConfigurationHandler.Config config = new ConfigurationHandler(serverInstance).loadConfig();
+        ChatDataManager manager = ChatDataManager.getServerInstance();
+        if (!manager.handleAutoResponse(chatData, player, is_auto_message, config)) {
+            return;
+        }
         // Set talk to player goal (prevent entity from walking off)
         TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
         EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
@@ -328,9 +335,9 @@ public class ServerPackets {
         userMessageBuilder.append("They speak in '").append(userLanguage).append("' with a ").append(randomSpeakingStyle).append(" style.");
 
         // Generate new character
-        chatData.generateCharacter(userLanguage, player, userMessageBuilder.toString(), false);
+        chatData.generateCharacter(userLanguage, player, userMessageBuilder.toString(), is_auto_message);
 
-// Populate inventory with some simple starter items if empty
+        // Populate inventory with some simple starter items if empty
         if (entity instanceof ChatInventory chatInv) {
             Container inv = chatInv.creaturechat$getInventory();
 
@@ -388,6 +395,12 @@ public class ServerPackets {
     }
 
     public static void generate_chat(String userLanguage, EntityChatData chatData, ServerPlayer player, Mob entity, String message, boolean is_auto_message) {
+        ConfigurationHandler.Config config = new ConfigurationHandler(serverInstance).loadConfig();
+        ChatDataManager manager = ChatDataManager.getServerInstance();
+        if (!manager.handleAutoResponse(chatData, player, is_auto_message, config)) {
+            return;
+        }
+
         // Set talk to player goal (prevent entity from walking off)
         TalkPlayerGoal talkGoal = new TalkPlayerGoal(player, entity, 3.5F);
         EntityBehaviorManager.addGoal(entity, talkGoal, GoalPriority.TALK_PLAYER);
@@ -480,7 +493,7 @@ public class ServerPackets {
 
         // Iterate over all players and send the packet
         for (ServerPlayer serverPlayer : serverInstance.getPlayerList().getPlayers()) {
-            LOGGER.debug("Server broadcast " + player.getName().getString() + " player status to client: " + serverPlayer.getName().getString() + " | isChatOpen: " + isChatOpen);
+            LOGGER.debug("Server broadcast " + player.getDisplayName().getString() + " player status to client: " + serverPlayer.getDisplayName().getString() + " | isChatOpen: " + isChatOpen);
             PacketHelper.send(serverPlayer, PACKET_S2C_PLAYER_STATUS, buffer);
         }
     }
