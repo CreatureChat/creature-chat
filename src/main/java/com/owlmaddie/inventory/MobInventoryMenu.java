@@ -54,9 +54,9 @@ public class MobInventoryMenu extends AbstractContainerMenu {
         EntityChatData chatData = chatDataManager.getOrCreateChatData(mob.getStringUUID());
         String playerName;
         if (player != null) {
-            playerName = player.getUUID().toString();
+            playerName = player.getName().toString();
         } else if (playerInventory.player != null) {
-            playerName = playerInventory.player.getUUID().toString();
+            playerName = playerInventory.player.getName().toString();
         } else {
             playerName = "";
         }
