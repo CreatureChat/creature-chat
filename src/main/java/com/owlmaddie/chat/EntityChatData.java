@@ -38,6 +38,7 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
@@ -476,6 +477,13 @@ public class EntityChatData {
                                 AdvancementHelper.bodyguard(player);
                                 if (entity.getType() == net.minecraft.world.entity.EntityType.PIG && playerData.friendship == 3) {
                                     playerData.pigProtect = true;
+                                    ItemStack main = entity.getMainHandItem();
+                                    ItemStack off = entity.getOffhandItem();
+                                    if (main.getItem() == Items.DIAMOND_SWORD || main.getItem() == Items.NETHERITE_SWORD ||
+                                            off.getItem() == Items.DIAMOND_SWORD || off.getItem() == Items.NETHERITE_SWORD) {
+                                        AdvancementHelper.aLegend(player);
+                                        playerData.pigProtect = false;
+                                    }
                                 }
                                 ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) PROTECT_PARTICLE, 0.5, 1);
 
