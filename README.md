@@ -5,10 +5,12 @@
 ### Features
 - **AI-Driven Chats:** Using ChatGPT or open-source AI models, each conversation is unique and engaging!
 - **Behaviors:** Creatures can make decisions on their own and **Follow, Flee, Attack, Protect**, and more!
-- **Reactions:** Creatures automatically react to being damaged or receiving items from players.
+- **Reactions:** Creatures automatically react to being damaged, shown items, or receiving or loosing items.
 - **Friendship:** Track your relationships from friends to foes.
 - **Multi-Player:** Share the experience; conversations sync across server & players.
 - **Memory:** Creatures remember your past interactions, making each chat more personal.
+- **Inventory:** Every mob has an inventory with random loot. Give items to your friends or take items to create enemies.
+- **Advancements:** Earn unique CreatureChat milestones as your friendships progress.
 
 ### Create meaningful conversations and enduring friendships? A betrayal perhaps?
 
