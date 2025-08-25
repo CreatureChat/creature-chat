@@ -33,7 +33,7 @@ public enum Advancements {
             Items.CHEST, FIRST_IMPRESSIONS, 0, false),
 
     TAG_ALONG("tag_along", "Tag Along", "Follow me, bro.", Type.TASK,
-            Items.LEAD, FIRST_IMPRESSIONS, 0, false),
+            Items.LEAD, ICE_BREAKER, 0, false),
 
     LEAD_THE_WAY("lead_the_way", "Lead The Way", "Where are we going?", Type.TASK,
             Items.COMPASS, TAG_ALONG, 0, false),
@@ -66,7 +66,7 @@ public enum Advancements {
             Items.BELL, INNER_CIRCLE, 0, false),
 
     ARCH_NEMESIS("arch_nemesis", "Arch Nemesis", "Keep your enemies closer.", Type.TASK,
-            Items.CROSSBOW, FIRST_IMPRESSIONS, 0, false),
+            Items.CROSSBOW, ICE_BREAKER, 0, false),
 
     FRIEND_OR_FOE("friend_or_foe", "Friend Or Foe", "Remember the good times?", Type.TASK,
             Items.TNT, ARCH_NEMESIS, 0, false),
@@ -84,7 +84,7 @@ public enum Advancements {
             Items.SPYGLASS, LEAD_THE_WAY, 0, false),
 
     THE_NEVERENDING_STORY("the_neverending_story", "The NeverEnding Story", "Every real story is a never ending story.", Type.GOAL,
-            Items.WRITABLE_BOOK, ICE_BREAKER, 0, false),
+            Items.WRITABLE_BOOK, TRUE_COMPANION, 0, false),
 
     GRAND_GESTURE("grand_gesture", "Grand Gesture", "You got rizz.", Type.TASK,
             Items.EXPERIENCE_BOTTLE, CALM_THE_STORM, 0, false),
