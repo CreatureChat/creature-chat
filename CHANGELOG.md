@@ -64,6 +64,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ### Fixed
 - Fixed constant death messages which appeared on each attack (for Minecraft 1.21.2+)
+- Line wrapping for all languages improved (especially noticeable for certain wide-character languages)
 - Support NBT format from 1.20 to 1.21.4 in newer versions (migrate CCUID)
 - Fixed "entity is null" errors when killing mobs (usually when killing lots of mobs)
 - Fixed names that were not appearing in the End and the Nether.
