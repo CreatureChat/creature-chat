@@ -331,7 +331,7 @@ public class EntityChatData {
                     type = Randomizer.ErrorType.CODE503;
                 }
                 String randomErrorMessage = Randomizer.getRandomErrorMessage(type);
-                this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
+                this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt, false);
 
                 // Remove the error message from history to prevent it from affecting future ChatGPT requests
                 if (!previousMessages.isEmpty()) {
@@ -684,7 +684,7 @@ public class EntityChatData {
                     type = Randomizer.ErrorType.CODE503;
                 }
                 String randomErrorMessage = Randomizer.getRandomErrorMessage(type);
-                this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
+                this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt, false);
 
                 // Remove the error message from history to prevent it from affecting future ChatGPT requests
                 if (!previousMessages.isEmpty()) {
@@ -726,6 +726,11 @@ public class EntityChatData {
 
     // Add a message to the history and update the current message
     public void addMessage(String message, ChatDataManager.ChatSender sender, ServerPlayer player, String systemPrompt) {
+        addMessage(message, sender, player, systemPrompt, true);
+    }
+
+    // Internal helper allowing callers to skip advancement triggers
+    public void addMessage(String message, ChatDataManager.ChatSender sender, ServerPlayer player, String systemPrompt, boolean triggerAdvancement) {
         // Truncate message (prevent crazy long messages... just in case)
         String truncatedMessage = message.substring(0, Math.min(message.length(), ChatDataManager.MAX_CHAR_IN_USER_MESSAGE));
 
@@ -773,7 +778,7 @@ public class EntityChatData {
         // Broadcast new entity message status (i.e. pending)
         ServerPackets.BroadcastEntityMessage(this);
 
-        if (sender == ChatDataManager.ChatSender.ASSISTANT) {
+        if (sender == ChatDataManager.ChatSender.ASSISTANT && triggerAdvancement) {
             AdvancementHelper.chatExchange(player, this);
             Mob entity = (Mob) ServerEntityFinder.getEntityByUUID((ServerLevel) player.level(), UUID.fromString(entityId));
             if (entity != null) {
