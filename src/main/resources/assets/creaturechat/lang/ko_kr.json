@@ -109,6 +109,6 @@
   "creaturechat.solution.server_error": "해결 방법: 서버 오류, 나중에 다시 시도하세요",
   "creaturechat.solution.try_again": "해결 방법: 나중에 다시 시도하세요",
   "creaturechat.solution.verify_url": "해결 방법: API URL을 확인하세요",
-  "creaturechat.ui.chat_title": "간단 채팅",
+  "creaturechat.ui.chat_title": "CreatureChat",
   "creaturechat.ui.enter_message": "메시지를 입력하세요:"
 }

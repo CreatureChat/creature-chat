@@ -109,6 +109,6 @@
   "creaturechat.solution.server_error": "Lösning: Serverfel, försök igen senare",
   "creaturechat.solution.try_again": "Lösning: Försök igen senare",
   "creaturechat.solution.verify_url": "Lösning: Verifiera API-URL:en",
-  "creaturechat.ui.chat_title": "Creature Chat",
+  "creaturechat.ui.chat_title": "CreatureChat",
   "creaturechat.ui.enter_message": "Skriv ditt meddelande:"
 }
