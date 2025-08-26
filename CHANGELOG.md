@@ -59,8 +59,8 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Leaving HTTP connection open (better connection pooling)
 - Expanded 'no response' messages
 - Improved rate-limits for automatic LLM requests (show item, inventory, attack)
-  - 10 automatic LLM messages per user, cooldown +1 every 6 seconds
-  - 1 automatic LLM message per entity, cooldown +1 every 4 seconds
+  - 10 automatic LLM messages per user, cooldown +1 every 3 seconds
+  - 3 automatic LLM message per entity, cooldown +1 every 3 seconds
 
 ### Fixed
 - Fixed constant death messages which appeared on each attack (for Minecraft 1.21.2+)
