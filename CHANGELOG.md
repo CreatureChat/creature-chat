@@ -7,6 +7,13 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ## Unreleased
 
 ### Added
+- Adding datagen provider for translations (en_us.json)
+- Including initial translations for Spanish and Swedish
+- WIP: Still build errors on 1.20+
+
+## Unreleased
+
+### Added
 - Inventories for all entities with chat data (Shift+Right Click, or Press 'E' while riding)
     - Random loot added to inventory on character creation (biome-specific loot tables for inventories)
     - You can borrow items from friends, or steel items from enemies

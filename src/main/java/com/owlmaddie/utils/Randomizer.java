@@ -6,6 +6,9 @@ package com.owlmaddie.utils;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Stream;
+
+import com.owlmaddie.i18n.TR;
 
 /**
  * The {@code Randomizer} class provides easy functions for generating a variety of different random numbers
@@ -55,126 +58,131 @@ public class Randomizer {
             "<sips water>",
             "<stares at the ground>"
     );
-    private static List<String> errorsGeneral = Arrays.asList(
-            "Seems like my words got lost in the End. Check out {LINK} for clues!",
-            "Oops! My speech bubble popped. Need help? Visit {LINK}",
-            "I might've eaten a bad Command Block. Help me out at {LINK}!",
-            "I think a Creeper blew up my script. Instructions? {LINK}",
-            "BRB, asking a villager for directions to {LINK}",
-            "I tried to speak, but it was a critical miss. Help at {LINK}",
-            "Words are hard. Come chat at {LINK}",
-            "I must've left my responses at my other base. See {LINK}",
-            "I’d tell you, but then I’d have to respawn. Meet me at {LINK}",
-            "Response not found. Maybe it’s hiding at {LINK}?",
-            "I'm speechless, literally. Let's troubleshoot at {LINK}",
-            "Looks like my connection got lost in the Nether. Can you help? {LINK}",
-            "I forgot what I was saying, but {LINK} remembers.",
-            "My message is unfortunately out of order. Find help at {LINK}"
+    public static final List<TR> ERROR_GENERAL = List.of(
+            new TR("error.general.0", "Seems like my words got lost in the End. Check out %s for clues!"),
+            new TR("error.general.1", "Oops! My speech bubble popped. Need help? Visit %s"),
+            new TR("error.general.2", "I might've eaten a bad Command Block. Help me out at %s!"),
+            new TR("error.general.3", "I think a Creeper blew up my script. Instructions? %s"),
+            new TR("error.general.4", "BRB, asking a villager for directions to %s"),
+            new TR("error.general.5", "I tried to speak, but it was a critical miss. Help at %s"),
+            new TR("error.general.6", "Words are hard. Come chat at %s"),
+            new TR("error.general.7", "I must've left my responses at my other base. See %s"),
+            new TR("error.general.8", "I’d tell you, but then I’d have to respawn. Meet me at %s"),
+            new TR("error.general.9", "Response not found. Maybe it’s hiding at %s?"),
+            new TR("error.general.10", "I'm speechless, literally. Let's troubleshoot at %s"),
+            new TR("error.general.11", "Looks like my connection got lost in the Nether. Can you help? %s"),
+            new TR("error.general.12", "I forgot what I was saying, but %s remembers."),
+            new TR("error.general.13", "My message is unfortunately out of order. Find help at %s")
     );
-    private static List<String> errorsConnection = Arrays.asList(
-            "No signal! Maybe connect to the internet? {LINK}",
-            "Looks like your request was blocked by a firewall. Info at {LINK}",
-            "Can't reach the server. Are you offline? {LINK}",
-            "Connection errors everywhere! My bad. Ask {LINK} for help",
-            "This network portal is closed. Check your connection. {LINK}",
-            "Are we underground? I can't find the web. Connection not found. {LINK}",
-            "Your network doesn't like me. More help at {LINK}",
-            "I bumped into a blocked port. Connection error, find help at {LINK}",
-            "Maybe your wifi is grumpy. Try fixing it. {LINK}",
-            "Your wifi might have vanished. {LINK}",
-            "Firewall says 'nope'. {LINK}",
-            "We might have no internet at all. Whoops. {LINK}",
-            "Connection meltdown! {LINK}"
+    public static final List<TR> ERROR_CONNECTION = List.of(
+            new TR("error.connection.0", "No signal! Maybe connect to the internet? %s"),
+            new TR("error.connection.1", "Looks like your request was blocked by a firewall. Info at %s"),
+            new TR("error.connection.2", "Can't reach the server. Are you offline? %s"),
+            new TR("error.connection.3", "Connection errors everywhere! My bad. Ask %s for help"),
+            new TR("error.connection.4", "This network portal is closed. Check your connection. %s"),
+            new TR("error.connection.5", "Are we underground? I can't find the web. Connection not found. %s"),
+            new TR("error.connection.6", "Your network doesn't like me. More help at %s"),
+            new TR("error.connection.7", "I bumped into a blocked port. Connection error, find help at %s"),
+            new TR("error.connection.8", "Maybe your wifi is grumpy. Try fixing it. %s"),
+            new TR("error.connection.9", "Your wifi might have vanished. %s"),
+            new TR("error.connection.10", "Firewall says 'nope'. %s"),
+            new TR("error.connection.11", "We might have no internet at all. Whoops. %s"),
+            new TR("error.connection.12", "Connection meltdown! %s")
     );
-    private static List<String> errors401 = Arrays.asList(
-            "I lost my keys! Maybe update the API key? {LINK}",
-            "No entry without a key! Visit {LINK} to learn more.",
-            "API door slammed shut. Did you set a valid key? {LINK}",
-            "I'm keyless and confused. Learn more at {LINK}",
-            "Access denied! That's usually an invalid API key. See {LINK}",
-            "Your key is invalid or confused. Get some help maybe, at {LINK}",
-            "I forgot the secret handshake. Check your API key or go to {LINK}",
-            "Bad token, bad! Fix your API key, support at {LINK}",
-            "This door won't let me in. Did you misplace the API key? {LINK}",
-            "Invalid key. Get help or something at {LINK}",
-            "No key, no chat! Configure it via {LINK}",
-            "No ominous trial keys allowed, API keys only. See {LINK} for help",
-            "Locked out! Did you use a trial key instead of an API key? Get help at {LINK}",
-            "Help! Double-check your API key, or see {LINK}",
-            "You need the golden API key to open this door. Invalid API key, see {LINK}",
-            "Please insert a valid API key, it no work. {LINK}"
+    public static final List<TR> ERROR_401 = List.of(
+            new TR("error.401.0", "I lost my keys! Maybe update the API key? %s"),
+            new TR("error.401.1", "No entry without a key! Visit %s to learn more."),
+            new TR("error.401.2", "API door slammed shut. Did you set a valid key? %s"),
+            new TR("error.401.3", "I'm keyless and confused. Learn more at %s"),
+            new TR("error.401.4", "Access denied! That's usually an invalid API key. See %s"),
+            new TR("error.401.5", "Your key is invalid or confused. Get some help maybe, at %s"),
+            new TR("error.401.6", "I forgot the secret handshake. Check your API key or go to %s"),
+            new TR("error.401.7", "Bad token, bad! Fix your API key, support at %s"),
+            new TR("error.401.8", "This door won't let me in. Did you misplace the API key? %s"),
+            new TR("error.401.9", "Invalid key. Get help or something at %s"),
+            new TR("error.401.10", "No key, no chat! Configure it via %s"),
+            new TR("error.401.11", "No ominous trial keys allowed, API keys only. See %s for help"),
+            new TR("error.401.12", "Locked out! Did you use a trial key instead of an API key? Get help at %s"),
+            new TR("error.401.13", "Help! Double-check your API key, or see %s"),
+            new TR("error.401.14", "You need the golden API key to open this door. Invalid API key, see %s"),
+            new TR("error.401.15", "Please insert a valid API key, it no work. %s")
     );
-    private static List<String> errors403 = Arrays.asList(
-            "The server says your region is off-limits. Sorry. :( Help available at {LINK}",
-            "Region not available. I guess your region isn't supported. :( Visit {LINK}",
-            "I'm blocked by a magical region barrier. :( Learn more at {LINK}",
-            "Country or region unavailable. :( See {LINK} for help.",
-            "Location denied by the elders. Region not supported :( See {LINK}",
-            "Messages evaporated. :( Are you from a supported region? {LINK}",
-            "Your region is having issues, I guess. Check region or get help at {LINK}",
-            "Check your region or get help at {LINK}",
-            "Region might not be supported. Try again after checking your region or see {LINK}",
-            "An angry golem refused me. Confirm your region on {LINK}",
-            "This gate is region-locked. :( More info at {LINK}",
-            "I'm trapped outside your region. Learn more at {LINK}",
-            "Country not supported. :( See {LINK} for advice.",
-            "A barrier ahead blocks us. Check your region or see {LINK} for help."
+    public static final List<TR> ERROR_403 = List.of(
+            new TR("error.403.0", "The server says your region is off-limits. Sorry. :( Help available at %s"),
+            new TR("error.403.1", "Region not available. I guess your region isn't supported. :( Visit %s"),
+            new TR("error.403.2", "I'm blocked by a magical region barrier. :( Learn more at %s"),
+            new TR("error.403.3", "Country or region unavailable. :( See %s for help."),
+            new TR("error.403.4", "Location denied by the elders. Region not supported :( See %s"),
+            new TR("error.403.5", "Messages evaporated. :( Are you from a supported region? %s"),
+            new TR("error.403.6", "Your region is having issues, I guess. Check region or get help at %s"),
+            new TR("error.403.7", "Check your region or get help at %s"),
+            new TR("error.403.8", "Region might not be supported. Try again after checking your region or see %s"),
+            new TR("error.403.9", "An angry golem refused me. Confirm your region on %s"),
+            new TR("error.403.10", "This gate is region-locked. :( More info at %s"),
+            new TR("error.403.11", "I'm trapped outside your region. Learn more at %s"),
+            new TR("error.403.12", "Country not supported. :( See %s for advice."),
+            new TR("error.403.13", "A barrier ahead blocks us. Check your region or see %s for help.")
     );
-    private static List<String> errors429 = Arrays.asList(
-            "Slow down! We hit the quota. See {LINK}",
-            "Overload! The token bucket is dry. Refill at {LINK}",
-            "Too many requests. Take a breather and check {LINK}",
-            "My brain is out of tokens or you're typing too fast. {LINK}",
-            "You might have exceeded the daily chatter limit. Details on {LINK}",
-            "Rate limit reached. Pause for a moment and visit {LINK}",
-            "Oops, I babbled too much. Get help at {LINK}",
-            "The LLM says I'm too chatty. Get help at {LINK}",
-            "Quota exhausted, or you talk too much. {LINK}",
-            "Your token bank is empty. Replenish or slow down the messaging! {LINK}",
-            "Hold on, I'm hitting the brake. Quota problems? {LINK}",
-            "Our conversation is temporarily paused. Learn more at {LINK}",
-            "Token supply run out. Grab extras on {LINK}",
-            "I can't talk until we slow down. Try {LINK}",
-            "Rate limited by the server. Info at {LINK}",
-            "Token meter flashing red. Head over to {LINK}",
-            "The API is tired of us. Let it rest (or buy more tokens) {LINK}"
+    public static final List<TR> ERROR_429 = List.of(
+            new TR("error.429.0", "Slow down! We hit the quota. See %s"),
+            new TR("error.429.1", "Overload! The token bucket is dry. Refill at %s"),
+            new TR("error.429.2", "Too many requests. Take a breather and check %s"),
+            new TR("error.429.3", "My brain is out of tokens or you're typing too fast. %s"),
+            new TR("error.429.4", "You might have exceeded the daily chatter limit. Details on %s"),
+            new TR("error.429.5", "Rate limit reached. Pause for a moment and visit %s"),
+            new TR("error.429.6", "Oops, I babbled too much. Get help at %s"),
+            new TR("error.429.7", "The LLM says I'm too chatty. Get help at %s"),
+            new TR("error.429.8", "Quota exhausted, or you talk too much. %s"),
+            new TR("error.429.9", "Your token bank is empty. Replenish or slow down the messaging! %s"),
+            new TR("error.429.10", "Hold on, I'm hitting the brake. Quota problems? %s"),
+            new TR("error.429.11", "Our conversation is temporarily paused. Learn more at %s"),
+            new TR("error.429.12", "Token supply run out. Grab extras on %s"),
+            new TR("error.429.13", "I can't talk until we slow down. Try %s"),
+            new TR("error.429.14", "Rate limited by the server. Info at %s"),
+            new TR("error.429.15", "Token meter flashing red. Head over to %s"),
+            new TR("error.429.16", "The API is tired of us. Let it rest (or buy more tokens) %s")
     );
-    private static List<String> errors500 = Arrays.asList(
-            "The server's brain melted. Let's retry later. See {LINK}",
-            "Something broke on their end. Keep calm and visit {LINK}",
-            "I triggered an internal hiccup. Try again or check {LINK}",
-            "Server is tangled in redstone dust. Hang tight! {LINK}",
-            "Oops, big crash over there. We'll need to wait. {LINK}",
-            "The API tripped on itself. Maybe check their status or {LINK}",
-            "Redstone bug. Give it a sec! {LINK}",
-            "Internal server meltdown! More details at {LINK}",
-            "Something on the other side is broken. {LINK}",
-            "The LLM spilled its coffee on the redstone wires, whoops. {LINK}",
-            "Back-end exploded. Redstone everywhere. Help at {LINK}",
-            "It's not you, it's them. Hang on and see {LINK}",
-            "The server monster ate my redstone. Look up {LINK}",
-            "I received gibberish back. Another hiccup. {LINK}",
-            "They're busy fixing stuff. In the meantime, {LINK}"
+    public static final List<TR> ERROR_500 = List.of(
+            new TR("error.500.0", "The server's brain melted. Let's retry later. See %s"),
+            new TR("error.500.1", "Something broke on their end. Keep calm and visit %s"),
+            new TR("error.500.2", "I triggered an internal hiccup. Try again or check %s"),
+            new TR("error.500.3", "Server is tangled in redstone dust. Hang tight! %s"),
+            new TR("error.500.4", "Oops, big crash over there. We'll need to wait. %s"),
+            new TR("error.500.5", "The API tripped on itself. Maybe check their status or %s"),
+            new TR("error.500.6", "Redstone bug. Give it a sec! %s"),
+            new TR("error.500.7", "Internal server meltdown! More details at %s"),
+            new TR("error.500.8", "Something on the other side is broken. %s"),
+            new TR("error.500.9", "The LLM spilled its coffee on the redstone wires, whoops. %s"),
+            new TR("error.500.10", "Back-end exploded. Redstone everywhere. Help at %s"),
+            new TR("error.500.11", "It's not you, it's them. Hang on and see %s"),
+            new TR("error.500.12", "The server monster ate my redstone. Look up %s"),
+            new TR("error.500.13", "I received gibberish back. Another hiccup. %s"),
+            new TR("error.500.14", "They're busy fixing stuff. In the meantime, %s")
     );
-    private static List<String> errors503 = Arrays.asList(
-            "Service is overloaded. We'll try later. {LINK}",
-            "Too many folks chatting. Hold tight! {LINK}",
-            "The engine is overworked right now. See {LINK}",
-            "Server says come back later. Info at {LINK}",
-            "They're taking a quick nap. Check {LINK}",
-            "Busy signal! Let's retry soon. {LINK}",
-            "Server at capacity. Patience! {LINK}",
-            "I'm stuck in a queue. Learn more at {LINK}",
-            "Overload! Wait a tick then check {LINK}",
-            "The API is swamped. Guidance at {LINK}",
-            "Server busy, please hold... In the meantime {LINK}",
-            "They put up a 'Back Soon' sign. {LINK}",
-            "Service unavailable. The fix? See {LINK}",
-            "The server is catching its breath. {LINK}",
-            "Our internal redstone is literally on fire. {LINK}",
-            "They're at capacity and can't talk. {LINK}",
-            "Try again once they fix everything. {LINK}"
+    public static final List<TR> ERROR_503 = List.of(
+            new TR("error.503.0", "Service is overloaded. We'll try later. %s"),
+            new TR("error.503.1", "Too many folks chatting. Hold tight! %s"),
+            new TR("error.503.2", "The engine is overworked right now. See %s"),
+            new TR("error.503.3", "Server says come back later. Info at %s"),
+            new TR("error.503.4", "They're taking a quick nap. Check %s"),
+            new TR("error.503.5", "Busy signal! Let's retry soon. %s"),
+            new TR("error.503.6", "Server at capacity. Patience! %s"),
+            new TR("error.503.7", "I'm stuck in a queue. Learn more at %s"),
+            new TR("error.503.8", "Overload! Wait a tick then check %s"),
+            new TR("error.503.9", "The API is swamped. Guidance at %s"),
+            new TR("error.503.10", "Server busy, please hold... In the meantime %s"),
+            new TR("error.503.11", "They put up a 'Back Soon' sign. %s"),
+            new TR("error.503.12", "Service unavailable. The fix? See %s"),
+            new TR("error.503.13", "The server is catching its breath. %s"),
+            new TR("error.503.14", "Our internal redstone is literally on fire. %s"),
+            new TR("error.503.15", "They're at capacity and can't talk. %s"),
+            new TR("error.503.16", "Try again once they fix everything. %s")
     );
+
+    public static Stream<TR> allErrorText() {
+        return Stream.of(ERROR_GENERAL, ERROR_CONNECTION, ERROR_401, ERROR_403, ERROR_429, ERROR_500, ERROR_503)
+                .flatMap(List::stream);
+    }
     private static List<String> characterAdjectives = Arrays.asList(
             "mystical", "fiery", "ancient", "cursed", "ethereal", "clumsy", "stealthy",
             "legendary", "toxic", "enigmatic", "celestial", "rambunctious", "shadowy",
@@ -248,34 +256,34 @@ public class Randomizer {
         return messages.get(index).trim();
     }
 
-    // Get random error message by type
-    public static String getRandomErrorMessage(ErrorType errorType) {
+    // Get random error text by type
+    public static TR getRandomError(ErrorType errorType) {
         Random random = new Random();
-        List<String> messages = errorsGeneral;
+        List<TR> messages = ERROR_GENERAL;
         switch (errorType) {
             case CONNECTION:
-                messages = errorsConnection;
+                messages = ERROR_CONNECTION;
                 break;
             case CODE401:
-                messages = errors401;
+                messages = ERROR_401;
                 break;
             case CODE403:
-                messages = errors403;
+                messages = ERROR_403;
                 break;
             case CODE429:
-                messages = errors429;
+                messages = ERROR_429;
                 break;
             case CODE500:
-                messages = errors500;
+                messages = ERROR_500;
                 break;
             case CODE503:
-                messages = errors503;
+                messages = ERROR_503;
                 break;
             default:
-                messages = errorsGeneral;
+                messages = ERROR_GENERAL;
         }
         int index = random.nextInt(messages.size());
-        return messages.get(index).replace("{LINK}", DISCORD_LINK).trim();
+        return messages.get(index);
     }
 
     public static String RandomLetter() {

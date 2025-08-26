@@ -11,6 +11,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.owlmaddie.network.ServerPackets;
+import com.owlmaddie.i18n.CCText;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -124,11 +125,12 @@ public class CreatureChatCommands {
         config.setChatBubbles(enabled);
 
         if (configHandler.saveConfig(config, useServerConfig)) {
-            Component feedbackMessage = Component.literal("Player chat bubbles have been " + (enabled ? "enabled" : "disabled") + ".").withStyle(ChatFormatting.GREEN);
+            Component feedbackMessage = (enabled ? CCText.CONFIG_CHATBUBBLE_ENABLED : CCText.CONFIG_CHATBUBBLE_DISABLED)
+                    .comp().withStyle(ChatFormatting.GREEN);
             source.sendSuccess(() -> feedbackMessage, true);
             return 1;
         } else {
-            Component feedbackMessage = Component.literal("Failed to update player chat bubble setting.").withStyle(ChatFormatting.RED);
+            Component feedbackMessage = CCText.CONFIG_CHATBUBBLE_UPDATE_FAILED.comp().withStyle(ChatFormatting.RED);
             source.sendSuccess(() -> feedbackMessage, false);
             return 0;
         }
@@ -167,20 +169,7 @@ public class CreatureChatCommands {
     private static LiteralArgumentBuilder<CommandSourceStack> registerHelpCommand() {
         return Commands.literal("help")
                 .executes(context -> {
-                    String helpMessage = "Usage of CreatureChat Commands:\n"
-                            + "/creaturechat key set <key> - Sets the API key\n"
-                            + "/creaturechat url set \"<url>\" - Sets the URL\n"
-                            + "/creaturechat model set <model> - Sets the model\n"
-                            + "/creaturechat timeout set <seconds> - Sets the API timeout\n"
-                            + "/creaturechat story set \"<story>\" - Sets a custom story\n"
-                            + "/creaturechat chatbubbles set <on | off> - Show player chat bubbles\n"
-                            + "/creaturechat whitelist <entityType | all | clear> - Show chat bubbles\n"
-                            + "/creaturechat blacklist <entityType | all | clear> - Hide chat bubbles\n"
-                            + "\n"
-                            + "Optional: Append [--config default | server] to any command to specify configuration scope.\n"
-                            + "\n"
-                            + "Security: Level 4 permission required.";
-                    context.getSource().sendSuccess(() -> Component.literal(helpMessage), false);
+                    context.getSource().sendSuccess(() -> CCText.CONFIG_HELP.comp(), false);
                     return 1;
                 });
     }
@@ -195,10 +184,10 @@ public class CreatureChatCommands {
                                     ConfigurationHandler.Config config = new ConfigurationHandler(context.getSource().getServer()).loadConfig();
                                     config.setStory(story);
                                     if (new ConfigurationHandler(context.getSource().getServer()).saveConfig(config, useServerConfig)) {
-                                        context.getSource().sendSuccess(() -> Component.literal("Story set successfully: " + story).withStyle(ChatFormatting.GREEN), true);
+                                        context.getSource().sendSuccess(() -> CCText.CONFIG_STORY_SET_SUCCESS.comp(story).withStyle(ChatFormatting.GREEN), true);
                                         return 1;
                                     } else {
-                                        context.getSource().sendSuccess(() -> Component.literal("Failed to set story!").withStyle(ChatFormatting.RED), false);
+                                        context.getSource().sendSuccess(() -> CCText.CONFIG_STORY_SET_FAILED.comp().withStyle(ChatFormatting.RED), false);
                                         return 0;
                                     }
                                 }))))
@@ -207,10 +196,10 @@ public class CreatureChatCommands {
                             ConfigurationHandler.Config config = new ConfigurationHandler(context.getSource().getServer()).loadConfig();
                             config.setStory("");
                             if (new ConfigurationHandler(context.getSource().getServer()).saveConfig(config, useServerConfig)) {
-                                context.getSource().sendSuccess(() -> Component.literal("Story cleared successfully!").withStyle(ChatFormatting.GREEN), true);
+                            context.getSource().sendSuccess(() -> CCText.CONFIG_STORY_CLEARED_SUCCESS.comp().withStyle(ChatFormatting.GREEN), true);
                                 return 1;
                             } else {
-                                context.getSource().sendSuccess(() -> Component.literal("Failed to clear story!").withStyle(ChatFormatting.RED), false);
+                            context.getSource().sendSuccess(() -> CCText.CONFIG_STORY_CLEARED_FAILED.comp().withStyle(ChatFormatting.RED), false);
                                 return 0;
                             }
                         })))
@@ -219,10 +208,10 @@ public class CreatureChatCommands {
                     ConfigurationHandler.Config config = new ConfigurationHandler(context.getSource().getServer()).loadConfig();
                     String story = config.getStory();
                     if (story == null || story.isEmpty()) {
-                        context.getSource().sendSuccess(() -> Component.literal("No story is currently set.").withStyle(ChatFormatting.RED), false);
+                        context.getSource().sendSuccess(() -> CCText.CONFIG_STORY_NOT_SET.comp().withStyle(ChatFormatting.RED), false);
                         return 0;
                     } else {
-                        context.getSource().sendSuccess(() -> Component.literal("Current story: " + story).withStyle(ChatFormatting.AQUA), false);
+                        context.getSource().sendSuccess(() -> CCText.CONFIG_STORY_SHOW.comp(story).withStyle(ChatFormatting.AQUA), false);
                         return 1;
                     }
                 }));
@@ -246,14 +235,14 @@ public class CreatureChatCommands {
                     if (value instanceof Integer) {
                         config.setTimeout((Integer) value);
                     } else {
-                        throw new IllegalArgumentException("Invalid type for timeout, must be Integer.");
+                        throw new IllegalArgumentException(CCText.CONFIG_TIMEOUT_INVALID_TYPE.comp().getString());
                     }
                     break;
                 default:
-                    throw new IllegalArgumentException("Unknown configuration setting: " + settingName);
+                    throw new IllegalArgumentException(CCText.CONFIG_UNKNOWN_SETTING.comp(settingName).getString());
             }
         } catch (ClassCastException e) {
-            Component errorMessage = Component.literal("Invalid type for setting " + settingName).withStyle(ChatFormatting.RED);
+            Component errorMessage = CCText.CONFIG_INVALID_SETTING_TYPE.comp(settingName).withStyle(ChatFormatting.RED);
             source.sendSuccess(() -> errorMessage, false);
             LOGGER.error("Type mismatch during configuration setting for: " + settingName, e);
             return 0;
@@ -266,12 +255,12 @@ public class CreatureChatCommands {
 
         Component feedbackMessage;
         if (configHandler.saveConfig(config, useServerConfig)) {
-            feedbackMessage = Component.literal(settingDescription + " Set Successfully!").withStyle(ChatFormatting.GREEN);
+            feedbackMessage = CCText.CONFIG_SETTING_SET_SUCCESS.comp(settingDescription).withStyle(ChatFormatting.GREEN);
             source.sendSuccess(() -> feedbackMessage, false);
             LOGGER.info("Command executed: " + feedbackMessage.getString());
             return 1;
         } else {
-            feedbackMessage = Component.literal(settingDescription + " Set Failed!").withStyle(ChatFormatting.RED);
+            feedbackMessage = CCText.CONFIG_SETTING_SET_FAILED.comp(settingDescription).withStyle(ChatFormatting.RED);
             source.sendSuccess(() -> feedbackMessage, false);
             LOGGER.info("Command executed: " + feedbackMessage.getString());
             return 0;
@@ -333,14 +322,14 @@ public class CreatureChatCommands {
         }
 
         if (configHandler.saveConfig(config, useServerConfig)) {
-            Component feedbackMessage = Component.literal("Successfully updated " + listName + " with " + action).withStyle(ChatFormatting.GREEN);
+            Component feedbackMessage = CCText.CONFIG_LIST_UPDATE_SUCCESS.comp(listName, action).withStyle(ChatFormatting.GREEN);
             source.sendSuccess(() -> feedbackMessage, false);
 
             // Send whitelist / blacklist to all players
             ServerPackets.send_whitelist_blacklist(null);
             return 1;
         } else {
-            Component feedbackMessage = Component.literal("Failed to update " + listName).withStyle(ChatFormatting.RED);
+            Component feedbackMessage = CCText.CONFIG_LIST_UPDATE_FAILED.comp(listName).withStyle(ChatFormatting.RED);
             source.sendSuccess(() -> feedbackMessage, false);
             return 0;
         }

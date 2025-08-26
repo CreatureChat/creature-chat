@@ -14,7 +14,6 @@ import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.advancements.AdvancementType;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.advancements.critereon.ImpossibleTrigger;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import com.owlmaddie.chat.Advancements;
@@ -49,8 +48,8 @@ public class CreatureChatAdvancementProvider extends FabricAdvancementProvider {
 
         DisplayInfo display = new DisplayInfo(
                 new ItemStack(adv.icon),
-                Component.literal(adv.title),
-                Component.literal(adv.description),
+                adv.title.comp(),
+                adv.description.comp(),
                 Optional.ofNullable(bg),
                 toAdvancementType(adv.type),
                 true,

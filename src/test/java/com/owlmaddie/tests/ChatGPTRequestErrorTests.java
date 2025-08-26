@@ -7,6 +7,7 @@ import com.owlmaddie.chat.ChatGPTRequest;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.utils.Randomizer;
+import com.owlmaddie.i18n.TR;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -98,15 +99,16 @@ public class ChatGPTRequestErrorTests {
         executeRequest(config);
         server.stop(0);
 
-        String randomMsg = Randomizer.getRandomErrorMessage(errorTypeFor(code));
-        String solution = EntityChatData.getSolutionMessage(code);
-        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution);
+        TR tr = Randomizer.getRandomError(errorTypeFor(code));
+        String randomMsg = String.format(tr.en(), Randomizer.DISCORD_LINK);
+        TR solution = EntityChatData.getSolutionMessage(code);
+        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution.en());
 
         assertEquals(code, ChatGPTRequest.lastErrorCode);
         assertNotNull(ChatGPTRequest.lastErrorMessage);
         assertFalse(ChatGPTRequest.lastErrorMessage.isEmpty());
         assertNotNull(randomMsg);
-        assertEquals("Solution: Add a valid API key", solution);
+        assertEquals("Solution: Add a valid API key", solution.en());
     }
 
     @Test
@@ -120,15 +122,16 @@ public class ChatGPTRequestErrorTests {
         executeRequest(config);
         server.stop(0);
 
-        String randomMsg = Randomizer.getRandomErrorMessage(errorTypeFor(code));
-        String solution = EntityChatData.getSolutionMessage(code);
-        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution);
+        TR tr = Randomizer.getRandomError(errorTypeFor(code));
+        String randomMsg = String.format(tr.en(), Randomizer.DISCORD_LINK);
+        TR solution = EntityChatData.getSolutionMessage(code);
+        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution.en());
 
         assertEquals(code, ChatGPTRequest.lastErrorCode);
         assertNotNull(ChatGPTRequest.lastErrorMessage);
         assertFalse(ChatGPTRequest.lastErrorMessage.isEmpty());
         assertNotNull(randomMsg);
-        assertEquals("Solution: Check region or VPN", solution);
+        assertEquals("Solution: Check region or VPN", solution.en());
     }
 
     @Test
@@ -142,15 +145,16 @@ public class ChatGPTRequestErrorTests {
         executeRequest(config);
         server.stop(0);
 
-        String randomMsg = Randomizer.getRandomErrorMessage(errorTypeFor(code));
-        String solution = EntityChatData.getSolutionMessage(code);
-        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution);
+        TR tr = Randomizer.getRandomError(errorTypeFor(code));
+        String randomMsg = String.format(tr.en(), Randomizer.DISCORD_LINK);
+        TR solution = EntityChatData.getSolutionMessage(code);
+        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution.en());
 
         assertEquals(code, ChatGPTRequest.lastErrorCode);
         assertNotNull(ChatGPTRequest.lastErrorMessage);
         assertFalse(ChatGPTRequest.lastErrorMessage.isEmpty());
         assertNotNull(randomMsg);
-        assertEquals("Solution: Add funds to your account", solution);
+        assertEquals("Solution: Add funds to your account", solution.en());
     }
 
     @Test
@@ -164,15 +168,16 @@ public class ChatGPTRequestErrorTests {
         executeRequest(config);
         server.stop(0);
 
-        String randomMsg = Randomizer.getRandomErrorMessage(errorTypeFor(code));
-        String solution = EntityChatData.getSolutionMessage(code);
-        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution);
+        TR tr = Randomizer.getRandomError(errorTypeFor(code));
+        String randomMsg = String.format(tr.en(), Randomizer.DISCORD_LINK);
+        TR solution = EntityChatData.getSolutionMessage(code);
+        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution.en());
 
         assertEquals(code, ChatGPTRequest.lastErrorCode);
         assertNotNull(ChatGPTRequest.lastErrorMessage);
         assertFalse(ChatGPTRequest.lastErrorMessage.isEmpty());
         assertNotNull(randomMsg);
-        assertEquals("Solution: Server error, try again later", solution);
+        assertEquals("Solution: Server error, try again later", solution.en());
     }
 
     @Test
@@ -186,15 +191,16 @@ public class ChatGPTRequestErrorTests {
         executeRequest(config);
         server.stop(0);
 
-        String randomMsg = Randomizer.getRandomErrorMessage(errorTypeFor(code));
-        String solution = EntityChatData.getSolutionMessage(code);
-        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution);
+        TR tr = Randomizer.getRandomError(errorTypeFor(code));
+        String randomMsg = String.format(tr.en(), Randomizer.DISCORD_LINK);
+        TR solution = EntityChatData.getSolutionMessage(code);
+        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution.en());
 
         assertEquals(code, ChatGPTRequest.lastErrorCode);
         assertNotNull(ChatGPTRequest.lastErrorMessage);
         assertFalse(ChatGPTRequest.lastErrorMessage.isEmpty());
         assertNotNull(randomMsg);
-        assertEquals("Solution: Try again later", solution);
+        assertEquals("Solution: Try again later", solution.en());
     }
 
     @Test
@@ -202,15 +208,16 @@ public class ChatGPTRequestErrorTests {
         ConfigurationHandler.Config config = buildConfig("http://");
         executeRequest(config);
 
-        String randomMsg = Randomizer.getRandomErrorMessage(errorTypeFor(0));
-        String solution = EntityChatData.getSolutionMessage(0);
-        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution);
+        TR tr = Randomizer.getRandomError(errorTypeFor(0));
+        String randomMsg = String.format(tr.en(), Randomizer.DISCORD_LINK);
+        TR solution = EntityChatData.getSolutionMessage(0);
+        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution.en());
 
         assertEquals(0, ChatGPTRequest.lastErrorCode);
         assertNotNull(ChatGPTRequest.lastErrorMessage);
         assertFalse(ChatGPTRequest.lastErrorMessage.isEmpty());
         assertNotNull(randomMsg);
-        assertEquals("Solution: Verify the API URL", solution);
+        assertEquals("Solution: Verify the API URL", solution.en());
     }
 
     @Test
@@ -218,14 +225,15 @@ public class ChatGPTRequestErrorTests {
         ConfigurationHandler.Config config = buildConfig("http://10.255.255.1" + PATH);
         executeRequest(config);
 
-        String randomMsg = Randomizer.getRandomErrorMessage(errorTypeFor(-1));
-        String solution = EntityChatData.getSolutionMessage(-1);
-        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution);
+        TR tr = Randomizer.getRandomError(errorTypeFor(-1));
+        String randomMsg = String.format(tr.en(), Randomizer.DISCORD_LINK);
+        TR solution = EntityChatData.getSolutionMessage(-1);
+        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution.en());
 
         assertEquals(-1, ChatGPTRequest.lastErrorCode);
         assertTrue(ChatGPTRequest.lastErrorMessage.startsWith("No Internet or Blocked Request"));
         assertNotNull(randomMsg);
-        assertEquals("Solution: Check internet connection or firewall", solution);
+        assertEquals("Solution: Check internet connection or firewall", solution.en());
     }
 
     @Test
@@ -233,13 +241,14 @@ public class ChatGPTRequestErrorTests {
         ConfigurationHandler.Config config = buildConfig("http://localhost:1" + PATH);
         executeRequest(config);
 
-        String randomMsg = Randomizer.getRandomErrorMessage(errorTypeFor(-1));
-        String solution = EntityChatData.getSolutionMessage(-1);
-        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution);
+        TR tr = Randomizer.getRandomError(errorTypeFor(-1));
+        String randomMsg = String.format(tr.en(), Randomizer.DISCORD_LINK);
+        TR solution = EntityChatData.getSolutionMessage(-1);
+        logOutput(ChatGPTRequest.lastErrorMessage, ChatGPTRequest.lastErrorCode, randomMsg, solution.en());
 
         assertEquals(-1, ChatGPTRequest.lastErrorCode);
         assertTrue(ChatGPTRequest.lastErrorMessage.startsWith("No Internet or Blocked Request"));
         assertNotNull(randomMsg);
-        assertEquals("Solution: Check internet connection or firewall", solution);
+        assertEquals("Solution: Check internet connection or firewall", solution.en());
     }
 }
