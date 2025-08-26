@@ -7,12 +7,12 @@ import com.owlmaddie.chat.Advancements;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.i18n.CCText;
 import com.owlmaddie.utils.Randomizer;
+
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Stream;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * Generates the English fallback language file.
@@ -24,19 +24,19 @@ public class CreatureChatLangProvider extends FabricLanguageProvider {
 
     @Override
     public void generateTranslations(TranslationBuilder builder) {
-        Set<String> added = new HashSet<>();
+        Map<String, String> en = new TreeMap<>();
         Stream.of(
                 Randomizer.allErrorText(),
+                Randomizer.allNoResponseText(),
                 CCText.UI_TEXT.stream(),
                 CCText.CONFIG_TEXT.stream(),
                 EntityChatData.ERROR_MISC.stream(),
                 EntityChatData.ERROR_SOLUTIONS.stream(),
                 Advancements.allText()
-        ).flatMap(s -> s).forEach(tr -> {
-            if (added.add(tr.key())) {
-                builder.add(tr.key(), tr.en());
-            }
-        });
+        ).flatMap(s -> s).forEach(tr -> en.putIfAbsent(tr.key(), tr.en()));
+
+        en.forEach(builder::add);
+        LangSync.sync(en);
     }
 
     @Override

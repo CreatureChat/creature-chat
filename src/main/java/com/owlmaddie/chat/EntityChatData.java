@@ -329,7 +329,7 @@ public class EntityChatData {
 
                     // Add NEW CHARACTER sheet & greeting
                     this.characterSheet = output_message;
-                    String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");
+                    String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomNoResponse().comp().getString()).replace("\n", " ");
                     this.addMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
 
                 } else {
@@ -413,7 +413,7 @@ public class EntityChatData {
         PlayerData playerData = this.getPlayerData(player.getDisplayName().getString());
         if (previousMessages.size() == 1) {
             // No messages exist yet for this player (start with normal greeting)
-            String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");
+            String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomNoResponse().comp().getString()).replace("\n", " ");
             previousMessages.add(0, new ChatMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString()));
         }
 
@@ -682,7 +682,7 @@ public class EntityChatData {
                     // Get cleaned message (i.e. no <BEHAVIOR> strings)
                     String cleanedMessage = result.getCleanedMessage();
                     if (cleanedMessage.isEmpty()) {
-                        cleanedMessage = Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE);
+                        cleanedMessage = Randomizer.getRandomNoResponse().comp().getString();
                     }
 
                     // Add ASSISTANT message to history
