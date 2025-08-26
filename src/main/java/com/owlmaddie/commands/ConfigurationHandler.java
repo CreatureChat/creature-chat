@@ -78,10 +78,10 @@ public class ConfigurationHandler {
         private List<String> whitelist = new ArrayList<>();
         private List<String> blacklist = new ArrayList<>();
         private String story = "";
-        private int maxPlayerAutoResponses = 12;
-        private int playerAutoCooldownSeconds = 6;
-        private int maxEntityAutoResponses = 1;
-        private int entityAutoCooldownSeconds = 4;
+        private int maxPlayerAutoResponses = 10;
+        private int playerAutoCooldownSeconds = 3;
+        private int maxEntityAutoResponses = 3;
+        private int entityAutoCooldownSeconds = 3;
 
         // Getters and setters for existing fields
         public String getApiKey() { return apiKey; }
