@@ -23,9 +23,11 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - Swedish (Sweden): `sv_se`
   - Turkish (Turkey): `tr_tr`
   - Ukrainian (Ukraine): `uk_ua`
+  - Russian (Russia): `ru_ru`
   - Chinese (Simplified, China): `zh_cn`
   - Chinese (Traditional, Taiwan): `zh_tw`
-
+  - Arabic (Saudi Arabia): `ar_sa`
+  - Indonesian (Indonesia): `id_id`
 
 ### Changed
 - Reduced # of random errors to a single message per error code (easier to troubleshoot and interpret)
