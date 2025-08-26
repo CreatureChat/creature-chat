@@ -8,7 +8,8 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ### Added
 - Adding datagen provider for translations (en_us.json)
-- Including initial translations for Spanish and Swedish
+- Integrating all player text (Advancements, ChatScreen, Inventory, Commands, Errors)
+- Including initial translations for Spanish, Swedish, Korean, and Portuguese
 
 ## Unreleased
 
