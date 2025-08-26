@@ -6,21 +6,26 @@ import com.owlmaddie.i18n.CCText;
 import com.owlmaddie.utils.Randomizer;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
+import net.minecraft.core.HolderLookup;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 /**
- * Generates the English fallback language file.
+ * 1.20.5+ variant of the language provider.
+ *
+ * <p>The Fabric datagen API added a registry lookup parameter beginning with
+ * 1.20.5.</p>
  */
 public class CreatureChatLangProvider extends FabricLanguageProvider {
-    public CreatureChatLangProvider(FabricDataOutput output) {
-        super(output, "creaturechat");
+    public CreatureChatLangProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registryLookup) {
+        super(output, registryLookup);
     }
 
     @Override
-    public void generateTranslations(TranslationBuilder builder) {
+    public void generateTranslations(HolderLookup.Provider registryLookup, TranslationBuilder builder) {
         Set<String> added = new HashSet<>();
         Stream.of(
                 Randomizer.allErrorText(),

@@ -9,7 +9,6 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ### Added
 - Adding datagen provider for translations (en_us.json)
 - Including initial translations for Spanish and Swedish
-- WIP: Still build errors on 1.20+
 
 ## Unreleased
 
