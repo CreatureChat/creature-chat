@@ -27,7 +27,6 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - Russian (Russia): `ru_ru`
   - Chinese (Simplified, China): `zh_cn`
   - Chinese (Traditional, Taiwan): `zh_tw`
-  - Arabic (Saudi Arabia): `ar_sa`
   - Indonesian (Indonesia): `id_id`
 
 ### Changed
