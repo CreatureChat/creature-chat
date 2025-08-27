@@ -7,6 +7,34 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ## Unreleased
 
 ### Added
+- Adding datagen provider for translations (en_us.json)
+- Integrating all player text (Advancements, ChatScreen, Inventory, Commands, Errors, No Responses)
+- Initial translations:
+  - German (Germany): `de_de`
+  - Spanish (Spain): `es_es`
+  - Spanish (Mexico): `es_mx`
+  - French (France): `fr_fr`
+  - Hindi (India): `hi_in`
+  - Japanese (Japan): `ja_jp`
+  - Korean (South Korea): `ko_kr`
+  - Dutch (Netherlands): `nl_nl`
+  - Polish (Poland): `pl_pl`
+  - Portuguese (Brazil): `pt_br`
+  - Portuguese (Portugal): `pt_pt`
+  - Swedish (Sweden): `sv_se`
+  - Turkish (Turkey): `tr_tr`
+  - Ukrainian (Ukraine): `uk_ua`
+  - Russian (Russia): `ru_ru`
+  - Chinese (Simplified, China): `zh_cn`
+  - Chinese (Traditional, Taiwan): `zh_tw`
+  - Indonesian (Indonesia): `id_id`
+
+### Changed
+- Reduced # of random errors to a single message per error code (easier to troubleshoot and interpret)
+
+## Unreleased
+
+### Added
 - Inventories for all entities with chat data (Shift+Right Click, or Press 'E' while riding)
     - Random loot added to inventory on character creation (biome-specific loot tables for inventories)
     - You can borrow items from friends, or steel items from enemies
