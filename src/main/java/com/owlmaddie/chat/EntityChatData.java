@@ -364,7 +364,7 @@ public class EntityChatData {
 
                 TR randomError = Randomizer.getRandomError(type);
                 MutableComponent randomComp = randomError.comp(link);
-                this.addMessage(randomComp.getString(), ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
+                this.addMessage(randomComp.getString(), ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt, false);
 
                 MutableComponent errorComp = ERROR_PREFIX.comp();
                 if (e.getMessage() != null && !e.getMessage().isEmpty()) {
@@ -724,7 +724,7 @@ public class EntityChatData {
 
                 TR randomError = Randomizer.getRandomError(type);
                 MutableComponent randomComp = randomError.comp(link);
-                this.addMessage(randomComp.getString(), ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
+                this.addMessage(randomComp.getString(), ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt, false);
 
                 MutableComponent errorComp = ERROR_PREFIX.comp();
                 if (e.getMessage() != null && !e.getMessage().isEmpty()) {
