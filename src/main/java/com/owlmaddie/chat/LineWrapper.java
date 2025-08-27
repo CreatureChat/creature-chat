@@ -7,39 +7,76 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The {@code LineWrapper} class is used to wrap lines of text on the nearest space character
+ * The {@code LineWrapper} class is used to wrap lines of text based on a rough
+ * visual width. It attempts to break on whitespace when possible but will also
+ * split long strings with no spaces (e.g. Chinese) so that text fits within the
+ * chat bubble.
  */
 public class LineWrapper {
 
     public static List<String> wrapLines(String text, int maxWidth) {
         List<String> wrappedLines = new ArrayList<>();
-        String[] words = text.split(" ");
-        StringBuilder currentLine = new StringBuilder();
+        if (text == null || text.isEmpty()) return wrappedLines;
 
-        for (String word : words) {
-            // Check if adding the next word exceeds the line length
-            if (currentLine.length() + word.length() + 1 > maxWidth) {
-                if (currentLine.length() > 0) {
-                    wrappedLines.add(currentLine.toString());
-                    currentLine = new StringBuilder();
-                }
-                // If the word itself is longer than maxWidth, split the word
-                while (word.length() > maxWidth) {
-                    wrappedLines.add(word.substring(0, maxWidth));
-                    word = word.substring(maxWidth);
-                }
+        int lineStart = 0;      // index where the current line starts
+        int lastSpace = -1;     // index of the last seen whitespace character
+        int lineWidth = 0;      // visual width of the current line
+
+        for (int i = 0; i < text.length();) {
+            int codePoint = text.codePointAt(i);
+            int charWidth = isWide(codePoint) ? 2 : 1;
+
+            if (Character.isWhitespace(codePoint)) {
+                lastSpace = i;
             }
-            // Append the word to the line
-            if (currentLine.length() > 0) {
-                currentLine.append(" ");
+
+            if (lineWidth + charWidth > maxWidth) {
+                int breakPos;
+                if (lastSpace >= lineStart) {
+                    breakPos = lastSpace;
+                } else {
+                    breakPos = i;
+                }
+
+                wrappedLines.add(text.substring(lineStart, breakPos).trim());
+                lineStart = breakPos;
+                lineWidth = 0;
+                lastSpace = -1;
+
+                // Skip leading whitespace on the next line
+                if (lineStart < text.length() && Character.isWhitespace(text.codePointAt(lineStart))) {
+                    lineStart += Character.charCount(text.codePointAt(lineStart));
+                }
+                i = lineStart;
+                continue;
             }
-            currentLine.append(word);
+
+            lineWidth += charWidth;
+            i += Character.charCount(codePoint);
         }
-        // Add the last line if there's anything left
-        if (currentLine.length() > 0) {
-            wrappedLines.add(currentLine.toString());
+
+        if (lineStart < text.length()) {
+            wrappedLines.add(text.substring(lineStart).trim());
         }
 
         return wrappedLines;
+    }
+
+    private static boolean isWide(int codePoint) {
+        Character.UnicodeBlock block = Character.UnicodeBlock.of(codePoint);
+        return block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS
+                || block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A
+                || block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B
+                || block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C
+                || block == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D
+                || block == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS
+                || block == Character.UnicodeBlock.CJK_SYMBOLS_AND_PUNCTUATION
+                || block == Character.UnicodeBlock.HIRAGANA
+                || block == Character.UnicodeBlock.KATAKANA
+                || block == Character.UnicodeBlock.KATAKANA_PHONETIC_EXTENSIONS
+                || block == Character.UnicodeBlock.HANGUL_SYLLABLES
+                || block == Character.UnicodeBlock.HANGUL_JAMO
+                || block == Character.UnicodeBlock.HANGUL_COMPATIBILITY_JAMO
+                || block == Character.UnicodeBlock.HALFWIDTH_AND_FULLWIDTH_FORMS;
     }
 }
