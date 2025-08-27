@@ -14,6 +14,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - Spanish (Spain): `es_es`
   - Spanish (Mexico): `es_mx`
   - French (France): `fr_fr`
+  - Hindi (India): `hi_in`
   - Japanese (Japan): `ja_jp`
   - Korean (South Korea): `ko_kr`
   - Dutch (Netherlands): `nl_nl`
