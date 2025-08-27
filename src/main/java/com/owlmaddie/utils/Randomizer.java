@@ -40,13 +40,13 @@ public class Randomizer {
             new TR("no_response.16", "<rolls eyes>")
     );
 
-    public static final TR ERROR_GENERAL    = new TR("error.general",    "My message is unfortunately out of order. Find help at %s.");
+    public static final TR ERROR_GENERAL    = new TR("error.general",    "Something unexpected has gone wrong. Find help at %s.");
     public static final TR ERROR_CONNECTION = new TR("error.connection", "Can't reach the server. Are you offline? Find help at %s.");
-    public static final TR ERROR_401        = new TR("error.401",        "Access denied! That's usually an invalid API key. Find help at %s.");
-    public static final TR ERROR_403        = new TR("error.403",        "Country or region unavailable. :( Find help at %s.");
-    public static final TR ERROR_429        = new TR("error.429",        "Rate limit reached or out of tokens. Find help at %s.");
-    public static final TR ERROR_500        = new TR("error.500",        "Something on the other side is broken. Find help at %s.");
-    public static final TR ERROR_503        = new TR("error.503",        "Service is overloaded. Please try later. Find help at %s.");
+    public static final TR ERROR_401        = new TR("error.401",        "To get started, you need an AI key or a local LLM. Find help at %s.");
+    public static final TR ERROR_403        = new TR("error.403",        "Country or region unavailable. Find help at %s.");
+    public static final TR ERROR_429        = new TR("error.429",        "Your AI key is out of tokens and needs funds, or you are sending too many messages. Find help at %s.");
+    public static final TR ERROR_500        = new TR("error.500",        "There was an error processing your message request. Please try again or find help at %s.");
+    public static final TR ERROR_503        = new TR("error.503",        "Service is overloaded or temporarily down. Please try again later. Find help at %s.");
 
     public static Stream<TR> allErrorText() {
         return Stream.of(
