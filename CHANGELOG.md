@@ -6,9 +6,11 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ## Unreleased
 
+### Added
+- Document SPDX header and changelog requirements in AGENTS.md for contributors
+
 ### Changed
 - Convert PNG screenshots to JPEG, compress, and remove less useful ones (smaller jar)
-
 
 ## [3.0.0] - 2025-08-27
 
