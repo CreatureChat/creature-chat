@@ -9,6 +9,7 @@ import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.inventory.ChatInventory;
 import com.owlmaddie.inventory.MobInventoryMenu;
 import com.owlmaddie.network.ServerPackets;
+import com.owlmaddie.goals.GoalUtils;
 import net.minecraft.world.entity.HasCustomInventoryScreen;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.network.chat.Component;
@@ -25,9 +26,13 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -40,6 +45,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
 
     private final SimpleContainer creaturechat$inventory = new SimpleContainer(15);
+    private boolean creaturechat$doorGoalAdded;
 
     @Override
     public SimpleContainer creaturechat$getInventory() {
@@ -236,5 +242,33 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
                 player.startRiding(thisEntity, true);
             }
         }
+    }
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void creaturechat$configureDoorAccess(CallbackInfo ci) {
+        if (creaturechat$doorGoalAdded) {
+            return;
+        }
+
+        Mob thisEntity = (Mob) (Object) this;
+        if (thisEntity.level().isClientSide()) {
+            return;
+        }
+
+        EntityChatData chatData = ChatDataManager.getServerInstance().entityChatDataMap.get(thisEntity.getStringUUID());
+        if (chatData == null || chatData.status == ChatDataManager.ChatStatus.NONE) {
+            return;
+        }
+
+        PathNavigation navigation = thisEntity.getNavigation();
+        if (!(navigation instanceof GroundPathNavigation groundNavigation)) {
+            return;
+        }
+
+        groundNavigation.setCanOpenDoors(true);
+        if (groundNavigation.getNodeEvaluator() instanceof WalkNodeEvaluator walkNodeEvaluator) {
+            walkNodeEvaluator.setCanPassDoors(true);
+        }
+        GoalUtils.getGoalSelector(thisEntity).addGoal(1, new OpenDoorGoal(thisEntity, true));
+        creaturechat$doorGoalAdded = true;
     }
 }

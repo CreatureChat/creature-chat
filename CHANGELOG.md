@@ -7,6 +7,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ## Unreleased
 
 ### Added
+- All entities with chat data can now open doors and path find through doors
 - Document SPDX header and changelog requirements in AGENTS.md for contributors
 
 ### Changed
