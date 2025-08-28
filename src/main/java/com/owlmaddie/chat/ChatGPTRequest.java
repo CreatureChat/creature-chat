@@ -227,6 +227,11 @@ public class ChatGPTRequest {
                     final String awsErrorType    = connection.getHeaderField("x-amzn-ErrorType");
                     final String openaiRequestId = connection.getHeaderField("x-request-id");
 
+                    // Log AWS headers only for debugging so they don't bloat user-facing messages
+                    if (awsRequestId != null) LOGGER.debug("AWS Request ID: {}", awsRequestId);
+                    if (awsErrorType != null) LOGGER.debug("AWS Error Type: {}", awsErrorType);
+                    if (openaiRequestId != null) LOGGER.debug("OpenAI Request ID: {}", openaiRequestId);
+
                     InputStream errStream = connection.getErrorStream();
                     if (errStream == null) {
                         try {
@@ -237,9 +242,6 @@ public class ChatGPTRequest {
                             StringBuilder base = new StringBuilder();
                             base.append("HTTP ").append(statusCode);
                             if (msg != null && !msg.isEmpty()) base.append(" ").append(msg);
-                            if (awsRequestId != null)    base.append(" [x-amzn-RequestId ").append(awsRequestId).append("]");
-                            if (awsErrorType != null)    base.append(" [x-amzn-ErrorType ").append(awsErrorType).append("]");
-                            if (openaiRequestId != null) base.append(" [x-request-id ").append(openaiRequestId).append("]");
 
                             lastErrorMessage = sanitizeApiKey(base + ": " + ex.getMessage(), apiKey);
                             return null;
@@ -262,9 +264,6 @@ public class ChatGPTRequest {
                         StringBuilder sb = new StringBuilder();
                         sb.append("HTTP ").append(statusCode);
                         if (!reason.isEmpty()) sb.append(" ").append(reason);
-                        if (awsRequestId != null)    sb.append(" [x-amzn-RequestId ").append(awsRequestId).append("]");
-                        if (awsErrorType != null)    sb.append(" [x-amzn-ErrorType ").append(awsErrorType).append("]");
-                        if (openaiRequestId != null) sb.append(" [x-request-id ").append(openaiRequestId).append("]");
 
                         if (cleanError != null && !cleanError.isEmpty() && !"Unknown error".equals(cleanError)) {
                             sb.append(": ").append(cleanError);
