@@ -13,5 +13,6 @@ public class CreatureChatDataGenerator implements DataGeneratorEntrypoint {
         pack.addProvider(CreatureChatLootTableProvider::new);
         pack.addProvider(CreatureChatAdvancementProvider::new);
         pack.addProvider(BuildIndexProvider::new);
+        pack.addProvider(CreatureChatLangProvider::new);
     }
 }

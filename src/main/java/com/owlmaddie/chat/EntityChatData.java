@@ -12,6 +12,8 @@ import com.owlmaddie.message.Behavior;
 import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
 import com.owlmaddie.network.ServerPackets;
+import com.owlmaddie.network.ClickEventHelper;
+import com.owlmaddie.i18n.TR;
 import com.owlmaddie.particle.ParticleEmitter;
 import com.owlmaddie.utils.*;
 import org.slf4j.Logger;
@@ -41,6 +43,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.ChatFormatting;
 
 import static com.owlmaddie.network.ServerPackets.*;
@@ -52,6 +55,29 @@ import static com.owlmaddie.network.ServerPackets.*;
  */
 public class EntityChatData {
     public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static final TR INFO_HELP_LINK = new TR("info.help_link", "Help is available at %s");
+    public static final TR ERROR_PREFIX = new TR("error.prefix", "Error: ");
+    public static final List<TR> ERROR_MISC = List.of(
+            INFO_HELP_LINK,
+            ERROR_PREFIX
+    );
+
+    public static final TR SOLUTION_CONNECTION = new TR("solution.connection", "Solution: Check internet connection or firewall");
+    public static final TR SOLUTION_VERIFY_URL = new TR("solution.verify_url", "Solution: Verify the API URL");
+    public static final TR SOLUTION_ADD_KEY = new TR("solution.add_key", "Solution: Add a valid API key");
+    public static final TR SOLUTION_CHECK_REGION = new TR("solution.check_region", "Solution: Check region or VPN");
+    public static final TR SOLUTION_ADD_FUNDS = new TR("solution.add_funds", "Solution: Add funds to your account");
+    public static final TR SOLUTION_SERVER_ERROR = new TR("solution.server_error", "Solution: Server error, try again later");
+    public static final TR SOLUTION_TRY_AGAIN = new TR("solution.try_again", "Solution: Try again later");
+    public static final List<TR> ERROR_SOLUTIONS = List.of(
+            SOLUTION_CONNECTION,
+            SOLUTION_VERIFY_URL,
+            SOLUTION_ADD_KEY,
+            SOLUTION_CHECK_REGION,
+            SOLUTION_ADD_FUNDS,
+            SOLUTION_SERVER_ERROR,
+            SOLUTION_TRY_AGAIN
+    );
     public String entityId;
     public String currentMessage;
     public int currentLineNumber;
@@ -303,7 +329,7 @@ public class EntityChatData {
 
                     // Add NEW CHARACTER sheet & greeting
                     this.characterSheet = output_message;
-                    String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");
+                    String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomNoResponse().comp().getString()).replace("\n", " ");
                     this.addMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
 
                 } else {
@@ -330,27 +356,33 @@ public class EntityChatData {
                 } else if (code == 503) {
                     type = Randomizer.ErrorType.CODE503;
                 }
-                String randomErrorMessage = Randomizer.getRandomErrorMessage(type);
-                this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt, false);
+                Component link = Component.literal(Randomizer.DISCORD_LINK)
+                        .withStyle(ChatFormatting.BLUE)
+                        .withStyle(style -> style
+                                .withClickEvent(ClickEventHelper.openUrl("http://" + Randomizer.DISCORD_LINK))
+                                .withUnderlined(true));
+
+                TR randomError = Randomizer.getRandomError(type);
+                MutableComponent randomComp = randomError.comp(link);
+                this.addMessage(randomComp.getString(), ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt, false);
+
+                MutableComponent errorComp = ERROR_PREFIX.comp();
+                if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+                    errorComp.append(Component.literal(truncateString(e.getMessage(), 50)));
+                }
+                player.displayClientMessage(errorComp.withStyle(ChatFormatting.RED), false);
 
                 // Remove the error message from history to prevent it from affecting future ChatGPT requests
                 if (!previousMessages.isEmpty()) {
                     previousMessages.remove(previousMessages.size() - 1);
                 }
 
-                String errorMessage = "Error: ";
-                if (e.getMessage() != null && !e.getMessage().isEmpty()) {
-                    String clean = e.getMessage().replace(config.getApiKey(), "**********");
-                    errorMessage += truncateString(clean, 55);
-                }
-                player.displayClientMessage(Component.literal(errorMessage).withStyle(ChatFormatting.RED), false);
-
-                String solution = getSolutionMessage(code);
+                TR solution = getSolutionMessage(code);
                 if (solution != null) {
-                    player.displayClientMessage(Component.literal(solution).withStyle(ChatFormatting.BLUE), false);
+                    player.displayClientMessage(solution.comp().withStyle(ChatFormatting.BLUE), false);
                 }
 
-                ServerPackets.SendClickableError(player, "Help is available at discord.creaturechat.com", "http://discord.creaturechat.com");
+                player.displayClientMessage(INFO_HELP_LINK.comp(link), false);
             }
         });
     }
@@ -380,7 +412,7 @@ public class EntityChatData {
         PlayerData playerData = this.getPlayerData(player.getDisplayName().getString());
         if (previousMessages.size() == 1) {
             // No messages exist yet for this player (start with normal greeting)
-            String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE)).replace("\n", " ");
+            String shortGreeting = Optional.ofNullable(getCharacterProp("short greeting")).filter(s -> !s.isEmpty()).orElse(Randomizer.getRandomNoResponse().comp().getString()).replace("\n", " ");
             previousMessages.add(0, new ChatMessage(shortGreeting, ChatDataManager.ChatSender.ASSISTANT, player.getDisplayName().getString()));
         }
 
@@ -649,7 +681,7 @@ public class EntityChatData {
                     // Get cleaned message (i.e. no <BEHAVIOR> strings)
                     String cleanedMessage = result.getCleanedMessage();
                     if (cleanedMessage.isEmpty()) {
-                        cleanedMessage = Randomizer.getRandomMessage(Randomizer.RandomType.NO_RESPONSE);
+                        cleanedMessage = Randomizer.getRandomNoResponse().comp().getString();
                     }
 
                     // Add ASSISTANT message to history
@@ -683,26 +715,33 @@ public class EntityChatData {
                 } else if (code == 503) {
                     type = Randomizer.ErrorType.CODE503;
                 }
-                String randomErrorMessage = Randomizer.getRandomErrorMessage(type);
-                this.addMessage(randomErrorMessage, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt, false);
+                Component link = Component.literal(Randomizer.DISCORD_LINK)
+                        .withStyle(ChatFormatting.BLUE)
+                        .withStyle(style -> style
+                                .withClickEvent(ClickEventHelper.openUrl("http://" + Randomizer.DISCORD_LINK))
+                                .withUnderlined(true));
+
+                TR randomError = Randomizer.getRandomError(type);
+                MutableComponent randomComp = randomError.comp(link);
+                this.addMessage(randomComp.getString(), ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt, false);
+
+                MutableComponent errorComp = ERROR_PREFIX.comp();
+                if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+                    errorComp.append(Component.literal(truncateString(e.getMessage(), 50)));
+                }
+                player.displayClientMessage(errorComp.withStyle(ChatFormatting.RED), false);
 
                 // Remove the error message from history to prevent it from affecting future ChatGPT requests
                 if (!previousMessages.isEmpty()) {
                     previousMessages.remove(previousMessages.size() - 1);
                 }
-                String errorMessage = "Error: ";
-                if (e.getMessage() != null && !e.getMessage().isEmpty()) {
-                    String clean = e.getMessage().replace(config.getApiKey(), "**********");
-                    errorMessage += truncateString(clean, 55);
-                }
-                player.displayClientMessage(Component.literal(errorMessage).withStyle(ChatFormatting.RED), false);
 
-                String solution = getSolutionMessage(code);
+                TR solution = getSolutionMessage(code);
                 if (solution != null) {
-                    player.displayClientMessage(Component.literal(solution).withStyle(ChatFormatting.BLUE), false);
+                    player.displayClientMessage(solution.comp().withStyle(ChatFormatting.BLUE), false);
                 }
 
-                ServerPackets.SendClickableError(player, "Help is available at discord.creaturechat.com", "http://discord.creaturechat.com");
+                player.displayClientMessage(INFO_HELP_LINK.comp(link), false);
             }
         });
     }
@@ -711,15 +750,15 @@ public class EntityChatData {
         return input.length() > maxLength ? input.substring(0, maxLength - 3) + "..." : input;
     }
 
-    public static String getSolutionMessage(int code) {
+    public static TR getSolutionMessage(int code) {
         return switch (code) {
-            case -1 -> "Solution: Check internet connection or firewall";
-            case 0 -> "Solution: Verify the API URL";
-            case 401 -> "Solution: Add a valid API key";
-            case 403 -> "Solution: Check region or VPN";
-            case 429 -> "Solution: Add funds to your account";
-            case 500 -> "Solution: Server error, try again later";
-            case 503 -> "Solution: Try again later";
+            case -1 -> SOLUTION_CONNECTION;
+            case 0 -> SOLUTION_VERIFY_URL;
+            case 401 -> SOLUTION_ADD_KEY;
+            case 403 -> SOLUTION_CHECK_REGION;
+            case 429 -> SOLUTION_ADD_FUNDS;
+            case 500 -> SOLUTION_SERVER_ERROR;
+            case 503 -> SOLUTION_TRY_AGAIN;
             default -> null;
         };
     }

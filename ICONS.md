@@ -1,13 +1,13 @@
 # Icon Tutorial for CreatureChat™
 
-<img src="src/main/resources/assets/creaturechat/screenshots/side-by-side-icons.png" width="100%" style="image-rendering: pixelated;">
+<img src="src/main/resources/assets/creaturechat/screenshots/side-by-side-icons.jpeg" width="100%" style="image-rendering: pixelated;">
 
 ### Customize entity and player icons in **CreatureChat™** by following this step-by-step guide.
 
 ---
 
 ## **Custom Entity Icons**
-<img src="src/main/resources/assets/creaturechat/screenshots/big-pig.png" width="440" style="image-rendering: pixelated;">
+<img src="src/main/resources/assets/creaturechat/screenshots/big-pig.jpeg" width="440" style="image-rendering: pixelated;">
 
 ### Folder Structure:
 To add custom icons for entities, place the icon files in the following path:
@@ -29,26 +29,26 @@ To add custom icons for entities, place the icon files in the following path:
 
 ### Step 1: Draw your character on top of the rainbow template
 Player icons should be `24x24` pixels, and PNG format.
-- Download [rainbow-icon-template.png](src/main/resources/assets/creaturechat/screenshots/rainbow-icon-template.png)
+- Download [rainbow-icon-template.png](src/main/resources/assets/creaturechat/screenshots/rainbow-icon-template.jpeg)
 
-<img src="src/main/resources/assets/creaturechat/screenshots/example-player-icon1.png" width="256" style="image-rendering: pixelated;">
-&nbsp; <img src="src/main/resources/assets/creaturechat/screenshots/example-player-icon2.png" width="256" style="image-rendering: pixelated;">
-&nbsp; <img src="src/main/resources/assets/creaturechat/screenshots/example-player-icon3.png" width="256" style="image-rendering: pixelated;">
+<img src="src/main/resources/assets/creaturechat/screenshots/example-player-icon1.jpeg" width="256" style="image-rendering: pixelated;">
+&nbsp; <img src="src/main/resources/assets/creaturechat/screenshots/example-player-icon2.jpeg" width="256" style="image-rendering: pixelated;">
+&nbsp; <img src="src/main/resources/assets/creaturechat/screenshots/example-player-icon3.jpeg" width="256" style="image-rendering: pixelated;">
 
 
 ### Step 2: Position your icon on your skin
-- Download [skin-template.png](src/main/resources/assets/creaturechat/screenshots/skin-template.png)
+- Download [skin-template.png](src/main/resources/assets/creaturechat/screenshots/skin-template.jpeg)
 
-<img src="src/main/resources/assets/creaturechat/screenshots/example-player-skin1.png" width="256" style="image-rendering: pixelated;">
-&nbsp; <img src="src/main/resources/assets/creaturechat/screenshots/example-player-skin2.png" width="256" style="image-rendering: pixelated;">
-&nbsp; <img src="src/main/resources/assets/creaturechat/screenshots/example-player-skin4.png" width="256" style="image-rendering: pixelated;">
+<img src="src/main/resources/assets/creaturechat/screenshots/example-player-skin1.jpeg" width="256" style="image-rendering: pixelated;">
+&nbsp; <img src="src/main/resources/assets/creaturechat/screenshots/example-player-skin2.jpeg" width="256" style="image-rendering: pixelated;">
+&nbsp; <img src="src/main/resources/assets/creaturechat/screenshots/example-player-skin4.jpeg" width="256" style="image-rendering: pixelated;">
 
 ### Step 3: Toggle Icon Visibility
 To activate a custom player icon, include a **black and white key** in your skin:
 
-<img src="src/main/resources/assets/creaturechat/screenshots/example-skin1.png" width="256" style="image-rendering: pixelated;">
-&nbsp; <img src="src/main/resources/assets/creaturechat/screenshots/example-skin2.png" width="256" style="image-rendering: pixelated;">
-&nbsp; <img src="src/main/resources/assets/creaturechat/screenshots/example-player-skin4.png" width="256" style="image-rendering: pixelated;">
+<img src="src/main/resources/assets/creaturechat/screenshots/example-skin1.jpeg" width="256" style="image-rendering: pixelated;">
+&nbsp; <img src="src/main/resources/assets/creaturechat/screenshots/example-skin2.jpeg" width="256" style="image-rendering: pixelated;">
+&nbsp; <img src="src/main/resources/assets/creaturechat/screenshots/example-player-skin4.jpeg" width="256" style="image-rendering: pixelated;">
 
 1. Add a **black square** at: `(28, 48)`
 2. Add a **white square** at: `(32, 48)`
