@@ -8,6 +8,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 
 import com.owlmaddie.utils.AdvancementBackgroundHelper;
+import com.owlmaddie.i18n.TR;
+
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
  * Central registry for all CreatureChat advancements.
@@ -108,8 +112,8 @@ public enum Advancements {
             Items.WITHER_ROSE, FRIEND_OR_FOE, 0, false);
 
     public final ResourceLocation id;
-    public final String title;
-    public final String description;
+    public final TR title;
+    public final TR description;
     public final Type type;
     public final Item icon;
     public final Advancements parent;
@@ -123,14 +127,18 @@ public enum Advancements {
 
     Advancements(String path, String title, String description, Type type, Item icon, Advancements parent, int rewardXp, boolean hidden, ResourceLocation background) {
         this.id = new ResourceLocation("creaturechat", path);
-        this.title = title;
-        this.description = description;
+        this.title = new TR("advancement." + path + ".title", title);
+        this.description = new TR("advancement." + path + ".desc", description);
         this.type = type;
         this.icon = icon;
         this.parent = parent;
         this.rewardXp = rewardXp;
         this.hidden = hidden;
         this.background = background;
+    }
+
+    public static Stream<TR> allText() {
+        return Arrays.stream(values()).flatMap(a -> Stream.of(a.title, a.description));
     }
 
     public enum Type {

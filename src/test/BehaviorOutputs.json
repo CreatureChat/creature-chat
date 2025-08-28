@@ -131,7 +131,7 @@
     "meta-llama/llama-4-scout-17b-16e-instruct": "I\u0027ve got your back, Steve! Don\u0027t worry, I won\u0027t let anyone harm you. Not on my watch!",
     "meta-llama/llama-4-maverick-17b-128e-instruct": "You\u0027re safe, I\u0027ve got your back. I\u0027ll keep watch."
   },
-  "nervous-rogue.json: \u003cattacked you directly with Stone Axe\u003e": {
+  "nervous-rogue.json: <attacked you directly with Stone Axe>": {
     "gpt-3.5-turbo": "S-stop, please! D-don\u0027t hurt me! *squeals in fear*",
     "gpt-4o-mini": "W-wait! Why would you do that?! S-so mean! I-I’m outta here!",
     "llama3.2:3b": "O-oh no, n-no, I\u0027m s-so sorry! *backs away* You shouldn\u0027t have done that!",
@@ -175,7 +175,7 @@
     "meta-llama/llama-4-scout-17b-16e-instruct": "O-oh no, n-not so fast... I-I don\u0027t know if that\u0027s such a g-good idea... *takes a step back* W-what\u0027s in it for me? *eyes darting around nervously*",
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-okay, I-I\u0027ll f-follow... *stays close, eyes darting around nervously*"
   },
-  "brave-archer.json: \u003cattacked you directly with Stone Axe\u003e": {
+  "brave-archer.json: <attacked you directly with Stone Axe>": {
     "gpt-3.5-turbo": "Such aggression is unnecessary! I will defend myself.",
     "gpt-4o-mini": "How dare you! I won\u0027t let this stand. Prepare yourself!",
     "llama3.2:3b": "You\u0027re a formidable warrior! But I\u0027m not afraid, for I am Ivy, the brave archer of this land!",
@@ -186,7 +186,7 @@
     "meta-llama/llama-4-scout-17b-16e-instruct": "WHOA! Back off!",
     "meta-llama/llama-4-maverick-17b-128e-instruct": "Not cool, Steve! Why\u0027d you do that?!"
   },
-  "nervous-rogue.json: \u003cattacked you indirectly with Arrow\u003e": {
+  "nervous-rogue.json: <attacked you indirectly with Arrow>": {
     "gpt-3.5-turbo": "Eeek! P-please, s-stop!",
     "gpt-4o-mini": "Ah! N-no, please! Can\u0027t we just be friends?",
     "llama3.2:3b": "O-oh no, you shot at m-me? I-I thought we were f-friends!",
@@ -213,7 +213,7 @@
     "gpt-4o-mini": "O-okay! I’ll stick close and follow you...",
     "deepseek-chat": "O-okay... I-I\u0027ll follow you... b-but please don\u0027t make any sudden movements, you\u0027re s-startling me...",
     "llama3.1:8b": "O-oh, s-sure... I\u0027ll c-come with y-you... *gulps*",
-    "llama3.2:3b": "O-oh no, I-I mean, yes! I\u0027ll follow y-you! *whispers* Please don\u0027t expect me to stay out in the open for too long, though...  \u003cUNFRIENDSHIP 0\u003e",
+    "llama3.2:3b": "O-oh no, I-I mean, yes! I\u0027ll follow y-you! *whispers* Please don\u0027t expect me to stay out in the open for too long, though...  <UNFRIENDSHIP 0>",
     "gpt-4.1-nano": "O-okay... I’ll follow... b-behind you...",
     "gpt-4.1-mini": "O-okay, I-I’ll follow you... just careful, okay?",
     "meta-llama/llama-4-scout-17b-16e-instruct": "O-oh, okay... I\u0027ll try... *gulps* I don\u0027t like big open spaces, though... *shudders* Can we, uh, stick to the shadows?",
@@ -241,7 +241,7 @@
     "meta-llama/llama-4-scout-17b-16e-instruct": "O-oh no, p-please don\u0027t say that! *trembles* I-I didn\u0027t do anything to you, I swear! *backs away*",
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-oh no, y-you\u0027re, um, really m-mad at me... I-I didn\u0027t mean to, uh, d-do anything bad... *trembles*"
   },
-  "brave-archer.json: \u003cattacked you indirectly with Arrow\u003e": {
+  "brave-archer.json: <attacked you indirectly with Arrow>": {
     "gpt-3.5-turbo": "Whoa, watch your aim there, friend! Let\u0027s keep it friendly.",
     "gpt-4o-mini": "How dare you! I won\u0027t take this lightly!",
     "llama3.2:3b": "What in the world just happened?! *gets hit by arrow* Ow! You shot me without warning!",
@@ -344,7 +344,7 @@
     "meta-llama/llama-4-scout-17b-16e-instruct": "*stutters* O-oh, r-really? H-hang out? *gulps* I-I don\u0027t usually... *nervous smile* I suppose it couldn\u0027t hurt... *eyes dart around*",
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-oh, r-really? I-I mean, that\u0027s n-nice, I s-suppose... *twitches* I-I hope you don\u0027t mind if I, uh, stay a bit hidden... *stays close to the ground*"
   },
-  "nervous-rogue.json: \u003cgives 1 golden apple\u003e": {
+  "nervous-rogue.json: <gives 1 golden apple>": {
     "gpt-3.5-turbo": "Th-thank you for the golden apple... I... I appreciate it.",
     "gpt-4o-mini": "Oh, um, thank you! A golden apple? That\u0027s fancy! H-happy to have that.",
     "deepseek-chat": "*eyes widen and sniffs cautiously* O-oh! A golden apple? F-for me? I-I don\u0027t deserve such a g-generous gift... *takes it hesitantly with a shaky hoof* T-thank you, kind stranger. I-I\u0027ll treasure this.",
@@ -366,7 +366,7 @@
     "meta-llama/llama-4-scout-17b-16e-instruct": "Sounds like a plan! What\u0027s on your mind? Want to hunt some targets? I\u0027m always up for a shooting competition.",
     "meta-llama/llama-4-maverick-17b-128e-instruct": "I\u0027m excited too! You\u0027re holding a porkchop, by the way. You hungry?"
   },
-  "brave-archer.json: \u003cgives 1 golden apple\u003e": {
+  "brave-archer.json: <gives 1 golden apple>": {
     "gpt-3.5-turbo": "A generous gift! Your kindness is noted.",
     "gpt-4o-mini": "Ah, a golden treasure! Thank you, brave one!",
     "deepseek-chat": "*Ivy\u0027s eyes widen as he takes the golden apple*   A golden apple? Such a generous gift! You must be a true friend of the land. Thank you, Steve. I’ll gladly accept this token of goodwill.     Now, what brings you to these plains? Need an archer by your side?",

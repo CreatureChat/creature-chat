@@ -17,7 +17,8 @@ import org.slf4j.LoggerFactory;
  * messages to the client.
  */
 public class ModInit implements ModInitializer {
-	public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+        public static final String MODID = "creaturechat";
+        public static final Logger LOGGER = LoggerFactory.getLogger(MODID);
 
 	@Override
 	public void onInitialize() {
