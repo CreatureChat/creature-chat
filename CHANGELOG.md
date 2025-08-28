@@ -7,6 +7,9 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ## Unreleased
 
 ### Added
+- Mobs can now read books! Right-click to share the book or add it to their inventory.
+
+### Added
 - Document SPDX header and changelog requirements in AGENTS.md for contributors
 
 ### Changed
