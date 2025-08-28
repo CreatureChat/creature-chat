@@ -368,7 +368,7 @@ public class EntityChatData {
 
                 MutableComponent errorComp = ERROR_PREFIX.comp();
                 if (e.getMessage() != null && !e.getMessage().isEmpty()) {
-                    errorComp.append(Component.literal(truncateString(e.getMessage(), 55)));
+                    errorComp.append(Component.literal(truncateString(e.getMessage(), 50)));
                 }
                 player.displayClientMessage(errorComp.withStyle(ChatFormatting.RED), false);
 
@@ -727,7 +727,7 @@ public class EntityChatData {
 
                 MutableComponent errorComp = ERROR_PREFIX.comp();
                 if (e.getMessage() != null && !e.getMessage().isEmpty()) {
-                    errorComp.append(Component.literal(truncateString(e.getMessage(), 55)));
+                    errorComp.append(Component.literal(truncateString(e.getMessage(), 50)));
                 }
                 player.displayClientMessage(errorComp.withStyle(ChatFormatting.RED), false);
 
