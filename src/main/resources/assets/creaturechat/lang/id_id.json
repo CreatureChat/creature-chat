@@ -109,6 +109,7 @@
   "creaturechat.solution.server_error": "Solusi: Error server, coba lagi nanti",
   "creaturechat.solution.try_again": "Solusi: Coba lagi nanti",
   "creaturechat.solution.verify_url": "Solusi: Periksa URL API",
+  "creaturechat.ui.chat_book_item": "Creature Book",
   "creaturechat.ui.chat_title": "CreatureChat",
   "creaturechat.ui.enter_message": "Tulis pesanmu:"
 }

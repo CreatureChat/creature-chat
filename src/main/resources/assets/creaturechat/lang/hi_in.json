@@ -109,6 +109,7 @@
   "creaturechat.solution.server_error": "समाधान: सर्वर त्रुटि, बाद में कोशिश करें",
   "creaturechat.solution.try_again": "समाधान: बाद में फिर कोशिश करें",
   "creaturechat.solution.verify_url": "समाधान: API URL जांचें",
+  "creaturechat.ui.chat_book_item": "Creature Book",
   "creaturechat.ui.chat_title": "CreatureChat",
   "creaturechat.ui.enter_message": "अपना संदेश लिखें:"
 }

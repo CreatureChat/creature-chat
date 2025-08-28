@@ -18,22 +18,6 @@ public class CreatureChatDataGenerator implements DataGeneratorEntrypoint {
         pack.addProvider(CreatureChatLootTableProvider::new);
         pack.addProvider(CreatureChatAdvancementProvider::new);
         pack.addProvider(CreatureChatLangProvider::new);
-        pack.addProvider(CreatureChatEnglishLangProvider::new);
-
-        // Load the client-side model provider reflectively so the common
-        // sources don't depend on client-only classes at compile time.
-        pack.addProvider((FabricDataOutput out) -> createModelProvider(out));
-    }
-
-    private DataProvider createModelProvider(FabricDataOutput output) {
-        try {
-            Class<?> clazz = Class.forName("com.owlmaddie.datagen.CreatureChatModelProvider");
-            return (DataProvider) clazz
-                    .getConstructor(FabricDataOutput.class)
-                    .newInstance(output);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Failed to load model provider", e);
-        }
     }
 }
 

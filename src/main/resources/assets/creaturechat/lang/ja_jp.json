@@ -109,6 +109,7 @@
   "creaturechat.solution.server_error": "解決策: サーバーエラー、後で再試行してください",
   "creaturechat.solution.try_again": "解決策: 後でもう一度試してください",
   "creaturechat.solution.verify_url": "解決策: APIのURLを確認してください",
+  "creaturechat.ui.chat_book_item": "Creature Book",
   "creaturechat.ui.chat_title": "CreatureChat",
   "creaturechat.ui.enter_message": "メッセージを入力してください:"
 }

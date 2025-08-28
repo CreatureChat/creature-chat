@@ -109,6 +109,7 @@
   "creaturechat.solution.server_error": "Çözüm: Sunucu hatası, daha sonra tekrar dene",
   "creaturechat.solution.try_again": "Çözüm: Daha sonra tekrar dene",
   "creaturechat.solution.verify_url": "Çözüm: API URL\u0027sini kontrol et",
+  "creaturechat.ui.chat_book_item": "Creature Book",
   "creaturechat.ui.chat_title": "CreatureChat",
   "creaturechat.ui.enter_message": "Mesajını yaz:"
 }

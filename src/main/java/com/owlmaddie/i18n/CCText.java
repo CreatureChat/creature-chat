@@ -12,9 +12,12 @@ public class CCText {
     // UI text
     public static final TR UI_CHAT_TITLE = new TR("ui.chat_title", "CreatureChat");
     public static final TR UI_ENTER_MESSAGE = new TR("ui.enter_message", "Enter your message:");
+    public static final TR UI_CREATURE_BOOK = new TR("ui.chat_book_item", "Creature Book");
+
     public static final List<TR> UI_TEXT = List.of(
             UI_CHAT_TITLE,
-            UI_ENTER_MESSAGE
+            UI_ENTER_MESSAGE,
+            UI_CREATURE_BOOK
     );
 
     // Configuration command text
