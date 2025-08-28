@@ -11,6 +11,8 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ### Changed
 - Convert PNG screenshots to JPEG, compress, and remove less useful ones (smaller jar)
+- Compressed all textures from 32-bit color to 4-bit indexed color, reduced size massively.
+
 
 ## [3.0.0] - 2025-08-27
 
