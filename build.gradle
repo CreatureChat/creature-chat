@@ -210,18 +210,6 @@ tasks.named("runDatagen") {
     }
 }
 
-tasks.named("classes") {
-    finalizedBy "runDatagen"
-}
-
-tasks.named("build") {
-    dependsOn "runDatagen"
-}
-
-tasks.named("sourcesJar") {
-    dependsOn "runDatagen"
-}
-
 tasks.named("clean") {
     delete generatedResources
 }

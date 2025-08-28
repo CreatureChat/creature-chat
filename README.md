@@ -5,14 +5,16 @@
 ### Features
 - **AI-Driven Chats:** Using ChatGPT or open-source AI models, each conversation is unique and engaging!
 - **Behaviors:** Creatures can make decisions on their own and **Follow, Flee, Attack, Protect**, and more!
-- **Reactions:** Creatures automatically react to being damaged or receiving items from players.
+- **Reactions:** Creatures automatically react to being damaged, shown items, or receiving or loosing items.
 - **Friendship:** Track your relationships from friends to foes.
 - **Multi-Player:** Share the experience; conversations sync across server & players.
 - **Memory:** Creatures remember your past interactions, making each chat more personal.
+- **Inventory:** Every mob has an inventory with random loot. Give items to your friends or take items to create enemies.
+- **Advancements:** Earn unique CreatureChat milestones as your friendships progress.
 
 ### Create meaningful conversations and enduring friendships? A betrayal perhaps?
 
-[![CreatureChat™ Trailer Video](src/main/resources/assets/creaturechat/screenshots/video-thumbnail.png)](https://youtu.be/GdY969Orsh0?si=qRgCne10XqOBC8YB)
+[![CreatureChat™ Trailer Video](src/main/resources/assets/creaturechat/screenshots/video-thumbnail.jpeg)](https://youtu.be/GdY969Orsh0?si=qRgCne10XqOBC8YB)
 
 ## Installation Instructions
 ### Fabric (Recommended)
@@ -100,11 +102,8 @@ Supports CreatureChat™ by purchasing tokens from the developers:
   - If the `--config` option is not specified, the `default` configuration scope is assumed.
 
 ### Screenshots
-![Interact with Minecraft Creatures](src/main/resources/assets/creaturechat/screenshots/salmon-follow.png)
-![Panda Following the Player](src/main/resources/assets/creaturechat/screenshots/panda-follow.png)
-![Piglins Reacting to Player](src/main/resources/assets/creaturechat/screenshots/piglin-reactions.png)
-![Enderman Following the Player](src/main/resources/assets/creaturechat/screenshots/enderman-follow.png)
-![Chat UI](src/main/resources/assets/creaturechat/screenshots/chat-ui.png)
+![Panda Following the Player](src/main/resources/assets/creaturechat/screenshots/panda-follow.jpeg)
+![Piglins Reacting to Player](src/main/resources/assets/creaturechat/screenshots/piglin-reactions.jpeg)
 
 ### Authors
 

@@ -9,11 +9,13 @@ ALLOW_GRADLE_RESTART=${ALLOW_GRADLE_RESTART:-}
 shopt -s nullglob
 
 run_build() {
+  ./gradlew runDatagen </dev/null
   ./gradlew build -x test -x validateAccessWidener --build-cache --parallel </dev/null && return 0
   [[ -n "$ALLOW_GRADLE_RESTART" ]] || return 1
   echo "Gradle failed; attempting to clear locks and retry..."
   ./gradlew --stop >/dev/null 2>&1 || true
   find .gradle ~/.gradle -type f -name '*.lock' -delete 2>/dev/null || true
+  ./gradlew runDatagen </dev/null
   ./gradlew build -x test -x validateAccessWidener --build-cache --parallel </dev/null
 }
 
