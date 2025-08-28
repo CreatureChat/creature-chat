@@ -364,12 +364,11 @@ public class EntityChatData {
 
                 TR randomError = Randomizer.getRandomError(type);
                 MutableComponent randomComp = randomError.comp(link);
-                this.addMessage(randomComp.getString(), ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
+                this.addMessage(randomComp.getString(), ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt, false);
 
                 MutableComponent errorComp = ERROR_PREFIX.comp();
                 if (e.getMessage() != null && !e.getMessage().isEmpty()) {
-                    String clean = e.getMessage().replace(config.getApiKey(), "**********");
-                    errorComp.append(Component.literal(truncateString(clean, 55)));
+                    errorComp.append(Component.literal(truncateString(e.getMessage(), 50)));
                 }
                 player.displayClientMessage(errorComp.withStyle(ChatFormatting.RED), false);
 
@@ -724,12 +723,11 @@ public class EntityChatData {
 
                 TR randomError = Randomizer.getRandomError(type);
                 MutableComponent randomComp = randomError.comp(link);
-                this.addMessage(randomComp.getString(), ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
+                this.addMessage(randomComp.getString(), ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt, false);
 
                 MutableComponent errorComp = ERROR_PREFIX.comp();
                 if (e.getMessage() != null && !e.getMessage().isEmpty()) {
-                    String clean = e.getMessage().replace(config.getApiKey(), "**********");
-                    errorComp.append(Component.literal(truncateString(clean, 55)));
+                    errorComp.append(Component.literal(truncateString(e.getMessage(), 50)));
                 }
                 player.displayClientMessage(errorComp.withStyle(ChatFormatting.RED), false);
 

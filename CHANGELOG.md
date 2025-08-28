@@ -4,49 +4,21 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [3.0.0] - 2025-08-27
 
 ### Added
-- Adding datagen provider for translations (en_us.json)
-- Integrating all player text (Advancements, ChatScreen, Inventory, Commands, Errors, No Responses)
-- Initial translations:
-  - German (Germany): `de_de`
-  - Spanish (Spain): `es_es`
-  - Spanish (Mexico): `es_mx`
-  - French (France): `fr_fr`
-  - Hindi (India): `hi_in`
-  - Japanese (Japan): `ja_jp`
-  - Korean (South Korea): `ko_kr`
-  - Dutch (Netherlands): `nl_nl`
-  - Polish (Poland): `pl_pl`
-  - Portuguese (Brazil): `pt_br`
-  - Portuguese (Portugal): `pt_pt`
-  - Swedish (Sweden): `sv_se`
-  - Turkish (Turkey): `tr_tr`
-  - Ukrainian (Ukraine): `uk_ua`
-  - Russian (Russia): `ru_ru`
-  - Chinese (Simplified, China): `zh_cn`
-  - Chinese (Traditional, Taiwan): `zh_tw`
-  - Indonesian (Indonesia): `id_id`
-
-### Changed
-- Reduced # of random errors to a single message per error code (easier to troubleshoot and interpret)
-
-## Unreleased
-
-### Added
-- Inventories for all entities with chat data (Shift+Right Click, or Press 'E' while riding)
+- **Inventories** for all mobs with chat data (Shift+Right Click, or Press 'E' while riding)
     - Random loot added to inventory on character creation (biome-specific loot tables for inventories)
-    - You can borrow items from friends, or steel items from enemies
+    - You can borrow items from friends, or steal items from enemies
     - Entities will react to changes in inventory
     - Integrates with existing inventories for Piglin, Pillager, Allay, and Villager
     - Press 'E' while riding a mob with max friendship to show inventory
-    - Imports chest-based mobs (horse with chest, donkey with chest, llama with chest)
+    - Imports chest-based mobs (donkey with chest, llama with chest, etc...)
     - Integrated Fabric DataGen for building compatible loot-tables (1.20 to 1.21.7 support)
-    - Randomly assign inventory into random slots
+    - Assign inventory into random slots
     - Main/Off hand support for max friendship (uses bottom left 2 slots for main/off hand)
-- Advancements
-    - **CreatureChat**: Your world just got way more alive.
+- **Advancements** (30 tasks, goals, and challenges)
+    - **CreatureChat** (root): Your world just got way more alive.
     - **Ice Breaker**: Cold Open.
     - **First Impressions**: Make a friend.
     - **No Hard Feelings**: Regain a friend.
@@ -71,24 +43,46 @@ All notable changes to **CreatureChat™** are documented in this file. The form
     - **Guided Tour**: Lost, together.
     - **The NeverEnding Story**: Every real story is a never ending story.
     - **Grand Gesture**: You got rizz.
-    - **A Legend**: Legends never die.
-    - **Potato War**: All war is deception.
+    - **A Legend**: <HIDDEN>
+    - **Potato War**: <HIDDEN>
     - **The Heist**: The perfect crime.
     - **Ender Escort**: Together to the End.
     - **Pacifist Route**: The best ending.
-- Validation of mixin targets (on build script)
+- **Translations** (18 Languages):
+  - Translating all visible text (Advancements, ChatScreen, Inventory, Commands, Errors, No Responses)
+  - Adding DataGen provider for translations (en_us.json)
+  - Languages:
+      - German (Germany): `de_de`
+      - Spanish (Spain): `es_es`
+      - Spanish (Mexico): `es_mx`
+      - French (France): `fr_fr`
+      - Hindi (India): `hi_in`
+      - Japanese (Japan): `ja_jp`
+      - Korean (South Korea): `ko_kr`
+      - Dutch (Netherlands): `nl_nl`
+      - Polish (Poland): `pl_pl`
+      - Portuguese (Brazil): `pt_br`
+      - Portuguese (Portugal): `pt_pt`
+      - Swedish (Sweden): `sv_se`
+      - Turkish (Turkey): `tr_tr`
+      - Ukrainian (Ukraine): `uk_ua`
+      - Russian (Russia): `ru_ru`
+      - Chinese (Simplified, China): `zh_cn`
+      - Chinese (Traditional, Taiwan): `zh_tw`
+      - Indonesian (Indonesia): `id_id`
 - Solutions to common errors are now displayed on screen (i.e. more helpful)
 - New HTTP keep alive and accept HTTP headers
 - Unit tests for all LLM request failure scenarios + solutions
+- Validation of mixin targets (on build)
 
 ### Changed
-- Adding specific error messages for specific LLM request status codes (i.e. more helpful)
+- Expanded & translated '<no response>' messages
+- Improved rate-limits for automatic LLM requests (show item, inventory, attack)
+    - 10 automatic LLM messages per user, cooldown +1 every 3 seconds
+    - 3 automatic LLM message per entity, cooldown +1 every 3 seconds
+- Adding specific **error messages** for specific LLM request status codes (i.e. more helpful)
 - Output more detailed error message from LLM APIs
 - Leaving HTTP connection open (better connection pooling)
-- Expanded 'no response' messages
-- Improved rate-limits for automatic LLM requests (show item, inventory, attack)
-  - 10 automatic LLM messages per user, cooldown +1 every 3 seconds
-  - 3 automatic LLM message per entity, cooldown +1 every 3 seconds
 
 ### Fixed
 - Fixed constant death messages which appeared on each attack (for Minecraft 1.21.2+)
@@ -97,7 +91,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Fixed "entity is null" errors when killing mobs (usually when killing lots of mobs)
 - Fixed names that were not appearing in the End and the Nether.
 - Fixed Z-fighting on message text and entity name (on chat bubble)
-- Fixed PlayerData from using UUID (changed back to PlayerName - to allow for role playing)
+- Fixed PlayerData from using UUID (changed back to PlayerName - to allow for roleplay)
 
 ## [2.5.0] - 2025-07-07
 
