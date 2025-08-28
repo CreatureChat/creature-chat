@@ -210,21 +210,30 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
             // Player has item in hand
             if (!itemStack.isEmpty()) {
                 ServerPlayer serverPlayer = (ServerPlayer) player;
-                String itemName = itemStack.getItem().getName(itemStack).getString();
-                int itemCount = itemStack.getCount();
+                if (com.owlmaddie.utils.BookHelper.isBook(itemStack.getItem())) {
+                    String contents = com.owlmaddie.utils.BookHelper.summarizeBook(itemStack);
+                    String msg = "<" + serverPlayer.getDisplayName().getString() +
+                            " shared a book with you> - Book contents: \"" + contents + "\"";
+                    if (!entityData.characterSheet.isEmpty()) {
+                        ServerPackets.generate_chat("N/A", entityData, serverPlayer, thisEntity, msg, true);
+                    }
+                } else {
+                    String itemName = itemStack.getItem().getName(itemStack).getString();
+                    int itemCount = itemStack.getCount();
 
-                // Decide verb
-                String action_verb = " shows ";
-                if (cir.getReturnValue().consumesAction()) {
-                    action_verb = " gives ";
-                }
+                    // Decide verb
+                    String action_verb = " shows ";
+                    if (cir.getReturnValue().consumesAction()) {
+                        action_verb = " gives ";
+                    }
 
-                // Prepare a message about the interaction
-                String giveItemMessage = "<" + serverPlayer.getDisplayName().getString() +
-                        action_verb + "you " + itemCount + " " + itemName + ">";
+                    // Prepare a message about the interaction
+                    String giveItemMessage = "<" + serverPlayer.getDisplayName().getString() +
+                            action_verb + "you " + itemCount + " " + itemName + ">";
 
-                if (!entityData.characterSheet.isEmpty()) {
-                    ServerPackets.generate_chat("N/A", entityData, serverPlayer, thisEntity, giveItemMessage, true);
+                    if (!entityData.characterSheet.isEmpty()) {
+                        ServerPackets.generate_chat("N/A", entityData, serverPlayer, thisEntity, giveItemMessage, true);
+                    }
                 }
 
             } else if (itemStack.isEmpty() && playerData.friendship == 3) {

@@ -233,6 +233,17 @@ public class MobInventoryMenu extends AbstractContainerMenu {
                         AdvancementHelper.potatoWar(serverPlayer);
                     }
                 }
+                if (added.size() == 1 && removed.isEmpty() && disarmedToInventory.isEmpty() && disarmedTaken.isEmpty() && !swapped && !handChanged) {
+                    Item item = added.keySet().iterator().next();
+                    if (com.owlmaddie.utils.BookHelper.isBook(item)) {
+                        ItemStack stack = findBookStack(item);
+                        String contents = com.owlmaddie.utils.BookHelper.summarizeBook(stack);
+                        String msg = "<" + player.getDisplayName().getString() +
+                                " shared a book with you> - Book contents: \"" + contents + "\"";
+                        ServerPackets.generate_chat("N/A", chatData, serverPlayer, mob, msg, true);
+                        return;
+                    }
+                }
                 StringBuilder msg = new StringBuilder("<" + player.getDisplayName().getString());
                 boolean first = true;
                 if (swapped) {
@@ -338,6 +349,16 @@ public class MobInventoryMenu extends AbstractContainerMenu {
             int remaining = count - initial.getCount();
             return remaining > 0 ? remaining : null;
         });
+    }
+
+    private ItemStack findBookStack(Item item) {
+        for (int i = 0; i < mobInvSize; i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (!stack.isEmpty() && stack.getItem() == item) {
+                return stack;
+            }
+        }
+        return ItemStack.EMPTY;
     }
 
     private static String joinCounts(Map<Item, Integer> map) {
