@@ -14,7 +14,7 @@
 
 ### Create meaningful conversations and enduring friendships? A betrayal perhaps?
 
-[![CreatureChat™ Trailer Video](src/main/resources/assets/creaturechat/screenshots/video-thumbnail.png)](https://youtu.be/GdY969Orsh0?si=qRgCne10XqOBC8YB)
+[![CreatureChat™ Trailer Video](src/main/resources/assets/creaturechat/screenshots/video-thumbnail.jpeg)](https://youtu.be/GdY969Orsh0?si=qRgCne10XqOBC8YB)
 
 ## Installation Instructions
 ### Fabric (Recommended)
@@ -102,11 +102,8 @@ Supports CreatureChat™ by purchasing tokens from the developers:
   - If the `--config` option is not specified, the `default` configuration scope is assumed.
 
 ### Screenshots
-![Interact with Minecraft Creatures](src/main/resources/assets/creaturechat/screenshots/salmon-follow.png)
-![Panda Following the Player](src/main/resources/assets/creaturechat/screenshots/panda-follow.png)
-![Piglins Reacting to Player](src/main/resources/assets/creaturechat/screenshots/piglin-reactions.png)
-![Enderman Following the Player](src/main/resources/assets/creaturechat/screenshots/enderman-follow.png)
-![Chat UI](src/main/resources/assets/creaturechat/screenshots/chat-ui.png)
+![Panda Following the Player](src/main/resources/assets/creaturechat/screenshots/panda-follow.jpeg)
+![Piglins Reacting to Player](src/main/resources/assets/creaturechat/screenshots/piglin-reactions.jpeg)
 
 ### Authors
 
