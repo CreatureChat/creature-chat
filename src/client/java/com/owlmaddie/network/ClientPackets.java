@@ -94,6 +94,12 @@ public class ClientPackets {
         ClientPacketHelper.send(ServerPackets.PACKET_C2S_SEND_CHAT, buf);
     }
 
+    public static void requestEntityData(UUID entityId) {
+        FriendlyByteBuf buf = ClientBufferHelper.create();
+        buf.writeUtf(entityId.toString());
+        ClientPacketHelper.send(ServerPackets.PACKET_C2S_REQUEST_ENTITY_DATA, buf);
+    }
+
     // Reading a Map<String, PlayerData> from the buffer
     public static Map<String, PlayerData> readPlayerDataMap(FriendlyByteBuf buffer) {
         int size = buffer.readInt(); // Read the size of the map
@@ -119,6 +125,8 @@ public class ClientPackets {
             String sender_name = buffer.readUtf(32767);
             ChatDataManager.ChatSender sender = ChatDataManager.ChatSender.valueOf(sender_name);
             Map<String, PlayerData> players = readPlayerDataMap(buffer);
+            long lastTs = buffer.readLong();
+            long deathTs = buffer.readLong();
 
             // Update the chat data manager on the client-side
             client.execute(() -> { // Make sure to run on the client thread
@@ -140,6 +148,8 @@ public class ClientPackets {
                 chatData.status = status;
                 chatData.sender = sender;
                 chatData.players = players;
+                chatData.lastMessage = lastTs;
+                chatData.death = deathTs != 0L ? deathTs : null;
 
                 // Play sound with volume based on distance (from player or entity)
                 Mob entity = ClientEntityFinder.getEntityByUUID(client.level, entityId);
@@ -203,6 +213,40 @@ public class ClientPackets {
 
                     // Clear receivedChunks for future use
                     receivedChunks.clear();
+                }
+            });
+        });
+
+        ClientPacketHelper.registerReceiver(ServerPackets.PACKET_S2C_ENTITY_DATA, (client, handler, buffer, responseSender) -> {
+            String entityId = buffer.readUtf();
+            byte[] compressed = buffer.readByteArray();
+            client.execute(() -> {
+                String json = Decompression.decompressString(compressed);
+                if (json == null || json.isEmpty()) {
+                    return;
+                }
+                Gson gson = new Gson();
+                EntityChatData data = gson.fromJson(json, EntityChatData.class);
+                data.postDeserializeInitialization();
+                LOGGER.info("Client received full data for entity {}", entityId);
+                ChatDataManager mgr = ChatDataManager.getClientInstance();
+                EntityChatData existing = mgr.entityChatDataMap.get(entityId);
+                if (existing != null) {
+                    existing.currentMessage = data.currentMessage;
+                    existing.currentLineNumber = data.currentLineNumber;
+                    existing.status = data.status;
+                    existing.sender = data.sender;
+                    existing.players = data.players;
+                    existing.characterSheet = data.characterSheet;
+                    existing.auto_generated = data.auto_generated;
+                    existing.previousMessages = data.previousMessages;
+                    existing.born = data.born;
+                    existing.death = data.death;
+                    existing.lastMessage = data.lastMessage;
+                    existing.entityType = data.entityType;
+                    existing.entityName = data.entityName;
+                } else {
+                    mgr.entityChatDataMap.put(entityId, data);
                 }
             });
         });

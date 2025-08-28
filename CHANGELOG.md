@@ -7,6 +7,19 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 ## Unreleased
 
 ### Added
+- New Book Item
+    - Load client entity chat data and display friends and enemies by most recent
+    - Using Fabric DataGen to create book item
+    - New packet types for sending / receiving all entity data (by UUID - per page)
+    - Dynamic Next/Previous buttons with hover (hidden when no page to turn)
+    - Summary pages are displayed first, then Detail pages with more info
+    - Improvements to page contents, layout, pagination - and page turn sounds
+    - Integrating entityType into chat data, and incorporating death into broadcast, login, and book pages
+    - Adding entityName into chat data, for dead mobs
+    - Remember book screen state when exiting (so book resumes exactly where you left it)
+    - Adding top buttons + hover states - integrated hover assets and new arrow buttons
+    - Adding deterministic random stickers to pages (based on UUID and page #)
+    - Clean recent messages (remove behaviors)
 - Document SPDX header and changelog requirements in AGENTS.md for contributors
 
 ### Changed

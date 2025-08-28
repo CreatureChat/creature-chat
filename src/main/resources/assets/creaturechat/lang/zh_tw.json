@@ -109,6 +109,7 @@
   "creaturechat.solution.server_error": "解決方法: 伺服器錯誤，稍後再試",
   "creaturechat.solution.try_again": "解決方法: 稍後再試",
   "creaturechat.solution.verify_url": "解決方法: 驗證 API URL",
+  "creaturechat.ui.chat_book_item": "Creature Book",
   "creaturechat.ui.chat_title": "CreatureChat",
   "creaturechat.ui.enter_message": "輸入你的訊息:"
 }

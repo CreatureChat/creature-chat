@@ -5,7 +5,12 @@ package com.owlmaddie.datagen;
 
 import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.minecraft.data.DataProvider;
 
+/**
+ * Registers all data generation providers for the mod.
+ */
 public class CreatureChatDataGenerator implements DataGeneratorEntrypoint {
     @Override
     public void onInitializeDataGenerator(FabricDataGenerator fabricDataGenerator) {
@@ -15,3 +20,4 @@ public class CreatureChatDataGenerator implements DataGeneratorEntrypoint {
         pack.addProvider(CreatureChatLangProvider::new);
     }
 }
+

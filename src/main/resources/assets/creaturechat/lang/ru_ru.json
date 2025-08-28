@@ -109,6 +109,7 @@
   "creaturechat.solution.server_error": "Решение: Ошибка сервера, попробуйте позже",
   "creaturechat.solution.try_again": "Решение: Попробуйте позже",
   "creaturechat.solution.verify_url": "Решение: Проверьте URL API",
+  "creaturechat.ui.chat_book_item": "Creature Book",
   "creaturechat.ui.chat_title": "CreatureChat",
   "creaturechat.ui.enter_message": "Введите сообщение:"
 }

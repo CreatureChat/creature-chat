@@ -6,6 +6,7 @@ package com.owlmaddie;
 import com.owlmaddie.commands.CreatureChatCommands;
 import com.owlmaddie.inventory.ModMenus;
 import com.owlmaddie.network.ServerPackets;
+import com.owlmaddie.items.ModItems;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +29,9 @@ public class ModInit implements ModInitializer {
                 // Register server commands
                 CreatureChatCommands.register();
 
-                // Register menus and events
+                // Register menus, items, and events
                 ModMenus.register();
+                ModItems.register();
                 ServerPackets.register();
 
 		LOGGER.info("CreatureChat MOD Initialized!");

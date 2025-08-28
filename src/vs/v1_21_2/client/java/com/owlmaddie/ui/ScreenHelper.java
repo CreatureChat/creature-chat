@@ -35,13 +35,19 @@ public abstract class ScreenHelper extends Screen {
      */
     protected abstract Component getLabelText();
 
+    /** Subclass must supply the UI texture id for its background */
+    protected abstract String getBackgroundTextureId();
+
+    /** Hook for subclasses to render additional content above the background */
+    protected void renderContent(GuiGraphics context, int mouseX, int mouseY, float delta) {}
+
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         // Draw the vanilla gradient once
         super.renderBackground(context, mouseX, mouseY, delta);
 
-        // Draw the chat-box texture
-        ResourceLocation bgTex = textures.GetUI("chat-background");
+        // Draw the background texture
+        ResourceLocation bgTex = textures.GetUI(getBackgroundTextureId());
         if (bgTex != null) {
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
@@ -55,6 +61,9 @@ public abstract class ScreenHelper extends Screen {
             );
             RenderSystem.disableBlend();
         }
+
+        // Allow subclass content between background and widgets
+        renderContent(context, mouseX, mouseY, delta);
 
         // Render children/widgets but suppress their background call
         skipNextBackground = true;

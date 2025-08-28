@@ -88,6 +88,9 @@ public class EntityChatData {
     public List<ChatMessage> previousMessages;
     public Long born;
     public Long death;
+    public Long lastMessage;
+    public String entityName;
+    public String entityType;
     public transient AutoMessageBucket autoBucket;
 
     @SerializedName("playerId")
@@ -112,6 +115,9 @@ public class EntityChatData {
         this.auto_generated = 0;
         this.previousMessages = new ArrayList<>();
         this.born = System.currentTimeMillis();;
+        this.lastMessage = null;
+        this.entityName = "";
+        this.entityType = null;
         this.autoBucket = null;
 
         // Old, unused migrated properties
@@ -126,6 +132,10 @@ public class EntityChatData {
         }
         if (this.legacyPlayerId != null && !this.legacyPlayerId.isEmpty()) {
             this.migrateData();
+        }
+        if (this.previousMessages != null && !this.previousMessages.isEmpty()) {
+            ChatMessage last = this.previousMessages.get(this.previousMessages.size() - 1);
+            this.lastMessage = last.timestamp;
         }
     }
 
@@ -184,6 +194,10 @@ public class EntityChatData {
     }
 
     public String getCharacterProp(String propertyName) {
+        if (characterSheet == null || characterSheet.isEmpty()) {
+            return "N/A";
+        }
+
         // Create a case-insensitive regex pattern to match the property name and capture its value
         Pattern pattern = Pattern.compile("-?\\s*" + Pattern.quote(propertyName) + ":\\s*(.+)", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(characterSheet);
@@ -776,8 +790,8 @@ public class EntityChatData {
         // Add context-switching logic for USER messages only
         String playerName = player.getDisplayName().getString();
         if (sender == ChatDataManager.ChatSender.USER && previousMessages.size() > 1) {
-            ChatMessage lastMessage = previousMessages.get(previousMessages.size() - 1);
-            if (lastMessage.name == null || !lastMessage.name.equals(playerName)) {  // Null-safe check
+            ChatMessage lastMsg = previousMessages.get(previousMessages.size() - 1);
+            if (lastMsg.name == null || !lastMsg.name.equals(playerName)) {  // Null-safe check
                 boolean isReturningPlayer = previousMessages.stream().anyMatch(msg -> playerName.equals(msg.name)); // Avoid NPE here too
                 String note = isReturningPlayer
                         ? "<returning player: " + playerName + " resumes the conversation>"
@@ -791,7 +805,9 @@ public class EntityChatData {
         }
 
         // Add message to history
-        previousMessages.add(new ChatMessage(truncatedMessage, sender, playerName));
+        ChatMessage chatMsg = new ChatMessage(truncatedMessage, sender, playerName);
+        previousMessages.add(chatMsg);
+        this.lastMessage = chatMsg.timestamp;
 
         // Log regular message addition
         LOGGER.info("Message added: status={}, sender={}, message={}, player={}, entity={}",

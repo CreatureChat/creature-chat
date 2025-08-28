@@ -33,6 +33,7 @@ public class ChatDataManager {
     public static int DISPLAY_NUM_LINES = 3;
     public static int MAX_CHAR_IN_USER_MESSAGE = 512;
     public static int TICKS_TO_DISPLAY_USER_MESSAGE = 70;
+    public static int MAX_AUTOGENERATE_RESPONSES = 12;
     private static final Gson GSON = new Gson();
 
     public enum ChatStatus {
@@ -135,11 +136,22 @@ public class ChatDataManager {
     }
 
     // Save chat data to file
-    public String GetLightChatData(String playerId) {
+    public String GetLightChatData(String playerName) {
         try {
-            // Create "light" version of entire chat data HashMap
+            // Create light versions for living entities
             HashMap<String, EntityChatDataLight> lightVersionMap = new HashMap<>();
-            this.entityChatDataMap.forEach((name, entityChatData) -> lightVersionMap.put(name, entityChatData.toLightVersion(playerId)));
+
+            this.entityChatDataMap.values().stream()
+                    .filter(data -> data.death == null)
+                    .forEach(data -> lightVersionMap.put(data.entityId, data.toLightVersion(playerName)));
+
+            // Include up to 100 most recent dead entities
+            this.entityChatDataMap.values().stream()
+                    .filter(data -> data.death != null)
+                    .sorted((a, b) -> Long.compare(b.death, a.death))
+                    .limit(100)
+                    .forEach(data -> lightVersionMap.put(data.entityId, data.toLightVersion(playerName)));
+
             return GSON.toJson(lightVersionMap);
         } catch (Exception e) {
             // Handle exceptions
