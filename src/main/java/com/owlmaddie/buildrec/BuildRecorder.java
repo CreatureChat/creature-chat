@@ -6,6 +6,8 @@ package com.owlmaddie.buildrec;
 import com.google.gson.JsonParseException;
 import com.owlmaddie.buildrec.BuildRecordIO.Action;
 import com.owlmaddie.buildrec.BuildRecordIO.Meta;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
@@ -58,6 +60,7 @@ public class BuildRecorder {
     private static final List<Replay> REPLAYS = new ArrayList<>();
     private static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
     private static final int MAX_IDLE_TICKS = 20; // 1 second
+    private static List<BuildIndex> BUILD_INDEX;
 
     static {
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
@@ -95,6 +98,62 @@ public class BuildRecorder {
         // Ensure static initializer runs
     }
 
+    private static class BuildIndex {
+        final String type;
+        final String height;
+        final String file;
+        final int score;
+
+        BuildIndex(String type, String height, String file, int score) {
+            this.type = type;
+            this.height = height;
+            this.file = file;
+            this.score = score;
+        }
+    }
+
+    private static int heightTier(double h) {
+        return h < 1 ? 1 : (h < 2 ? 2 : 3);
+    }
+
+    private static void loadBuildIndex() {
+        if (BUILD_INDEX != null) return;
+        List<BuildIndex> list = new ArrayList<>();
+        FabricLoader.getInstance().getModContainer("creaturechat")
+                .flatMap(m -> m.findPath("assets/creaturechat/builds/index.json"))
+                .ifPresent(path -> {
+                    try (var reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+                        JsonObject root = BuildRecordIO.GSON.fromJson(reader, JsonObject.class);
+                        JsonArray arr = root.getAsJsonArray("builds");
+                        for (var el : arr) {
+                            JsonObject o = el.getAsJsonObject();
+                            list.add(new BuildIndex(o.get("type").getAsString(), o.get("height").getAsString(),
+                                    o.get("file").getAsString(), o.get("score").getAsInt()));
+                        }
+                    } catch (IOException | JsonParseException e) {
+                        LOGGER.error("[BuildRec] failed to read build index", e);
+                    }
+                });
+        BUILD_INDEX = list;
+    }
+
+    public static String randomBuildFile(double entityHeight, String type, int level) {
+        loadBuildIndex();
+        int tier = heightTier(entityHeight);
+        String t = (type == null || type.isEmpty() || "unknown".equalsIgnoreCase(type)) ? null : type.toLowerCase();
+        List<BuildIndex> filtered = new ArrayList<>();
+        for (BuildIndex e : BUILD_INDEX) {
+            if (t != null && !e.type.equalsIgnoreCase(t)) continue;
+            if (!"any".equalsIgnoreCase(e.height) && Integer.parseInt(e.height) < tier) continue;
+            if (e.score > level) continue;
+            filtered.add(e);
+        }
+        if (filtered.isEmpty()) return null;
+        BuildIndex pick = filtered.get(new Random().nextInt(filtered.size()));
+        String path = pick.type + ("any".equalsIgnoreCase(pick.height) ? "" : "/" + pick.height) + "/" + pick.file;
+        return path;
+    }
+
     public static boolean start(ServerPlayer player, String type, String height, String name) {
         if (RECORDINGS.containsKey(player.getUUID())) {
             LOGGER.info("[BuildRec] start ignored already recording player={}", player.getGameProfile().getName());
@@ -125,6 +184,15 @@ public class BuildRecorder {
     }
 
     public static boolean startReplay(ServerPlayer player, String fileName, EntityType<? extends Mob> entityType, int speed) {
+        return startReplayInternal(player, fileName, entityType, speed, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static boolean startReplay(ServerPlayer player, Mob actor, String fileName, int speed) {
+        return startReplayInternal(player, fileName, (EntityType<? extends Mob>) actor.getType(), speed, actor);
+    }
+
+    private static boolean startReplayInternal(ServerPlayer player, String fileName, EntityType<? extends Mob> entityType, int speed, Mob existingActor) {
         Path dir = buildRootDir();
         String actual = fileName.endsWith(".json.gz") ? fileName : fileName + ".json.gz";
         Path file = dir.resolve(actual);
@@ -159,7 +227,10 @@ public class BuildRecorder {
             }
             ServerLevel level = (ServerLevel) player.level();
             Mob actor;
-            if (entityType == null) {
+            boolean preserve = existingActor != null;
+            if (preserve) {
+                actor = existingActor;
+            } else if (entityType == null) {
                 actor = new Pig(EntityType.PIG, level);
             } else {
                 actor = MobHelper.create(entityType, level);
@@ -169,17 +240,19 @@ public class BuildRecorder {
                 }
             }
             MobHelper.initSpawn(actor, level);
-            actor.teleportTo(player.getX(), player.getY(), player.getZ());
-            actor.setYRot(player.getYRot());
-            float sp = adjustPitch(level, player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot(), recEye, actor.getEyeHeight(), actor);
-            actor.setXRot(sp);
-            actor.yHeadRot = player.getYRot();
-            actor.yBodyRot = player.getYRot();
+            if (!preserve) {
+                actor.teleportTo(player.getX(), player.getY(), player.getZ());
+                actor.setYRot(player.getYRot());
+                float sp = adjustPitch(level, player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot(), recEye, actor.getEyeHeight(), actor);
+                actor.setXRot(sp);
+                actor.yHeadRot = player.getYRot();
+                actor.yBodyRot = player.getYRot();
+                level.addFreshEntity(actor);
+            }
             actor.setNoAi(true);
             actor.setInvulnerable(true);
             actor.setPersistenceRequired();
-            level.addFreshEntity(actor);
-            REPLAYS.add(new Replay(actor, actions, speed, recEye, recWidth, recHeight, palette));
+            REPLAYS.add(new Replay(actor, actions, speed, recEye, recWidth, recHeight, palette, preserve));
             LOGGER.info("[BuildRec] replay loaded actions={} eyeHeight={} bbW={} bbH={}", actions.size(), recEye, recWidth, recHeight);
             return true;
         } catch (IOException | JsonParseException e) {
@@ -188,6 +261,36 @@ public class BuildRecorder {
             LOGGER.error("[BuildRec] replay runtime error {}", file, e);
         }
         return false;
+    }
+
+    public static void pauseReplay(Mob actor) {
+        REPLAYS.stream().filter(r -> r.actor == actor).forEach(r -> {
+            r.paused = true;
+            r.actor.setNoAi(false);
+        });
+    }
+
+    public static void resumeReplay(Mob actor) {
+        REPLAYS.stream().filter(r -> r.actor == actor).forEach(r -> {
+            r.paused = false;
+            r.actor.setNoAi(true);
+        });
+    }
+
+    public static boolean isReplaying(Mob actor) {
+        return REPLAYS.stream().anyMatch(r -> r.actor == actor);
+    }
+
+    public static BlockPos getReplayCursor(Mob actor) {
+        for (Replay r : REPLAYS) {
+            if (r.actor == actor) {
+                if (r.action != null) {
+                    return new BlockPos(Mth.floor(r.tx), Mth.floor(r.ty), Mth.floor(r.tz));
+                }
+                return new BlockPos(Mth.floor(r.baseX), Mth.floor(r.baseY), Mth.floor(r.baseZ));
+            }
+        }
+        return null;
     }
 
     private static float adjustPitch(ServerLevel level, double x, double y, double z, float yaw, float pitch,
@@ -263,13 +366,20 @@ public class BuildRecorder {
         Iterator<Replay> it = REPLAYS.iterator();
         while (it.hasNext()) {
             Replay r = it.next();
+            if (r.paused) {
+                continue;
+            }
             double advance = r.speed;
             while (advance > 0) {
                 if (r.action == null) {
                     if (r.index >= r.actions.size()) {
                         LOGGER.info("[BuildRec] replay finished actor={} actions={} speed={}",
                                 r.actor.getType().toShortString(), r.actions.size(), r.speed);
-                        r.actor.discard();
+                        if (r.preserveActor) {
+                            r.actor.setNoAi(false);
+                        } else {
+                            r.actor.discard();
+                        }
                         it.remove();
                         break;
                     }
@@ -576,13 +686,15 @@ public class BuildRecorder {
         final double recordEyeHeight;
         final double recordBbWidth;
         final double recordBbHeight;
+        final boolean preserveActor;
+        boolean paused = false;
         int index = 0;
         Action action = null;
         double progress = 0;
         double sx, sy, sz, tx, ty, tz;
         float syaw, spitch, tyaw, tpitch;
 
-        Replay(Mob actor, List<Action> actions, int speed, double recordEyeHeight, double recordBbWidth, double recordBbHeight, List<BlockState> palette) {
+        Replay(Mob actor, List<Action> actions, int speed, double recordEyeHeight, double recordBbWidth, double recordBbHeight, List<BlockState> palette, boolean preserveActor) {
             this.actor = actor;
             this.actions = actions;
             this.speed = speed;
@@ -590,6 +702,7 @@ public class BuildRecorder {
             this.recordBbWidth = recordBbWidth;
             this.recordBbHeight = recordBbHeight;
             this.palette = palette;
+            this.preserveActor = preserveActor;
             BlockPos p = actor.blockPosition();
             this.baseX = p.getX();
             this.baseY = p.getY();

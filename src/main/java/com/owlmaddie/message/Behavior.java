@@ -4,17 +4,15 @@
 package com.owlmaddie.message;
 
 /**
- * The {@code Behavior} class represents a single behavior with an optional integer argument.
- * This class is used to model behaviors extracted from a parsed message, where each
- * behavior might have an associated argument that further defines the behavior.
- *
- * For example: "<FOLLOW>", "<FRIENDSHIP 3>", "<UNFOLLOW>"
+ * The {@code Behavior} class represents a single behavior with an optional argument.
+ * Arguments may be numeric or textual depending on the behavior (i.e. FRIENDSHIP uses
+ * integers while BUILD uses a string such as "house").
  */
 public class Behavior {
-    private String name;
-    private Integer argument;
+    private final String name;
+    private final String argument;
 
-    public Behavior(String name, Integer argument) {
+    public Behavior(String name, String argument) {
         this.name = name;
         this.argument = argument;
     }
@@ -24,16 +22,27 @@ public class Behavior {
         return name;
     }
 
-    public Integer getArgument() {
+    public String getArgument() {
         return argument;
+    }
+
+    /**
+     * Helper to parse the argument as an {@link Integer}. Returns {@code null} if the
+     * argument is absent or cannot be parsed as an integer.
+     */
+    public Integer getArgumentAsInt() {
+        if (argument == null) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(argument.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     @Override
     public String toString() {
-        if (argument != null) {
-            return name + ": " + argument;
-        } else {
-            return name;
-        }
+        return argument != null ? name + ": " + argument : name;
     }
 }

@@ -22,10 +22,14 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ### Added
 - Document SPDX header and changelog requirements in AGENTS.md for contributors
+- Build goal and behavior enabling entities to construct structures for players
+- Behavior tests now cover BUILD and UNBUILD behaviors with live LLM responses
 
 ### Changed
 - Convert PNG screenshots to JPEG, compress, and remove less useful ones (smaller jar)
 - Compressed all textures from 32-bit color to 4-bit indexed color, reduced size massively.
+- Build goal now uses build replays, keeps FOLLOW and PROTECT goals active, and system prompts describe build skill and types.
+- Build goal completion message is generated through the LLM when a structure finishes
 
 
 ## [3.0.0] - 2025-08-27

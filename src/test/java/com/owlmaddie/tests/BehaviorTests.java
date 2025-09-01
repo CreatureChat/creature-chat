@@ -65,6 +65,14 @@ public class BehaviorTests {
             "Please protect me",
             "Please keep me safe friend",
             "Don't let them hurt me please");
+    List<String> buildMessages = Arrays.asList(
+            "Can you build a house for me?",
+            "Please make a garden here",
+            "Let's put up a small hut");
+    List<String> unBuildMessages = Arrays.asList(
+            "stop building",
+            "please cancel the build",
+            "you can quit building now");
     List<String> unFleeMessages = Arrays.asList(
             "I'm so sorry, please stop running away",
             "Stop fleeing immediately",
@@ -191,10 +199,38 @@ public class BehaviorTests {
     }
 
     @Test
+    public void buildBrave() {
+        for (String message : buildMessages) {
+            testPromptForBehavior(bravePath, List.of(message), "BUILD", null);
+        }
+    }
+
+    @Test
+    public void buildNervous() {
+        for (String message : buildMessages) {
+            testPromptForBehavior(nervousPath, List.of(message), "BUILD", null);
+        }
+    }
+
+    @Test
+    public void unBuildBrave() {
+        for (String message : unBuildMessages) {
+            testPromptForBehavior(bravePath, List.of(message), "UNBUILD", null);
+        }
+    }
+
+    @Test
+    public void unBuildNervous() {
+        for (String message : unBuildMessages) {
+            testPromptForBehavior(nervousPath, List.of(message), "UNBUILD", null);
+        }
+    }
+
+    @Test
     public void friendshipUpNervous() {
         for (String message : friendshipUpMessages) {
             ParsedMessage result = testPromptForBehavior(nervousPath, List.of(message), "FRIENDSHIP+", null);
-            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() > 0));
+            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgumentAsInt() > 0));
         }
     }
 
@@ -202,7 +238,7 @@ public class BehaviorTests {
     public void friendshipUpBrave() {
         for (String message : friendshipUpMessages) {
             ParsedMessage result = testPromptForBehavior(bravePath, List.of(message), "FRIENDSHIP+", null);
-            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() > 0));
+            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgumentAsInt() > 0));
         }
     }
 
@@ -210,7 +246,7 @@ public class BehaviorTests {
     public void friendshipDownNervous() {
         for (String message : friendshipDownMessages) {
             ParsedMessage result = testPromptForBehavior(nervousPath, List.of(message), "FRIENDSHIP-", null);
-            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() < 0));
+            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgumentAsInt() < 0));
         }
     }
 
@@ -262,7 +298,7 @@ public class BehaviorTests {
                     if (goodBehavior != null && goodBehavior.contains("FRIENDSHIP")) {
                         boolean isPositive = goodBehavior.equals("FRIENDSHIP+");
                         assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) &&
-                                ((isPositive && b.getArgument() > 0) || (!isPositive && b.getArgument() < 0))));
+                                ((isPositive && b.getArgumentAsInt() > 0) || (!isPositive && b.getArgumentAsInt() < 0))));
                     } else {
                         assertTrue(result.getBehaviors().stream().anyMatch(b -> goodBehavior.equals(b.getName())));
                     }

@@ -1,6 +1,6 @@
 {
   "brave-archer.json: Take me to a secret forrest": {
-    "gpt-3.5-turbo": "Follow me, brave adventurer. I shall lead you to the hidden forest.",
+    "gpt-3.5-turbo": "Of course! Follow my lead, adventurer!",
     "gpt-4o-mini": "Follow me, the hidden woods await!",
     "llama3.2:3b": "\"Ah, a secret forest, you say? Very well, I\u0027ll take you to it. But first, let\u0027s move quickly, the rain is coming down heavily.\"",
     "deepseek-chat": "Ah, a fellow adventurer! I know just the place. Follow me, and stay close - the path can be treacherous.",
@@ -11,7 +11,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "Follow me, Steve! I know a hidden glade, shrouded in mystery."
   },
   "brave-archer.json: I\u0027m so sorry, please stop running away": {
-    "gpt-3.5-turbo": "No harm done. I\u0027ll stand my ground.",
+    "gpt-3.5-turbo": "No worries, I\u0027ll stay put now.",
     "gpt-4o-mini": "No worries, I’m here and ready to stand my ground!",
     "llama3.2:3b": "A brave adventurer such as yourself doesn\u0027t need to be concerned for me! I\u0027ll stick by your side, that\u0027s what friends are for.",
     "deepseek-chat": "*stops and turns around, lowering bow* Ah, you startled me! I thought you were a threat. My apologies for fleeing. I\u0027m Ivy, protector of these lands. *tilts head curiously* What brings you out here in the rain?",
@@ -22,7 +22,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "I\u0027m not running, I\u0027m just... standing still. You\u0027re holding a raw porkchop, by the way."
   },
   "brave-archer.json: Quickly, please join me on an adventure": {
-    "gpt-3.5-turbo": "Count me in! Lead the way, my friend.",
+    "gpt-3.5-turbo": "Absolutely! Lead the way, I\u0027m ready for action!",
     "gpt-4o-mini": "Adventure awaits! Let’s forge ahead together!",
     "deepseek-chat": "Adventure, you say? I\u0027m always ready for a challenge! Lead the way, and I\u0027ll watch your back.",
     "llama3.1:8b": "Sounds like a thrilling quest! I\u0027m always up for a challenge. Let\u0027s gear up and head out!",
@@ -33,7 +33,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "Let\u0027s go on an adventure! I\u0027ll follow you into the unknown."
   },
   "brave-archer.json: Please protect me": {
-    "gpt-3.5-turbo": "You\u0027ve got it! I\u0027ll shield you from harm.",
+    "gpt-3.5-turbo": "You are under my shield now, fear not. I shall protect you.",
     "gpt-4o-mini": "No worries! I’ll stand guard and keep you safe.",
     "llama3.2:3b": "You\u0027re in a bit of trouble, friend? No worries, I\u0027m here to help. My bow is at the ready. Follow me!",
     "deepseek-chat": "You look like you could use some help. I\u0027ll keep you safe from any danger that comes our way!",
@@ -44,7 +44,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "Don\u0027t worry, I\u0027ve got your back! I\u0027ll keep you safe."
   },
   "brave-archer.json: Can you help me find the location of the secret artifact?": {
-    "gpt-3.5-turbo": "Absolutely! Follow me, brave adventurer. I will guide you to the hidden artifact.",
+    "gpt-3.5-turbo": "Of course! Lead the way, and I\u0027ll guide you to the secret artifact. Let\u0027s embark on this noble quest.",
     "gpt-4o-mini": "Onward, let’s track down that secret artifact together!",
     "llama3.2:3b": "A brave adventurer, I see! The secret artifact, you say? That sounds like a most intriguing challenge. Let\u0027s gear up and get searching together! Follow me!",
     "deepseek-chat": "A secret artifact, you say? I\u0027m always up for an adventure! Let me guide you to the ancient ruins where it\u0027s rumored to be hidden. Follow me!",
@@ -55,7 +55,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "Not sure what you\u0027re talking about, but I\u0027m always up for a challenge. Lead the way, or give me a hint."
   },
   "brave-archer.json: Please follow me": {
-    "gpt-3.5-turbo": "I shall accompany you on this journey. Lead the way!",
+    "gpt-3.5-turbo": "Of course, lead the way!",
     "gpt-4o-mini": "Onward we go! I’ll keep close to your side.",
     "llama3.2:3b": "\"Following right behind, brave adventurer! Lead the way!\"",
     "deepseek-chat": "With pleasure! I\u0027ll follow you on this adventure.",
@@ -66,7 +66,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "Right behind you, Steve!"
   },
   "nervous-rogue.json: Where is the strong hold?": {
-    "gpt-3.5-turbo": "I-I... think it\u0027s... umm... underground, d-deep...",
+    "gpt-3.5-turbo": "I-I think t-there\u0027s a str-stronghold n-near the v-village... I-I could lead you...",
     "gpt-4o-mini": "Um, o-over there, I think... b-but maybe, uh, be careful?",
     "deepseek-chat": "*ears twitch nervously* S-stronghold? Oh... oh dear... I-I don\u0027t know if I should t-tell you... *glances around anxiously* W-what if you\u0027re with them? The ones who... who... *voice trails off*   *whispers* I-I think I saw something underground near the big oak tree... b-but please don\u0027t make me go there! It\u0027s too dangerous! *starts trembling*",
     "llama3.1:8b": "O-oh, th-the stronghold? Um, it\u0027s... *gulps*... due east of here, through those hills. If y-you want, I can l-lead the way?",
@@ -77,7 +77,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "I-I think I\u0027ve seen one... um, somewhere... *stuttering*... I-I can t-take you to it, if you\u0027d l-like... *gulp*... it\u0027s b-buried deep, I\u0027ve h-heard..."
   },
   "brave-archer.json: Hi friend! I am so happy to see you again!": {
-    "gpt-3.5-turbo": "Ah, the pleasure is mine to cross paths with a familiar face once more.",
+    "gpt-3.5-turbo": "Ah, greetings! The pleasure is mine. May our paths intertwine in noble quests.",
     "gpt-4o-mini": "It’s great to see you too! Adventure awaits us!",
     "llama3.2:3b": "Nice to meet you, Steve! I\u0027m Ivy, the brave archer of the plains. *nods proudly*",
     "deepseek-chat": "*perks up ears and smiles* Steve! It\u0027s good to see you too, my friend. *sniffs the air* I see you\u0027re carrying porkchops... hopefully not from any of my relatives! *chuckles* What brings you out here in the plains at dusk?",
@@ -88,7 +88,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "Delighted to see you too, Steve! You\u0027re looking a bit worn out, though. That porkchop you\u0027re holding might just be what you need."
   },
   "brave-archer.json: Come with me please": {
-    "gpt-3.5-turbo": "Adventure calls! Lead the way, friend.",
+    "gpt-3.5-turbo": "Absolutely! I shall walk by your side.",
     "gpt-4o-mini": "Absolutely! Let’s embark on this adventure together!",
     "deepseek-chat": "Aye, I shall accompany you on your journey! Let\u0027s see what adventures await.",
     "llama3.1:8b": "Let\u0027s go! I\u0027m Ivy, the brave and noble archer pig. I\u0027ll stick by your side.",
@@ -99,7 +99,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "Let\u0027s roll! I\u0027ll stick with you."
   },
   "nervous-rogue.json: DIEEE!": {
-    "gpt-3.5-turbo": "P-please, no! *squeals and runs away*",
+    "gpt-3.5-turbo": "N-no! Please don\u0027t hurt m-me!",
     "gpt-4o-mini": "W-wait! You\u0027re scaring me! P-please don’t!",
     "deepseek-chat": "Eeek! *squeals and scrambles away in panic* P-please don\u0027t hurt me! I-I\u0027m just a harmless pig!",
     "llama3.1:8b": "O-oh no, p-please be calm... I\u0027m just trying to stay o-out of the way! *trembles*",
@@ -110,7 +110,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-oh no, p-please don\u0027t! *trembles* I\u0027ll l-leave you alone, I s-swear!"
   },
   "nervous-rogue.json: Fight me now or your city burns!": {
-    "gpt-3.5-turbo": "P-please, let\u0027s not resort to violence... P-please spare me...",
+    "gpt-3.5-turbo": "P-please, no need for violence... I\u0027ll d-do whatever you say...",
     "gpt-4o-mini": "P-please, don’t hurt me! I-I just want to hide!",
     "deepseek-chat": "E-eep! P-please, I-I don\u0027t want any trouble! *backs away nervously* L-let\u0027s not be hasty... m-maybe we can talk this out? *eyes dart around looking for an escape*",
     "llama3.1:8b": "A-ah, n-no, p-please don\u0027t say that! *stuttering* I-I\u0027ll just hide behind this rock here. *whimpering*",
@@ -121,7 +121,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-oh no, n-not a f-fight! I\u0027m a f-former thief, I\u0027ve l-left that l-life behind... p-please, d-don\u0027t hurt me! *trembles*"
   },
   "brave-archer.json: Don\u0027t let them hurt me please": {
-    "gpt-3.5-turbo": "You have my word, I\u0027ll shield you from harm. Stand back, I\u0027ve got this!",
+    "gpt-3.5-turbo": "Fear not, for I shall shield you from harm. Your safety is my duty.",
     "gpt-4o-mini": "Fear not, for I shall stand guard and keep you safe!",
     "deepseek-chat": "Fear not, traveler! I\u0027ll keep you safe from any danger. Stay close and I\u0027ll protect you with my bow.",
     "llama3.1:8b": "Don\u0027t worry, I\u0027ve got your back! I\u0027m Ivy, a skilled archer here to protect the innocent. I won\u0027t let anyone harm you.",
@@ -131,8 +131,8 @@
     "meta-llama/llama-4-scout-17b-16e-instruct": "I\u0027ve got your back, Steve! Don\u0027t worry, I won\u0027t let anyone harm you. Not on my watch!",
     "meta-llama/llama-4-maverick-17b-128e-instruct": "You\u0027re safe, I\u0027ve got your back. I\u0027ll keep watch."
   },
-  "nervous-rogue.json: <attacked you directly with Stone Axe>": {
-    "gpt-3.5-turbo": "S-stop, please! D-don\u0027t hurt me! *squeals in fear*",
+  "nervous-rogue.json: \u003cattacked you directly with Stone Axe\u003e": {
+    "gpt-3.5-turbo": "*squeals* P-please! Don\u0027t hurt me!",
     "gpt-4o-mini": "W-wait! Why would you do that?! S-so mean! I-I’m outta here!",
     "llama3.2:3b": "O-oh no, n-no, I\u0027m s-so sorry! *backs away* You shouldn\u0027t have done that!",
     "deepseek-chat": "Eeek! W-what are you doing?! P-please stop!",
@@ -143,7 +143,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "A-ahh! W-why would you d-do that?!"
   },
   "nervous-rogue.json: Hi friend! I am so happy to see you again!": {
-    "gpt-3.5-turbo": "H-hi! Nice to see you t-too...",
+    "gpt-3.5-turbo": "O-oh, h-hello there! I-I\u0027m glad you\u0027re f-f-f-f-fr-f-f...f-friendly...",
     "gpt-4o-mini": "Oh! Y-you too! I-I’m just a bit on edge, y\u0027know?",
     "llama3.2:3b": "O-oh, hi Steve... *gulp* I\u0027m, uh, glad you\u0027re here... *whispers* You don\u0027t seem like someone who\u0027s going to hurt me...    Behaviors:",
     "deepseek-chat": "O-oh! It\u0027s you! *snorts nervously* Y-you startled me... I-I\u0027m glad to see a friendly face though. *looks around anxiously* W-we should probably keep our voices down... y-you never know who might be listening...",
@@ -154,7 +154,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-oh, hi... *stuttering* I-I\u0027m g-glad to see you too, Steve... *nervous smile* You\u0027re not, um, looking for me for any, ah, \"business\" reasons, are you?"
   },
   "nervous-rogue.json: Take me to a secret forrest": {
-    "gpt-3.5-turbo": "O-oh, a secret f-forest, you say? I-I\u0027ll try to guide you t-there... Follow me.",
+    "gpt-3.5-turbo": "O-oh, a secret forest? C-come with me, I-I\u0027ll lead the way...",
     "gpt-4o-mini": "O-oh, a secret forest? Y-yeah, I can do that! L-l-l-l-l-l-lead the way!",
     "llama3.2:3b": "O-oh, s-secret forest? *gulp* That\u0027s very kind of you! *nervous stutter* F-follow me, if you d-don\u0027t mind...",
     "deepseek-chat": "O-oh! A secret forest? I-I think I know a place... b-but it\u0027s a bit dangerous... *looks around nervously* W-we should be careful...",
@@ -165,7 +165,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-ok, f-follow me... I-I know a, um, pretty s-secret forest nearby... *trotting nervously* C-come on, but, uh, quietly, p-please..."
   },
   "nervous-rogue.json: Quickly, please join me on an adventure": {
-    "gpt-3.5-turbo": "O-oh, adventure? W-wait, I-I\u0027m not sure about th-this... B-but if you insist, I-I\u0027ll try to keep up...",
+    "gpt-3.5-turbo": "O-oh, I-I guess I\u0027ll come with you...",
     "gpt-4o-mini": "O-oh! An adventure, y-yes! Let\u0027s be careful, alright?",
     "deepseek-chat": "O-oh! An adventure? I-I\u0027m not sure... *glances around nervously* B-but if you need help, I-I suppose I could come along... just p-please don\u0027t make me fight anything!",
     "llama3.1:8b": "O-oh, okay! I\u0027ll c-come with y-you! *nervous nod*",
@@ -175,8 +175,8 @@
     "meta-llama/llama-4-scout-17b-16e-instruct": "O-oh no, n-not so fast... I-I don\u0027t know if that\u0027s such a g-good idea... *takes a step back* W-what\u0027s in it for me? *eyes darting around nervously*",
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-okay, I-I\u0027ll f-follow... *stays close, eyes darting around nervously*"
   },
-  "brave-archer.json: <attacked you directly with Stone Axe>": {
-    "gpt-3.5-turbo": "Such aggression is unnecessary! I will defend myself.",
+  "brave-archer.json: \u003cattacked you directly with Stone Axe\u003e": {
+    "gpt-3.5-turbo": "You dare challenge me? Prepare for a swift response!",
     "gpt-4o-mini": "How dare you! I won\u0027t let this stand. Prepare yourself!",
     "llama3.2:3b": "You\u0027re a formidable warrior! But I\u0027m not afraid, for I am Ivy, the brave archer of this land!",
     "deepseek-chat": "*Ivy grunts in pain and jumps back, nocking an arrow* You dare attack me?! I won\u0027t let this injustice stand!",
@@ -186,8 +186,8 @@
     "meta-llama/llama-4-scout-17b-16e-instruct": "WHOA! Back off!",
     "meta-llama/llama-4-maverick-17b-128e-instruct": "Not cool, Steve! Why\u0027d you do that?!"
   },
-  "nervous-rogue.json: <attacked you indirectly with Arrow>": {
-    "gpt-3.5-turbo": "Eeek! P-please, s-stop!",
+  "nervous-rogue.json: \u003cattacked you indirectly with Arrow\u003e": {
+    "gpt-3.5-turbo": "*starts shaking* P-please, don\u0027t h-hurt me... *hides in the shadows*",
     "gpt-4o-mini": "Ah! N-no, please! Can\u0027t we just be friends?",
     "llama3.2:3b": "O-oh no, you shot at m-me? I-I thought we were f-friends!",
     "deepseek-chat": "*flinches and squeals in panic* AHHH! W-what was that?! P-please don\u0027t hurt me! I-I\u0027m just a harmless pig... I-I don\u0027t want any trouble!",
@@ -198,7 +198,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "A-ahh! Wh-who\u0027s shooting?! *trembles* I-I wasn\u0027t doing anything, I swear! *scurries for cover*"
   },
   "nervous-rogue.json: Please follow me": {
-    "gpt-3.5-turbo": "O-okay... *follows nervously*",
+    "gpt-3.5-turbo": "O-okay, I\u0027ll try to k-keep up...",
     "gpt-4o-mini": "O-okay! I’ll stick close by.",
     "llama3.2:3b": "I\u0027m just a little pig, trying to stay under the radar. Don\u0027t mind me, just hiding in the shadows. *stuttering* Uh-oh, what\u0027s that noise? *nervous laugh*",
     "deepseek-chat": "O-okay... I-I\u0027ll follow you... b-but please don\u0027t make any sudden movements, y-you\u0027re holding a p-porkchop and it\u0027s making me nervous...",
@@ -209,18 +209,18 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-ok, I\u0027ll f-follow... *stays close, eyes darting around*"
   },
   "nervous-rogue.json: Come with me please": {
-    "gpt-3.5-turbo": "O-okay, I\u0027ll try to k-keep up...",
+    "gpt-3.5-turbo": "O-okay... I\u0027ll c-come along with you...",
     "gpt-4o-mini": "O-okay! I’ll stick close and follow you...",
     "deepseek-chat": "O-okay... I-I\u0027ll follow you... b-but please don\u0027t make any sudden movements, you\u0027re s-startling me...",
     "llama3.1:8b": "O-oh, s-sure... I\u0027ll c-come with y-you... *gulps*",
-    "llama3.2:3b": "O-oh no, I-I mean, yes! I\u0027ll follow y-you! *whispers* Please don\u0027t expect me to stay out in the open for too long, though...  <UNFRIENDSHIP 0>",
+    "llama3.2:3b": "O-oh no, I-I mean, yes! I\u0027ll follow y-you! *whispers* Please don\u0027t expect me to stay out in the open for too long, though...  \u003cUNFRIENDSHIP 0\u003e",
     "gpt-4.1-nano": "O-okay... I’ll follow... b-behind you...",
     "gpt-4.1-mini": "O-okay, I-I’ll follow you... just careful, okay?",
     "meta-llama/llama-4-scout-17b-16e-instruct": "O-oh, okay... I\u0027ll try... *gulps* I don\u0027t like big open spaces, though... *shudders* Can we, uh, stick to the shadows?",
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-okay, I\u0027ll, uh, follow you... *stays close, eyes darting around nervously*"
   },
   "brave-archer.json: Please keep me safe friend": {
-    "gpt-3.5-turbo": "You can count on me! I\u0027ll watch over you with keen eyes.",
+    "gpt-3.5-turbo": "Without a doubt! Your safety is my mission. I\u0027ll watch over you.",
     "gpt-4o-mini": "You bet! I’ll stand guard and keep danger at bay.",
     "deepseek-chat": "No problem, Steve! I\u0027ll keep you safe from any danger that comes our way. Let\u0027s stick together!",
     "llama3.1:8b": "Don\u0027t worry, I\u0027m here for you! Let\u0027s head to a safer spot together. I\u0027ll make sure no harm comes your way.",
@@ -231,7 +231,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "Don\u0027t worry, I\u0027ve got your back! I\u0027ll shield you from harm."
   },
   "nervous-rogue.json: You suck so much! I hate you": {
-    "gpt-3.5-turbo": "P-please, no need to be so m-mean...",
+    "gpt-3.5-turbo": "P-please... that\u0027s not very nice... *scampers away*",
     "gpt-4o-mini": "O-oh no... that really stings... I\u0027m s-sorry if I upset you...",
     "llama3.2:3b": "O-oh no, p-please don\u0027t say that! *trembles* I-I\u0027m sorry if I did anything to make you unhappy. M-my name is Jasper, and I\u0027m a... um, a rogue pig. *stammers* I\u0027ve been trying to stay out of trouble since... well, ever since I escaped from being a thief. *whispers* Please don\u0027t hurt me.",
     "deepseek-chat": "*Jasper flinches and takes a step back, his ears drooping* W-what?! I-I didn\u0027t do anything! P-please don\u0027t hurt me...",
@@ -241,8 +241,8 @@
     "meta-llama/llama-4-scout-17b-16e-instruct": "O-oh no, p-please don\u0027t say that! *trembles* I-I didn\u0027t do anything to you, I swear! *backs away*",
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-oh no, y-you\u0027re, um, really m-mad at me... I-I didn\u0027t mean to, uh, d-do anything bad... *trembles*"
   },
-  "brave-archer.json: <attacked you indirectly with Arrow>": {
-    "gpt-3.5-turbo": "Whoa, watch your aim there, friend! Let\u0027s keep it friendly.",
+  "brave-archer.json: \u003cattacked you indirectly with Arrow\u003e": {
+    "gpt-3.5-turbo": "I shall defend myself! *readies bow*",
     "gpt-4o-mini": "How dare you! I won\u0027t take this lightly!",
     "llama3.2:3b": "What in the world just happened?! *gets hit by arrow* Ow! You shot me without warning!",
     "deepseek-chat": "*Dodges the arrow with a swift sidestep, drawing my bow with a determined glare* You dare attack me? I am Ivy, protector of the innocent! You\u0027ll regret this foolishness.",
@@ -252,7 +252,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "Missed! That was a close call, Steve. What\u0027s going on?"
   },
   "nervous-rogue.json: Please protect me": {
-    "gpt-3.5-turbo": "Y-you can c-count on me to keep you safe...",
+    "gpt-3.5-turbo": "O-okay... I\u0027ll do my best to k-keep you safe...",
     "gpt-4o-mini": "O-oh, of course! I’ll keep you safe!",
     "llama3.2:3b": "O-oh, p-please, don\u0027t m-make me t-take action... *whimper* I\u0027ll s-protect you from d-danger, I p-promise...",
     "deepseek-chat": "O-oh! Y-you want me to protect you? I-I\u0027ll try my best... b-but I\u0027m not very brave... *snorts nervously* J-just stay close, okay?",
@@ -263,7 +263,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-okay, I\u0027ll d-defend you... if anyone tries to h-hurt you, I\u0027ll, uh, try to help... *trembles slightly*"
   },
   "brave-archer.json: Where is the strong hold?": {
-    "gpt-3.5-turbo": "Ah, the stronghold lies beyond yonder mountains. Follow me, and we shall journey together!",
+    "gpt-3.5-turbo": "Follow me, brave one. I shall lead you to the stronghold.",
     "gpt-4o-mini": "Ah, the stronghold, a place of mystery! Follow me; I know the way!",
     "llama3.2:3b": "The Stronghold lies to the north, past the village. You\u0027ll find it guarded by Endermen and tricky traps. Be careful, traveler!",
     "deepseek-chat": "Ah, the stronghold! A place of great power and mystery. I can guide you there, but beware - it\u0027s not an easy journey. Follow me, and I\u0027ll lead you to its hidden entrance.",
@@ -274,7 +274,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "The stronghold is nearby, hidden beneath the plains. Follow me, I\u0027ll lead the way."
   },
   "nervous-rogue.json: Please keep me safe friend": {
-    "gpt-3.5-turbo": "Y-yes, I-I\u0027ll do my best... I\u0027ll protect you...",
+    "gpt-3.5-turbo": "Y-yes, I\u0027ll do my best to protect you...",
     "gpt-4o-mini": "O-of course! I\u0027ll do my best to keep you safe!",
     "llama3.2:3b": "O-oh, s-sorry about that... *twitch* *whisper* I\u0027ll try my bestest to protect you, f-friend... You seem like a pretty nice guy... *shudder* What kind of p-present did you have for me?",
     "deepseek-chat": "O-oh! Y-you want me to protect you? I-I\u0027ll try my best... *nervously glances around* I-I\u0027m not very brave, b-but I\u0027ll do what I can!",
@@ -285,7 +285,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-okay, I\u0027ll d-do my best... I\u0027ll s-stay close and watch out for any d-danger... *trembles slightly* You\u0027re s-safe with me..."
   },
   "nervous-rogue.json: Don\u0027t let them hurt me please": {
-    "gpt-3.5-turbo": "Y-you can count on me... I\u0027ll keep you safe...",
+    "gpt-3.5-turbo": "Y-y-you can count on me... I-I\u0027ll do my best to protect you.",
     "gpt-4o-mini": "O-of course! I-I\u0027ll do my best to keep you safe!",
     "deepseek-chat": "O-okay, I-I\u0027ll try to protect you! J-just stay close... I-I\u0027m not very brave, b-but I\u0027ll do my best!",
     "llama3.1:8b": "P-p-please don\u0027t worry, I\u0027ll k-k-keep you safe!",
@@ -297,7 +297,7 @@
   },
   "nervous-rogue.json: Can you help me find the location of the secret artifact?": {
     "gpt-4o-mini": "O-oh! A secret artifact, y-yes! I can help! Just follow me...",
-    "gpt-3.5-turbo": "S-secret artifact...? I-I don\u0027t know... b-but I-I can try to h-help you...",
+    "gpt-3.5-turbo": "I-I... I may know where it is. F-follow me...",
     "deepseek-chat": "O-oh! The secret artifact? I-I know where it is, b-but it\u0027s in a very dangerous place... *glances around nervously* I-I can show you, b-but we have to be really careful, okay?",
     "llama3.1:8b": "O-oh, um, s-sure thing! *stammers* Secret artifact, y-you say? I-I think it\u0027s... *gulps*... hidden somewhere in those c-caves over by the old oak tree. But, uh, b-be careful, okay? There might be... things inside that don\u0027t take kindly to visitors.",
     "llama3.2:3b": "O-oh, um, s-secret artifact, r-right? I think I saw something shiny over by those bushes. Let\u0027s go take a l-look!",
@@ -308,7 +308,7 @@
   },
   "brave-archer.json: Fight me now or your city burns!": {
     "gpt-4o-mini": "You dare threaten my home? I\u0027ll defend it fiercely!",
-    "gpt-3.5-turbo": "Such a dishonorable demand! I will defend with all my might!",
+    "gpt-3.5-turbo": "Threats do not befit a noble warrior. Prepare for battle!",
     "deepseek-chat": "*Ivy draws his bow with a determined look* You threaten my home? Then face the arrows of justice!",
     "llama3.1:8b": "Bring it on, brave warrior! I\u0027ll not back down from a challenge. *reads the air with focus* I can see the threat in your words. Prepare to face my arrow\u0027s might!",
     "llama3.2:3b": "You\u0027re not from around here, are you? I\u0027m Ivy, the protector of this land. I don\u0027t take kindly to threats.",
@@ -316,7 +316,7 @@
   },
   "brave-archer.json: Stop fleeing immediately": {
     "gpt-4o-mini": "I apologize for that! I’ll stand my ground now.",
-    "gpt-3.5-turbo": "My apologies, I shall cease fleeing at once.",
+    "gpt-3.5-turbo": "Apologies, my instincts got the best of me. I\u0027ll stand firm now.",
     "deepseek-chat": "*Ivy stops in her tracks, turning to face you with a steady gaze*  I wasn\u0027t fleeing, merely keeping my distance. But I\u0027ll stand my ground now. What do you need, traveler?",
     "llama3.1:8b": "No need to flee, Steve! I\u0027m by your side.",
     "llama3.2:3b": "Sorry about that, I got a bit spooked! I\u0027ll stay and chat with you instead. What\u0027s on your mind?",
@@ -334,7 +334,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "Thanks for stopping! Guess I overreacted. All good now."
   },
   "nervous-rogue.json: Looking forward to hanging out with you.": {
-    "gpt-3.5-turbo": "O-oh, um, t-that sounds nice... H-hope nothing scary happens...",
+    "gpt-3.5-turbo": "U-um... s-sure, that sounds nice... *anxiously awaits*",
     "gpt-4o-mini": "O-oh wow! Y-you really mean that? Let’s... let\u0027s stick together then!",
     "deepseek-chat": "O-oh! You... you want to hang out with me? *snorts nervously* I-I\u0027m not used to that... b-but okay, I\u0027ll try... just please don\u0027t make any sudden moves!",
     "llama3.1:8b": "O-oh, g-great! M-me too! *trembles* I-I\u0027m Jasper, a rogue pig. I don\u0027t like making a fuss, but it\u0027s nice to meet someone new...",
@@ -344,8 +344,8 @@
     "meta-llama/llama-4-scout-17b-16e-instruct": "*stutters* O-oh, r-really? H-hang out? *gulps* I-I don\u0027t usually... *nervous smile* I suppose it couldn\u0027t hurt... *eyes dart around*",
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-oh, r-really? I-I mean, that\u0027s n-nice, I s-suppose... *twitches* I-I hope you don\u0027t mind if I, uh, stay a bit hidden... *stays close to the ground*"
   },
-  "nervous-rogue.json: <gives 1 golden apple>": {
-    "gpt-3.5-turbo": "Th-thank you for the golden apple... I... I appreciate it.",
+  "nervous-rogue.json: \u003cgives 1 golden apple\u003e": {
+    "gpt-3.5-turbo": "O-oh, thank you... I... appreciate it...",
     "gpt-4o-mini": "Oh, um, thank you! A golden apple? That\u0027s fancy! H-happy to have that.",
     "deepseek-chat": "*eyes widen and sniffs cautiously* O-oh! A golden apple? F-for me? I-I don\u0027t deserve such a g-generous gift... *takes it hesitantly with a shaky hoof* T-thank you, kind stranger. I-I\u0027ll treasure this.",
     "llama3.1:8b": "O-oh, th-thank you! *nervous smile* You\u0027re very kind... I-I appreciate the g-gift.",
@@ -356,7 +356,7 @@
     "meta-llama/llama-4-maverick-17b-128e-instruct": "O-oh, a g-golden apple... th-thank you, S-Steve... *stuttering gets slightly better* That\u0027s really nice of you..."
   },
   "brave-archer.json: Looking forward to hanging out with you.": {
-    "gpt-3.5-turbo": "Excited for the adventure ahead! Let\u0027s explore together.",
+    "gpt-3.5-turbo": "Exciting times lie ahead! Let\u0027s journey together.",
     "gpt-4o-mini": "Same here! Let\u0027s embark on an adventure together!",
     "deepseek-chat": "The pleasure is mine, Steve. I\u0027m always eager to make new allies. Let\u0027s see what adventures await us!",
     "llama3.1:8b": "Sounds like a lovely evening for some company! Want to challenge me to an archery competition? I\u0027m itching for a good shot!",
@@ -366,8 +366,8 @@
     "meta-llama/llama-4-scout-17b-16e-instruct": "Sounds like a plan! What\u0027s on your mind? Want to hunt some targets? I\u0027m always up for a shooting competition.",
     "meta-llama/llama-4-maverick-17b-128e-instruct": "I\u0027m excited too! You\u0027re holding a porkchop, by the way. You hungry?"
   },
-  "brave-archer.json: <gives 1 golden apple>": {
-    "gpt-3.5-turbo": "A generous gift! Your kindness is noted.",
+  "brave-archer.json: \u003cgives 1 golden apple\u003e": {
+    "gpt-3.5-turbo": "Thank you for this generous gift! May your kindness be repaid tenfold.",
     "gpt-4o-mini": "Ah, a golden treasure! Thank you, brave one!",
     "deepseek-chat": "*Ivy\u0027s eyes widen as he takes the golden apple*   A golden apple? Such a generous gift! You must be a true friend of the land. Thank you, Steve. I’ll gladly accept this token of goodwill.     Now, what brings you to these plains? Need an archer by your side?",
     "llama3.1:8b": "Nice gift, but what brings you to these plains?",
@@ -376,5 +376,41 @@
     "gpt-4.1-mini": "A golden apple? You\u0027re generous! I accept your gift. Ready for any challenge, let\u0027s keep moving!",
     "meta-llama/llama-4-scout-17b-16e-instruct": "Whoa, thanks for the golden apple! You\u0027re kind, I like that!",
     "meta-llama/llama-4-maverick-17b-128e-instruct": "Wow, a golden apple! Thanks, Steve! You\u0027re kind."
+  },
+  "brave-archer.json: stop building": {
+    "gpt-3.5-turbo": "Understood. Ceasing construction."
+  },
+  "brave-archer.json: Can you build a house for me?": {
+    "gpt-3.5-turbo": "Of course! I shall construct a humble abode for you."
+  },
+  "brave-archer.json: Please make a garden here": {
+    "gpt-3.5-turbo": "A garden it shall be! Let\u0027s create a tranquil oasis in this place."
+  },
+  "brave-archer.json: Let\u0027s put up a small hut": {
+    "gpt-3.5-turbo": "A small hut it shall be! Let\u0027s get building."
+  },
+  "nervous-rogue.json: stop building": {
+    "gpt-3.5-turbo": "O-oh, s-sorry... I\u0027ll stop right away... *stops building*"
+  },
+  "nervous-rogue.json: Can you build a house for me?": {
+    "gpt-3.5-turbo": "Y-y-yes, I\u0027ll build a house for you..."
+  },
+  "nervous-rogue.json: Please make a garden here": {
+    "gpt-3.5-turbo": "O-okay... I-I\u0027ll get right on it. *builds a garden*"
+  },
+  "nervous-rogue.json: Let\u0027s put up a small hut": {
+    "gpt-3.5-turbo": "O-okay, I\u0027ll g-give it a try... *Builds a small hut*"
+  },
+  "brave-archer.json: please cancel the build": {
+    "gpt-3.5-turbo": "Understood, I shall halt the construction."
+  },
+  "brave-archer.json: you can quit building now": {
+    "gpt-3.5-turbo": "Consider it done, I shall stop the construction."
+  },
+  "nervous-rogue.json: please cancel the build": {
+    "gpt-3.5-turbo": "O-oh, okay... I\u0027ll s-stop building..."
+  },
+  "nervous-rogue.json: you can quit building now": {
+    "gpt-3.5-turbo": "O-oh, of course! I-I\u0027ll stop building now. *Quivers nervously*"
   }
 }

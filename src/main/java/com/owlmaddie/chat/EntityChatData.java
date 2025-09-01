@@ -89,6 +89,7 @@ public class EntityChatData {
     public Long born;
     public Long death;
     public transient AutoMessageBucket autoBucket;
+    public int buildLevel;
 
     @SerializedName("playerId")
     @Expose(serialize = false)
@@ -113,10 +114,20 @@ public class EntityChatData {
         this.previousMessages = new ArrayList<>();
         this.born = System.currentTimeMillis();;
         this.autoBucket = null;
+        this.buildLevel = getRandomBuildLevel();
 
         // Old, unused migrated properties
         this.legacyPlayerId = null;
         this.legacyFriendship = null;
+    }
+
+    private static int getRandomBuildLevel() {
+        int n = new Random().nextInt(600);
+        if (n < 2) return 5;      // 1/300
+        if (n < 5) return 4;      // 1/200
+        if (n < 11) return 3;     // 1/100
+        if (n < 41) return 2;     // 5/100
+        return 1;
     }
 
     // Post-deserialization initialization
@@ -126,6 +137,9 @@ public class EntityChatData {
         }
         if (this.legacyPlayerId != null && !this.legacyPlayerId.isEmpty()) {
             this.migrateData();
+        }
+        if (this.buildLevel <= 0) {
+            this.buildLevel = 1;
         }
     }
 
@@ -295,6 +309,7 @@ public class EntityChatData {
         } else {
             contextData.put("entity_friendship", String.valueOf(0));
         }
+        contextData.put("entity_build_level", String.valueOf(this.buildLevel));
 
         return contextData;
     }
@@ -319,6 +334,7 @@ public class EntityChatData {
 
         // Add PLAYER context information
         Map<String, String> contextData = getPlayerContext(player, userLanguage, config);
+        contextData.remove("entity_build_level");
 
         // fetch HTTP response from ChatGPT
         ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, previousMessages, false).thenAccept(output_message -> {
@@ -443,6 +459,7 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, BuildPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
                                 if (playerData.attacking) {
                                     AdvancementHelper.calmTheStorm(player);
@@ -467,6 +484,7 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, BuildPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
                                 ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FLEE_PARTICLE, 0.5, 1);
                                 playerData.fleeing = true;
@@ -489,6 +507,7 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, BuildPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
                                 ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FLEE_PARTICLE, 0.5, 1);
                                 playerData.attacking = true;
@@ -502,6 +521,7 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, BuildPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, protectGoal, GoalPriority.PROTECT_PLAYER);
                                 if (playerData.attacking) {
                                     AdvancementHelper.calmTheStorm(player);
@@ -529,6 +549,7 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, BuildPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, leadGoal, GoalPriority.LEAD_PLAYER);
                                 if (playerData.attacking) {
                                     AdvancementHelper.calmTheStorm(player);
@@ -544,8 +565,19 @@ public class EntityChatData {
                             } else if (behavior.getName().equals("UNLEAD")) {
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
 
+                            } else if (behavior.getName().equals("BUILD")) {
+                                BuildPlayerGoal buildGoal = new BuildPlayerGoal(player, entity, entitySpeedMedium, behavior.getArgument());
+                                EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                                EntityBehaviorManager.addGoal(entity, buildGoal, GoalPriority.BUILD_PLAYER);
+
+                            } else if (behavior.getName().equals("UNBUILD")) {
+                                EntityBehaviorManager.removeGoal(entity, BuildPlayerGoal.class);
+
                             } else if (behavior.getName().equals("FRIENDSHIP")) {
-                                int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
+                                int argVal = behavior.getArgumentAsInt() != null ? behavior.getArgumentAsInt() : 0;
+                                int new_friendship = Math.max(-3, Math.min(3, argVal));
                                 int old_friendship = playerData.friendship;
 
                                 // Does friendship improve?
