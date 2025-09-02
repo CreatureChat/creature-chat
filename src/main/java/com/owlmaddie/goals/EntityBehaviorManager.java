@@ -11,6 +11,7 @@ import java.util.function.Predicate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Objects;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -69,6 +70,7 @@ public class EntityBehaviorManager {
     public static void moveConflictingGoals(GoalSelector goalSelector, GoalPriority newGoalPriority) {
         // Collect all prioritized goals currently in the selector.
         List<WrappedGoal> sortedGoals = goalSelector.getAvailableGoals().stream()
+                .filter(Objects::nonNull)
                 .sorted(Comparator.comparingInt(WrappedGoal::getPriority))
                 .collect(Collectors.toList());
 
@@ -81,10 +83,13 @@ public class EntityBehaviorManager {
             int shiftPriority = newGoalPriority.getPriority();
             for (WrappedGoal pg : sortedGoals) {
                 if (pg.getPriority() >= shiftPriority) {
-                    // Remove the goal and increment its priority.
-                    goalSelector.removeGoal(pg.getGoal());
-                    goalSelector.addGoal(shiftPriority + 1, pg.getGoal());
-                    shiftPriority++;  // Update the shift priority for the next possible conflict.
+                    Goal g = pg.getGoal();
+                    if (g != null) {
+                        // Remove the goal and increment its priority.
+                        goalSelector.removeGoal(g);
+                        goalSelector.addGoal(shiftPriority + 1, g);
+                        shiftPriority++;  // Update the shift priority for the next possible conflict.
+                    }
                 }
             }
 

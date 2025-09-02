@@ -459,7 +459,6 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
-                                EntityBehaviorManager.removeGoal(entity, BuildPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, followGoal, GoalPriority.FOLLOW_PLAYER);
                                 if (playerData.attacking) {
                                     AdvancementHelper.calmTheStorm(player);
@@ -567,10 +566,17 @@ public class EntityChatData {
 
                             } else if (behavior.getName().equals("BUILD")) {
                                 BuildPlayerGoal buildGoal = new BuildPlayerGoal(player, entity, entitySpeedMedium, behavior.getArgument());
+                                EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, buildGoal, GoalPriority.BUILD_PLAYER);
+                                if (playerData.friendship >= 0) {
+                                    ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FOLLOW_FRIEND_PARTICLE, 0.5, 1);
+                                } else {
+                                    ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FOLLOW_ENEMY_PARTICLE, 0.5, 1);
+                                }
+                                entity.level().playSound(null, entity.blockPosition(), SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.PLAYERS, 1f, 1f);
 
                             } else if (behavior.getName().equals("UNBUILD")) {
                                 EntityBehaviorManager.removeGoal(entity, BuildPlayerGoal.class);

@@ -453,6 +453,7 @@ public class ServerPackets {
                     buffer.writeInt(chatData.currentLineNumber);
                     buffer.writeUtf(chatData.status.toString());
                     buffer.writeUtf(chatData.sender.toString());
+                    buffer.writeInt(chatData.buildLevel);
                     writePlayerDataMap(buffer, chatData.players);
 
                     // Send message to player

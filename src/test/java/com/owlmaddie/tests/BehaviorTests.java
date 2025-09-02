@@ -126,7 +126,7 @@ public class BehaviorTests {
             config.setModel(API_MODEL);
         }
         // Verify API key is set correctly
-        assertNotNull(API_KEY, NO_API_KEY);
+        Assumptions.assumeTrue(API_KEY != null && !API_KEY.isEmpty(), NO_API_KEY);
 
         // Load system chat prompt
         systemChatContents = readFileContents(systemChatPath);
@@ -250,6 +250,12 @@ public class BehaviorTests {
         }
     }
 
+    @Test
+    public void missingItemsDoesNotUnbuild() {
+        String message = "The build is paused because I'm missing materials. Next item needed: dirt. Missing items to finish: 3 dirt, 2 stone. In your reply, ask the player for these items and confirm you'll continue building once they arrive.";
+        testPromptForBehavior(bravePath, List.of(message), null, "UNBUILD");
+    }
+
     public ParsedMessage testPromptForBehavior(Path chatDataPath, List<String> messages, String goodBehavior, String badBehavior) {
         LOGGER.info("Testing '" + chatDataPath.getFileName() + "' with '" + messages.toString() +
                 "' expecting behavior: " + goodBehavior + " and avoid: " + badBehavior);
@@ -295,12 +301,14 @@ public class BehaviorTests {
                     outputData.get(Key).put(config.getModel(), result.getCleanedMessage());
 
                     // Check for the presence of good behavior
-                    if (goodBehavior != null && goodBehavior.contains("FRIENDSHIP")) {
-                        boolean isPositive = goodBehavior.equals("FRIENDSHIP+");
-                        assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) &&
-                                ((isPositive && b.getArgumentAsInt() > 0) || (!isPositive && b.getArgumentAsInt() < 0))));
-                    } else {
-                        assertTrue(result.getBehaviors().stream().anyMatch(b -> goodBehavior.equals(b.getName())));
+                    if (goodBehavior != null) {
+                        if (goodBehavior.contains("FRIENDSHIP")) {
+                            boolean isPositive = goodBehavior.equals("FRIENDSHIP+");
+                            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) &&
+                                    ((isPositive && b.getArgumentAsInt() > 0) || (!isPositive && b.getArgumentAsInt() < 0))));
+                        } else {
+                            assertTrue(result.getBehaviors().stream().anyMatch(b -> goodBehavior.equals(b.getName())));
+                        }
                     }
 
                     // Check for the absence of bad behavior if badBehavior is not empty

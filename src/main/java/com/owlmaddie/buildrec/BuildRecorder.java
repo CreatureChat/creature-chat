@@ -8,7 +8,9 @@ import com.owlmaddie.buildrec.BuildRecordIO.Action;
 import com.owlmaddie.buildrec.BuildRecordIO.Meta;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.loader.api.FabricLoader;
@@ -27,6 +29,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.Container;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -34,6 +38,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.Holder;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
@@ -49,6 +55,10 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPOutputStream;
 
+import com.owlmaddie.inventory.ChatInventory;
+import com.owlmaddie.goals.BuildPlayerGoal;
+import com.owlmaddie.goals.EntityBehaviorManager;
+
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
@@ -61,6 +71,7 @@ public class BuildRecorder {
     private static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
     private static final int MAX_IDLE_TICKS = 20; // 1 second
     private static List<BuildIndex> BUILD_INDEX;
+    private static final Map<Mob, Map<String, Integer>> MISSING_RECIPES = new ConcurrentHashMap<>();
 
     static {
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
@@ -92,6 +103,8 @@ public class BuildRecorder {
             }
         });
         ServerTickEvents.START_SERVER_TICK.register(BuildRecorder::tick);
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> cancelAllReplays());
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> cancelAllReplays());
     }
 
     public static void init() {
@@ -252,7 +265,7 @@ public class BuildRecorder {
             actor.setNoAi(true);
             actor.setInvulnerable(true);
             actor.setPersistenceRequired();
-            REPLAYS.add(new Replay(actor, actions, speed, recEye, recWidth, recHeight, palette, preserve));
+            REPLAYS.add(new Replay(actor, actions, speed, recEye, recWidth, recHeight, palette, preserve, player.isCreative()));
             LOGGER.info("[BuildRec] replay loaded actions={} eyeHeight={} bbW={} bbH={}", actions.size(), recEye, recWidth, recHeight);
             return true;
         } catch (IOException | JsonParseException e) {
@@ -274,11 +287,101 @@ public class BuildRecorder {
         REPLAYS.stream().filter(r -> r.actor == actor).forEach(r -> {
             r.paused = false;
             r.actor.setNoAi(true);
+            MISSING_RECIPES.remove(actor);
         });
+    }
+
+    public static void cancelAllReplays() {
+        Iterator<Replay> it = REPLAYS.iterator();
+        while (it.hasNext()) {
+            Replay r = it.next();
+            r.actor.setNoAi(false);
+            r.actor.setInvulnerable(false);
+            MISSING_RECIPES.remove(r.actor);
+            EntityBehaviorManager.removeGoal(r.actor, BuildPlayerGoal.class);
+            if (!r.preserveActor) {
+                r.actor.discard();
+            }
+            it.remove();
+        }
     }
 
     public static boolean isReplaying(Mob actor) {
         return REPLAYS.stream().anyMatch(r -> r.actor == actor);
+    }
+
+    public static Map<String, Integer> getMissingRecipe(Mob actor) {
+        return MISSING_RECIPES.get(actor);
+    }
+
+    public static String getNextMissingItem(Mob actor) {
+        for (Replay r : REPLAYS) {
+            if (r.actor == actor && r.requiredItem != null) {
+                return BuiltInRegistries.ITEM.getKey(r.requiredItem).getPath();
+            }
+        }
+        return null;
+    }
+
+    public static String recipeToString(Map<String, Integer> recipe) {
+        return recipeToString(recipe, 0);
+    }
+
+    public static String recipeToString(Map<String, Integer> recipe, int limit) {
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        for (Map.Entry<String, Integer> e : recipe.entrySet()) {
+            if (limit > 0 && i >= limit) break;
+            if (i++ > 0) sb.append(", ");
+            sb.append(e.getValue()).append(" ").append(e.getKey().replace('_', ' '));
+        }
+        return sb.toString();
+    }
+
+    public static String recipeToDisplayString(Map<String, Integer> recipe) {
+        return recipeToDisplayString(recipe, 0);
+    }
+
+    public static String recipeToDisplayString(Map<String, Integer> recipe, int limit) {
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        for (Map.Entry<String, Integer> e : recipe.entrySet()) {
+            if (limit > 0 && i >= limit) break;
+            ResourceLocation id = ResourceLocation.parse(e.getKey());
+            Holder.Reference<Item> ref = BuiltInRegistries.ITEM.get(id).orElse(null);
+            Item item = ref != null ? ref.value() : null;
+            String name = item != null ? new ItemStack(item).getHoverName().getString() : e.getKey().replace('_', ' ');
+            if (i++ > 0) sb.append(", ");
+            sb.append(e.getValue()).append(" x ").append(name);
+        }
+        return sb.toString();
+    }
+
+    private static Map<String, Integer> computeRemainingRecipe(Replay r) {
+        Map<String, Integer> recipe = new LinkedHashMap<>();
+        for (int i = r.index - 1; i < r.actions.size(); i++) {
+            Action a = r.actions.get(i);
+            if ("place".equals(a.action)) {
+                BlockState st = r.palette.get(a.blockId);
+                String name = BuiltInRegistries.BLOCK.getKey(st.getBlock()).getPath();
+                recipe.merge(name, 1, Integer::sum);
+            }
+        }
+        return recipe;
+    }
+
+    private static boolean consume(Container inv, Item item) {
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (!stack.isEmpty() && stack.getItem() == item) {
+                stack.shrink(1);
+                if (stack.isEmpty()) {
+                    inv.setItem(i, ItemStack.EMPTY);
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     public static BlockPos getReplayCursor(Mob actor) {
@@ -367,7 +470,16 @@ public class BuildRecorder {
         while (it.hasNext()) {
             Replay r = it.next();
             if (r.paused) {
-                continue;
+                if (MISSING_RECIPES.containsKey(r.actor) && r.requiredItem != null && !r.creative && r.actor instanceof ChatInventory inv) {
+                    Container c = inv.creaturechat$getInventory();
+                    if (consume(c, r.requiredItem)) {
+                        MISSING_RECIPES.remove(r.actor);
+                        r.requiredItem = null;
+                    }
+                }
+                if (r.paused) {
+                    continue;
+                }
             }
             double advance = r.speed;
             while (advance > 0) {
@@ -410,6 +522,19 @@ public class BuildRecorder {
                         r.actor.level().getChunkAt(bpos);
                         if ("place".equals(r.action.action)) {
                             BlockState state = r.palette.get(r.action.blockId);
+                            if (!r.creative) {
+                                Item item = state.getBlock().asItem();
+                                Container c = (r.actor instanceof ChatInventory inv) ? inv.creaturechat$getInventory() : null;
+                                if (c == null || !consume(c, item)) {
+                                    MISSING_RECIPES.put(r.actor, computeRemainingRecipe(r));
+                                    r.requiredItem = state.getBlock().asItem();
+                                    String missingName = BuiltInRegistries.ITEM.getKey(r.requiredItem).getPath();
+                                    LOGGER.info("[BuildRec] next missing item={} remaining={}", missingName, recipeToString(MISSING_RECIPES.get(r.actor)));
+                                    pauseReplay(r.actor);
+                                    advance = 0;
+                                    break;
+                                }
+                            }
                             boolean upper = state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF) && state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER;
                             r.actor.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(state.getBlock()));
                             r.actor.level().setBlock(bpos, state, 3);
@@ -687,6 +812,8 @@ public class BuildRecorder {
         final double recordBbWidth;
         final double recordBbHeight;
         final boolean preserveActor;
+        final boolean creative;
+        Item requiredItem;
         boolean paused = false;
         int index = 0;
         Action action = null;
@@ -694,7 +821,7 @@ public class BuildRecorder {
         double sx, sy, sz, tx, ty, tz;
         float syaw, spitch, tyaw, tpitch;
 
-        Replay(Mob actor, List<Action> actions, int speed, double recordEyeHeight, double recordBbWidth, double recordBbHeight, List<BlockState> palette, boolean preserveActor) {
+        Replay(Mob actor, List<Action> actions, int speed, double recordEyeHeight, double recordBbWidth, double recordBbHeight, List<BlockState> palette, boolean preserveActor, boolean creative) {
             this.actor = actor;
             this.actions = actions;
             this.speed = speed;
@@ -703,6 +830,7 @@ public class BuildRecorder {
             this.recordBbHeight = recordBbHeight;
             this.palette = palette;
             this.preserveActor = preserveActor;
+            this.creative = creative;
             BlockPos p = actor.blockPosition();
             this.baseX = p.getX();
             this.baseY = p.getY();

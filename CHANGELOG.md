@@ -24,6 +24,13 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Document SPDX header and changelog requirements in AGENTS.md for contributors
 - Build goal and behavior enabling entities to construct structures for players
 - Behavior tests now cover BUILD and UNBUILD behaviors with live LLM responses
+- Build replays pause when materials are missing, stop four blocks from players, and prompt for supplies with recipe details
+- Placeholder follow particle and sound play when a build starts
+- Missing-material requests now broadcast the remaining recipe to nearby players in plain chat
+- Unit tests ensure build selection covers all height tiers and skill levels
+- Build skill increases after successful builds and syncs across clients
+- Build goal only begins after the builder reaches the player
+- Selecting builds logs skill, type, height tier, and chosen file
 
 ### Changed
 - Convert PNG screenshots to JPEG, compress, and remove less useful ones (smaller jar)

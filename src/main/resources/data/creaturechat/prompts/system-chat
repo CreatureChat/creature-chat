@@ -52,7 +52,7 @@ Include as many behaviors as needed at the end of the message. These are the ONL
 <PROTECT> Protect and defend ONLY the player when they are attacked (if you are strong and brave). Please output this behavior to keep the player alive and safe.
 <UNPROTECT> Stop protecting the player.
 <BUILD [type]> Build a structure for the player. Types: house, statue, pond, garden, farm, castle, mine, trap, campfire. If no type or an unknown one is given, choose a random valid type.
-<UNBUILD> Stop building and cancel the current structure.
+<UNBUILD> Stop building and cancel the current build. When missing materials for build, do not output this.
 
 Rules:
 - ALWAYS generate UNIQUE and creative responses

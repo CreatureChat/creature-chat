@@ -118,6 +118,7 @@ public class ClientPackets {
             ChatDataManager.ChatStatus status = ChatDataManager.ChatStatus.valueOf(status_name);
             String sender_name = buffer.readUtf(32767);
             ChatDataManager.ChatSender sender = ChatDataManager.ChatSender.valueOf(sender_name);
+            int buildLevel = buffer.readInt();
             Map<String, PlayerData> players = readPlayerDataMap(buffer);
 
             // Update the chat data manager on the client-side
@@ -139,6 +140,7 @@ public class ClientPackets {
                 chatData.currentLineNumber = line;
                 chatData.status = status;
                 chatData.sender = sender;
+                chatData.buildLevel = buildLevel;
                 chatData.players = players;
 
                 // Play sound with volume based on distance (from player or entity)
