@@ -39,7 +39,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.core.Holder;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
@@ -347,9 +346,8 @@ public class BuildRecorder {
         int i = 0;
         for (Map.Entry<String, Integer> e : recipe.entrySet()) {
             if (limit > 0 && i >= limit) break;
-            ResourceLocation id = ResourceLocation.parse(e.getKey());
-            Holder.Reference<Item> ref = BuiltInRegistries.ITEM.get(id).orElse(null);
-            Item item = ref != null ? ref.value() : null;
+            ResourceLocation id = ResourceLocation.tryParse(e.getKey());
+            Item item = RegistryUtil.getItem(id);
             String name = item != null ? new ItemStack(item).getHoverName().getString() : e.getKey().replace('_', ' ');
             if (i++ > 0) sb.append(", ");
             sb.append(e.getValue()).append(" x ").append(name);
