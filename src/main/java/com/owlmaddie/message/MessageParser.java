@@ -22,7 +22,7 @@ public class MessageParser {
         LOGGER.debug("Parsing message: {}", input);
         StringBuilder cleanedMessage = new StringBuilder();
         List<Behavior> behaviors = new ArrayList<>();
-        Pattern pattern = Pattern.compile("[<*](FOLLOW|LEAD|FLEE|ATTACK|PROTECT|FRIENDSHIP|UNFOLLOW|UNLEAD|UNPROTECT|UNFLEE|BUILD|UNBUILD)[:\\s]*(\\s*[\\w+-]+)?[>*]", Pattern.CASE_INSENSITIVE);
+        Pattern pattern = Pattern.compile("[<*](FOLLOW|LEAD|FLEE|ATTACK|PROTECT|FRIENDSHIP|UNFOLLOW|UNLEAD|UNPROTECT|UNFLEE|BUILD|UNBUILD)[:\\s]*(\\s*[\\w:#-+]+)?[>*]", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(input);
 
         while (matcher.find()) {

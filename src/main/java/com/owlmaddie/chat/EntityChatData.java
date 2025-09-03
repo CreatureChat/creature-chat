@@ -30,6 +30,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -544,7 +545,21 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
 
                             } else if (behavior.getName().equals("LEAD")) {
-                                LeadPlayerGoal leadGoal = new LeadPlayerGoal(player, entity, entitySpeedMedium);
+                                LeadTarget target = LeadTargetParser.parse(behavior.getArgument()).orElse(null);
+                                if (target == null || !(entity.level() instanceof ServerLevel serverLevel)) {
+                                    LOGGER.info("LEAD target argument '{}' could not be parsed", behavior.getArgument());
+                                    sendLeadFailureMessage(entity, player, behavior.getArgument(), systemPrompt);
+                                    return;
+                                }
+                                Vec3 destination = LeadTargetLocator.locate(serverLevel, entity.blockPosition(), target, 300);
+                                if (destination == null) {
+                                    LOGGER.info("LEAD target '{}' not found within radius", behavior.getArgument());
+                                    sendLeadFailureMessage(entity, player, behavior.getArgument(), systemPrompt);
+                                    return;
+                                }
+                                LOGGER.info("LEAD target '{}' located at ({}, {}, {})", behavior.getArgument(),
+                                        destination.x, destination.y, destination.z);
+                                LeadPlayerGoal leadGoal = new LeadPlayerGoal(player, entity, entitySpeedMedium, destination);
                                 EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
@@ -889,5 +904,22 @@ public class EntityChatData {
 
         // Broadcast to all players
         ServerPackets.BroadcastEntityMessage(this);
+    }
+
+    private void sendLeadFailureMessage(Mob entity, ServerPlayer player, String arg, String systemPrompt) {
+        String targetName = (arg != null && !arg.isEmpty()) ? arg : "that";
+        ConfigurationHandler.Config cfg = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
+        String systemPromptText = ChatPrompt.loadPromptFromResource(ServerPackets.serverInstance.getResourceManager(), "system-chat");
+        Map<String, String> ctx = getPlayerContext(player, "N/A", cfg);
+        List<ChatMessage> history = new ArrayList<>(previousMessages);
+        history.add(new ChatMessage("The player asked me to lead them to " + targetName +
+                " but I can't find that nearby. Apologize and say you'll stop leading.",
+                ChatDataManager.ChatSender.USER, player.getDisplayName().getString()));
+        ChatGPTRequest.fetchMessageFromChatGPT(cfg, systemPromptText, ctx, history, false).thenAccept(msg -> {
+            if (msg != null) {
+                addMessage(msg, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
+            }
+        });
+        EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
     }
 }

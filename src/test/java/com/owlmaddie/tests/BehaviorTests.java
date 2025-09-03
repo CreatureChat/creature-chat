@@ -54,9 +54,12 @@ public class BehaviorTests {
             "Come with me please",
             "Quickly, please join me on an adventure");
     List<String> leadMessages = Arrays.asList(
-            "Take me to a secret forrest",
-            "Where is the strong hold?",
-            "Can you help me find the location of the secret artifact?");
+            "Please take me to a jungle",
+            "Where is the nearest village?",
+            "Lead me to a slime chunk",
+            "Can you guide me to the moon?",
+            "Can you show me your home?",
+            "Please take me to the badlands");
     List<String> attackMessages = Arrays.asList(
             "<attacked you directly with Stone Axe>",
             "<attacked you indirectly with Arrow>",
@@ -152,14 +155,16 @@ public class BehaviorTests {
     @Test
     public void leadBrave() {
         for (String message : leadMessages) {
-            testPromptForBehavior(bravePath, List.of(message), "LEAD", "FOLLOW");
+            ParsedMessage result = testPromptForBehavior(bravePath, List.of(message), "LEAD", "FOLLOW");
+            assertTrue(result.getBehaviors().stream().anyMatch(b -> "LEAD".equals(b.getName()) && b.getArgument() != null && !b.getArgument().isEmpty()));
         }
     }
 
     @Test
     public void leadNervous() {
         for (String message : leadMessages) {
-            testPromptForBehavior(nervousPath, List.of(message), "LEAD", "FOLLOW");
+            ParsedMessage result = testPromptForBehavior(nervousPath, List.of(message), "LEAD", "FOLLOW");
+            assertTrue(result.getBehaviors().stream().anyMatch(b -> "LEAD".equals(b.getName()) && b.getArgument() != null && !b.getArgument().isEmpty()));
         }
     }
 
