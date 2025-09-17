@@ -5,7 +5,8 @@
 	"client": [
 		"EntityRendererMixin",
 		"MixinPlayerCustomTexture",
-		"MixinPlayerSkinTexture"
+		"MixinPlayerSkinTexture",
+        "TitleScreenMixin"
 	],
 	"env": {
 		"client.MixinPlayerCustomTexture": {

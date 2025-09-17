@@ -20,14 +20,14 @@ import net.minecraft.server.packs.resources.Resource;
  * Pre-1.21.5: RenderSystem.setShaderTexture(int, Identifier) is used.
  */
 public class TextureLoader {
-    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturepals");
     private static final Set<String> missing = new HashSet<>();
 
     public TextureLoader() {}
 
     public ResourceLocation GetUI(String name) {
         String texturePath = "textures/ui/" + name + ".png";
-        ResourceLocation textureId = new ResourceLocation("creaturechat", texturePath);
+        ResourceLocation textureId = new ResourceLocation("creaturepals", texturePath);
         Optional<Resource> resource = Minecraft
                 .getInstance()
                 .getResourceManager()
@@ -44,7 +44,7 @@ public class TextureLoader {
     }
 
     public ResourceLocation GetEntity(String texturePath) {
-        ResourceLocation textureId = new ResourceLocation("creaturechat", texturePath);
+        ResourceLocation textureId = new ResourceLocation("creaturepals", texturePath);
         Optional<Resource> resource = Minecraft
                 .getInstance()
                 .getResourceManager()
@@ -54,7 +54,7 @@ public class TextureLoader {
             RenderSystem.setShaderTexture(0, textureId);
             return textureId;
         } else {
-            ResourceLocation notFoundId = new ResourceLocation("creaturechat", "textures/entity/not_found.png");
+            ResourceLocation notFoundId = new ResourceLocation("creaturepals", "textures/entity/not_found.png");
             RenderSystem.setShaderTexture(0, notFoundId);
             logMissingTextureOnce(texturePath);
             return notFoundId;

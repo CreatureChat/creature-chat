@@ -324,8 +324,8 @@ public class EntityChatData {
                 if (e.getMessage() != null && !e.getMessage().isEmpty()) {
                     errorMessage += truncateString(e.getMessage(), 55) + "\n";
                 }
-                errorMessage += "Help is available at discord.creaturechat.com";
-                ServerPackets.SendClickableError(player, errorMessage, "http://discord.creaturechat.com");
+                errorMessage += "Help is available at player2.game/discord";
+                ServerPackets.SendClickableError(player, errorMessage, "https://player2.game/discord");
             }
         });
     }
@@ -605,8 +605,8 @@ public class EntityChatData {
                 if (e.getMessage() != null && !e.getMessage().isEmpty()) {
                     errorMessage += truncateString(e.getMessage(), 55) + "\n";
                 }
-                errorMessage += "Help is available at discord.creaturechat.com";
-                ServerPackets.SendClickableError(player, errorMessage, "http://discord.creaturechat.com");
+                errorMessage += "Help is available at player2.game/discord";
+                ServerPackets.SendClickableError(player, errorMessage, "https://player2.game/discord");
             }
         });
     }

@@ -123,11 +123,11 @@ repositories {
 }
 
 loom {
-	accessWidenerPath = file("src/main/resources/creaturechat.accesswidener")
+	accessWidenerPath = file("src/main/resources/creaturepals.accesswidener")
 	splitEnvironmentSourceSets()
 
 	mods {
-		"creaturechat" {
+		"creaturepals" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}

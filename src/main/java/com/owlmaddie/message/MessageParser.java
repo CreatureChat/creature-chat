@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * a {@code ParsedMessage} result, which separates the cleaned message and the included behaviors.
  */
 public class MessageParser {
-    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturepals");
 
     public static ParsedMessage parseMessage(String input) {
         LOGGER.debug("Parsing message: {}", input);

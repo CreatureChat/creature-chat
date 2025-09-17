@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
  * messages.
  */
 public class ChatGPTRequest {
-    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturepals");
     public static String lastErrorMessage;
 
     static class ChatGPTRequestMessage {
@@ -123,10 +123,9 @@ public class ChatGPTRequest {
 
     public static CompletableFuture<String> fetchMessageFromChatGPT(ConfigurationHandler.Config config, String systemPrompt, Map<String, String> contextData, List<ChatMessage> messageHistory, Boolean jsonMode) {
         // Init API & LLM details
-        String apiUrl = config.getUrl();
-        String apiKey = config.getApiKey();
+        String apiUrl = "https://api.player2.game/v1/chat/completions";
         String modelName = config.getModel();
-        Integer timeout = config.getTimeout() * 1000;
+        int timeout = config.getTimeout() * 1000;
         int maxContextTokens = config.getMaxContextTokens();
         int maxOutputTokens = config.getMaxOutputTokens();
         double percentOfContext = config.getPercentOfContext();

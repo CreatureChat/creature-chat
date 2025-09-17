@@ -31,7 +31,7 @@ import java.util.stream.Stream;
  * back to the server.
  */
 public class ClickHandler {
-    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturepals");
     private static boolean wasClicked = false;
 
     public static void register() {

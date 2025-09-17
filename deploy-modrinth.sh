@@ -29,11 +29,11 @@ echo "$VERSION"
 echo ""
 
 # Iterate over each jar file in the artifacts
-for FILE in creaturechat*.jar; do
+for FILE in creaturepals*.jar; do
   if [ -f "$FILE" ]; then
     echo "--------------$FILE----------------"
     FILE_BASENAME=$(basename "$FILE")
-    OUR_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/creaturechat-\(.*\)+.*\.jar/\1/p')
+    OUR_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/creaturepals-\(.*\)+.*\.jar/\1/p')
     MINECRAFT_VERSION=$(echo "$FILE_BASENAME" | sed -n 's/.*+\([0-9.]*\)\(-forge\|-neoforge\)*\.jar/\1/p')
     VERSION_NUMBER="$OUR_VERSION+$MINECRAFT_VERSION"
 

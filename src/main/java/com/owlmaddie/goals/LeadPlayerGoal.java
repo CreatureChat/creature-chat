@@ -27,7 +27,7 @@ import net.minecraft.world.phys.Vec3;
  * of many random waypoints. It supports PathAware and NonPathAware entities.
  */
 public class LeadPlayerGoal extends PlayerBaseGoal {
-    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturepals");
     private final Mob entity;
     private final double speed;
     private final Random random = new Random();

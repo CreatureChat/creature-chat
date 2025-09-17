@@ -24,7 +24,7 @@ public abstract class MixinEntityChatData {
     @Shadow
     public abstract UUID getUUID();
 
-    /** Add "CCUUID" when the entity already owns chat data. */
+    /** Add "CPUUID" when the entity already owns chat data. */
     @Inject(method = "saveWithoutId(Lnet/minecraft/world/level/storage/ValueOutput;)V",
             at = @At("TAIL"))
     private void writeChatData(ValueOutput valueOutput, CallbackInfo ci) {
@@ -33,7 +33,7 @@ public abstract class MixinEntityChatData {
                 ChatDataManager.getServerInstance().getOrCreateChatData(uuid.toString());
 
         if (!chatData.characterSheet.isEmpty()) {
-            valueOutput.store("CCUUID", UUIDUtil.CODEC, uuid);
+            valueOutput.store("CPUUID", UUIDUtil.CODEC, uuid);
         }
     }
 
@@ -43,7 +43,7 @@ public abstract class MixinEntityChatData {
     private void readChatData(ValueInput valueInput, CallbackInfo ci) {
         UUID current = this.getUUID();
 
-        valueInput.read("CCUUID", UUIDUtil.CODEC).ifPresent(original -> {
+        valueInput.read("CPUUID", UUIDUtil.CODEC).ifPresent(original -> {
             if (!original.equals(current)) {
                 ChatDataManager.getServerInstance()
                         .updateUUID(original.toString(), current.toString());

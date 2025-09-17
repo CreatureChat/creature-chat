@@ -25,7 +25,7 @@ import net.minecraft.world.level.block.entity.CreakingHeartBlockEntity;
 @Mixin(CreakingHeartBlockEntity.class)
 public class MixinCreakingHeartBlockEntity {
     @Shadow @Nullable private Either<Creaking, UUID> creakingInfo;
-    @Unique private UUID creaturechatCachedId;
+    @Unique private UUID creaturepalsCachedId;
 
     /**
      * Cache the old puppet UUID when the heart kills its puppet (night despawn)
@@ -36,10 +36,10 @@ public class MixinCreakingHeartBlockEntity {
     )
     private void cacheOnKill(@Nullable DamageSource source, CallbackInfo ci) {
         if (creakingInfo != null) {
-            creaturechatCachedId = creakingInfo.map(e -> e.getUUID(), u -> u);
-            LoggerFactory.getLogger("creaturechat").info("[Creaking-Cache] cached puppetUUID={}", creaturechatCachedId);
+            creaturepalsCachedId = creakingInfo.map(e -> e.getUUID(), u -> u);
+            LoggerFactory.getLogger("creaturepals").info("[Creaking-Cache] cached puppetUUID={}", creaturepalsCachedId);
         } else {
-            LoggerFactory.getLogger("creaturechat").warn("[Creaking-Cache] no puppet to cache");
+            LoggerFactory.getLogger("creaturepals").warn("[Creaking-Cache] no puppet to cache");
         }
     }
 
@@ -51,13 +51,13 @@ public class MixinCreakingHeartBlockEntity {
             at     = @At("TAIL")
     )
     private void restoreOnSpawn(Creaking puppet, CallbackInfo ci) {
-        if (creaturechatCachedId != null) {
+        if (creaturepalsCachedId != null) {
             UUID newId = puppet.getUUID();
-            LoggerFactory.getLogger("creaturechat").info("[Creaking-Restore] {} → {}", creaturechatCachedId, newId);
-            ChatDataManager.getServerInstance().updateUUID(creaturechatCachedId.toString(), newId.toString());
-            creaturechatCachedId = null;
+            LoggerFactory.getLogger("creaturepals").info("[Creaking-Restore] {} → {}", creaturepalsCachedId, newId);
+            ChatDataManager.getServerInstance().updateUUID(creaturepalsCachedId.toString(), newId.toString());
+            creaturepalsCachedId = null;
         } else {
-            LoggerFactory.getLogger("creaturechat").warn("[Creaking-Restore] no cached UUID for puppet {}", puppet.getUUID());
+            LoggerFactory.getLogger("creaturepals").warn("[Creaking-Restore] no cached UUID for puppet {}", puppet.getUUID());
         }
     }
 }

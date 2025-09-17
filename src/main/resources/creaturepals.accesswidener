@@ -8,6 +8,6 @@ accessible method net/minecraft/world/entity/monster/Slime$SlimeMoveControl setD
 accessible class net/minecraft/resources/ResourceLocation
 accessible method net/minecraft/resources/ResourceLocation <init> (Ljava/lang/String;Ljava/lang/String;)V
 
-# NativeImage getPixelRGBA
+# NativeImage getPixelABGR
 accessible class com/mojang/blaze3d/platform/NativeImage
-accessible method com/mojang/blaze3d/platform/NativeImage getPixelRGBA (II)I
+accessible method com/mojang/blaze3d/platform/NativeImage getPixelABGR (II)I

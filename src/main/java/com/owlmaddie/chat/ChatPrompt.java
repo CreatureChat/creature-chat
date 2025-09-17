@@ -15,11 +15,11 @@ import org.slf4j.LoggerFactory;
  * The {@code ChatPrompt} class is used to load a prompt from the Minecraft resource manager
  */
 public class ChatPrompt {
-    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturepals");
 
     // This method should be called in an appropriate context where ResourceManager is available
     public static String loadPromptFromResource(ResourceManager resourceManager, String promptName) {
-        ResourceLocation fileIdentifier = new ResourceLocation("creaturechat", "prompts/" + promptName);
+        ResourceLocation fileIdentifier = new ResourceLocation("creaturepals", "prompts/" + promptName);
         try (InputStream inputStream = resourceManager.getResource(fileIdentifier).get().open();
              BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
 

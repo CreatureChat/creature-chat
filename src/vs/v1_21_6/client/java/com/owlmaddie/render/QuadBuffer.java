@@ -43,7 +43,7 @@ public final class QuadBuffer {
             .buildSnippet();
 
     private static final RenderPipeline QUAD_PIPELINE = RenderPipeline.builder(QUAD_SNIPPET)
-            .withLocation("creaturechat/quad") // arbitrary ID
+            .withLocation("creaturepals/quad") // arbitrary ID
             .withDepthBias(3.0f, 3.0f) // mimic polygonOffset
             .withBlend(BlendFunction.TRANSLUCENT) // vanilla style alpha blending
             .build();

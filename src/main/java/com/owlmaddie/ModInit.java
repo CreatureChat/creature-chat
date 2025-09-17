@@ -3,7 +3,7 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie;
 
-import com.owlmaddie.commands.CreatureChatCommands;
+import com.owlmaddie.commands.CreaturePalsCommands;
 import com.owlmaddie.network.ServerPackets;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
  * messages to the client.
  */
 public class ModInit implements ModInitializer {
-	public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+	public static final Logger LOGGER = LoggerFactory.getLogger("creaturepals");
 
 	@Override
 	public void onInitialize() {
@@ -24,11 +24,11 @@ public class ModInit implements ModInitializer {
 		// Proceed with mild caution.
 
 		// Register server commands
-		CreatureChatCommands.register();
+		CreaturePalsCommands.register();
 
 		// Register events
 		ServerPackets.register();
 
-		LOGGER.info("CreatureChat MOD Initialized!");
+		LOGGER.info("CreaturePals MOD Initialized!");
 	}
 }

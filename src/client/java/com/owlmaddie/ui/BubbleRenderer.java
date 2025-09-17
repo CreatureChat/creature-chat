@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
  * text, friendship status, and other UI-related rendering code.
  */
 public class BubbleRenderer {
-    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturepals");
     protected static TextureLoader textures = new TextureLoader();
     public static int DISPLAY_PADDING = 2;
     public static int animationFrame = 0;

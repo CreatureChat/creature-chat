@@ -27,14 +27,14 @@ import java.util.List;
  */
 
 public class ConfigurationHandler {
-    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturepals");
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final Path serverConfigPath;
     private final Path defaultConfigPath;
 
     public ConfigurationHandler(MinecraftServer server) {
-        this.serverConfigPath = server.getWorldPath(LevelResource.ROOT).resolve("creaturechat.json");
-        this.defaultConfigPath = Paths.get(".", "creaturechat.json"); // Assumes the default location is the server root or a similar logical default
+        this.serverConfigPath = server.getWorldPath(LevelResource.ROOT).resolve("creaturepals.json");
+        this.defaultConfigPath = Paths.get(".", "creaturepals.json"); // Assumes the default location is the server root or a similar logical default
     }
 
     public Config loadConfig() {
@@ -51,7 +51,7 @@ public class ConfigurationHandler {
             gson.toJson(config, writer);
             return true;
         } catch (IOException e) {
-            String errorMessage = "Error saving `creaturechat.json`. CreatureChat config was not saved. " + e.getMessage();
+            String errorMessage = "Error saving `creaturepals.json`. CreaturePals config was not saved. " + e.getMessage();
             LOGGER.error(errorMessage, e);
             ServerPackets.sendErrorToAllOps(ServerPackets.serverInstance, errorMessage);
             return false;
@@ -68,7 +68,7 @@ public class ConfigurationHandler {
 
     public static class Config {
         private String apiKey = "";
-        private String url = "https://api.openai.com/v1/chat/completions";
+        private String url = "https://api.player2.game/v1/chat/completions";
         private String model = "gpt-3.5-turbo";
         private int maxContextTokens = 16385;
         private int maxOutputTokens = 200;
@@ -82,13 +82,16 @@ public class ConfigurationHandler {
         // Getters and setters for existing fields
         public String getApiKey() { return apiKey; }
         public void setApiKey(String apiKey) {
-            if (apiKey.startsWith("cc_") && apiKey.length() == 15) {
+            if (apiKey.startsWith("p2_")) {
+                // Update URL if a Player2 API key is detected
+                setUrl("https://api.player2.game/v1/chat/completions");
+            } else if (apiKey.startsWith("cc_") && apiKey.length() == 15) {
                 // Update URL if a CreatureChat API key is detected
                 setUrl("https://api.creaturechat.com/v1/chat/completions");
             } else if (apiKey.startsWith("sk-")) {
                 // Update URL if an OpenAI API key is detected
                 setUrl("https://api.openai.com/v1/chat/completions");
-            }
+            } else
             this.apiKey = apiKey;
         }
 

@@ -34,7 +34,7 @@ build_mod:
     - ./build.sh
   artifacts:
     paths:
-      - creaturechat-*.jar
+      - creaturepals-*.jar
       - fabric-api-*.jar
   tags:
     - minecraft

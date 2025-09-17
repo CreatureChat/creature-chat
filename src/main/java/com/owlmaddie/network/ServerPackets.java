@@ -47,20 +47,20 @@ import java.util.concurrent.TimeUnit;
  * updating message details, and sending user messages.
  */
 public class ServerPackets {
-    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturepals");
     public static MinecraftServer serverInstance;
     public static ChatDataSaverScheduler scheduler = null;
-    public static final ResourceLocation PACKET_C2S_GREETING = new ResourceLocation("creaturechat", "packet_c2s_greeting");
-    public static final ResourceLocation PACKET_C2S_READ_NEXT = new ResourceLocation("creaturechat", "packet_c2s_read_next");
-    public static final ResourceLocation PACKET_C2S_SET_STATUS = new ResourceLocation("creaturechat", "packet_c2s_set_status");
-    public static final ResourceLocation PACKET_C2S_OPEN_CHAT = new ResourceLocation("creaturechat", "packet_c2s_open_chat");
-    public static final ResourceLocation PACKET_C2S_CLOSE_CHAT = new ResourceLocation("creaturechat", "packet_c2s_close_chat");
-    public static final ResourceLocation PACKET_C2S_SEND_CHAT = new ResourceLocation("creaturechat", "packet_c2s_send_chat");
-    public static final ResourceLocation PACKET_S2C_ENTITY_MESSAGE = new ResourceLocation("creaturechat", "packet_s2c_entity_message");
-    public static final ResourceLocation PACKET_S2C_PLAYER_MESSAGE = new ResourceLocation("creaturechat", "packet_s2c_player_message");
-    public static final ResourceLocation PACKET_S2C_LOGIN = new ResourceLocation("creaturechat", "packet_s2c_login");
-    public static final ResourceLocation PACKET_S2C_WHITELIST = new ResourceLocation("creaturechat", "packet_s2c_whitelist");
-    public static final ResourceLocation PACKET_S2C_PLAYER_STATUS = new ResourceLocation("creaturechat", "packet_s2c_player_status");
+    public static final ResourceLocation PACKET_C2S_GREETING = new ResourceLocation("creaturepals", "packet_c2s_greeting");
+    public static final ResourceLocation PACKET_C2S_READ_NEXT = new ResourceLocation("creaturepals", "packet_c2s_read_next");
+    public static final ResourceLocation PACKET_C2S_SET_STATUS = new ResourceLocation("creaturepals", "packet_c2s_set_status");
+    public static final ResourceLocation PACKET_C2S_OPEN_CHAT = new ResourceLocation("creaturepals", "packet_c2s_open_chat");
+    public static final ResourceLocation PACKET_C2S_CLOSE_CHAT = new ResourceLocation("creaturepals", "packet_c2s_close_chat");
+    public static final ResourceLocation PACKET_C2S_SEND_CHAT = new ResourceLocation("creaturepals", "packet_c2s_send_chat");
+    public static final ResourceLocation PACKET_S2C_ENTITY_MESSAGE = new ResourceLocation("creaturepals", "packet_s2c_entity_message");
+    public static final ResourceLocation PACKET_S2C_PLAYER_MESSAGE = new ResourceLocation("creaturepals", "packet_s2c_player_message");
+    public static final ResourceLocation PACKET_S2C_LOGIN = new ResourceLocation("creaturepals", "packet_s2c_login");
+    public static final ResourceLocation PACKET_S2C_WHITELIST = new ResourceLocation("creaturepals", "packet_s2c_whitelist");
+    public static final ResourceLocation PACKET_S2C_PLAYER_STATUS = new ResourceLocation("creaturepals", "packet_s2c_player_status");
     public static final ParticleType<?> HEART_SMALL_PARTICLE = Particles.HEART_SMALL_PARTICLE;
     public static final ParticleType<?> HEART_BIG_PARTICLE = Particles.HEART_BIG_PARTICLE;
     public static final ParticleType<?> FIRE_SMALL_PARTICLE = Particles.FIRE_SMALL_PARTICLE;
@@ -76,18 +76,22 @@ public class ServerPackets {
 
     public static void register() {
         // Register custom particles
-        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "heart_small"), HEART_SMALL_PARTICLE);
-        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "heart_big"), HEART_BIG_PARTICLE);
-        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "fire_small"), FIRE_SMALL_PARTICLE);
-        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "fire_big"), FIRE_BIG_PARTICLE);
-        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "attack"), ATTACK_PARTICLE);
-        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "flee"), FLEE_PARTICLE);
-        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "follow_enemy"), FOLLOW_ENEMY_PARTICLE);
-        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "follow_friend"), FOLLOW_FRIEND_PARTICLE);
-        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "protect"), PROTECT_PARTICLE);
-        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "lead_enemy"), LEAD_ENEMY_PARTICLE);
-        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "lead_friend"), LEAD_FRIEND_PARTICLE);
-        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "lead"), LEAD_PARTICLE);
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturepals", "heart_small"), HEART_SMALL_PARTICLE);
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturepals", "heart_big"), HEART_BIG_PARTICLE);
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturepals", "fire_small"), FIRE_SMALL_PARTICLE);
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturepals", "fire_big"), FIRE_BIG_PARTICLE);
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturepals", "attack"), ATTACK_PARTICLE);
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturepals", "flee"), FLEE_PARTICLE);
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturepals", "follow_enemy"), FOLLOW_ENEMY_PARTICLE);
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturepals", "follow_friend"), FOLLOW_FRIEND_PARTICLE);
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturepals", "protect"), PROTECT_PARTICLE);
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturepals", "lead_enemy"), LEAD_ENEMY_PARTICLE);
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturepals", "lead_friend"), LEAD_FRIEND_PARTICLE);
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturepals", "lead"), LEAD_PARTICLE);
+
+
+        PayloadTypeRegistry.playS2C().register(AuthRequestPayload.PACKET_ID, AuthRequestPayload.PACKET_CODEC);
+        PayloadTypeRegistry.playC2S().register(AuthResponsePayload.PACKET_ID, AuthResponsePayload.PACKET_CODEC);
 
         // Handle packet for Greeting
         PacketHelper.registerReceiver(PACKET_C2S_GREETING, (server, player, buf) -> {

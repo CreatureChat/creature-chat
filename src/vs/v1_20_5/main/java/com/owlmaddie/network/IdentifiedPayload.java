@@ -12,11 +12,11 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * A generic payload that wraps an Identifier and a byte array for packet data. This is for
  * Minecraft 1.20.5+ versions, which switched to CustomPayload. This maintains compatibility
- * with the rest of CreatureChat code.
+ * with the rest of CreaturePal code.
  */
 public record IdentifiedPayload(ResourceLocation id, byte[] data) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<IdentifiedPayload> PACKET_ID =
-            new CustomPacketPayload.Type<>(new ResourceLocation("creaturechat", "identified_payload"));
+            new CustomPacketPayload.Type<>(new ResourceLocation("creaturepals", "identified_payload"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, IdentifiedPayload> PACKET_CODEC =
             StreamCodec.composite(

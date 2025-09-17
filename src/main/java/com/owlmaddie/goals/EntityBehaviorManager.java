@@ -22,7 +22,7 @@ import net.minecraft.world.entity.ai.goal.WrappedGoal;
  * to manage goals, while avoiding concurrent modification issues.
  */
 public class EntityBehaviorManager {
-    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturepals");
 
     public static void addGoal(Mob entity, Goal goal, GoalPriority priority) {
         if (!(entity.level() instanceof ServerLevel)) {

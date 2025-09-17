@@ -25,7 +25,7 @@ public class ChatDataManager {
     // Use a static instance to manage our data globally
     private static final ChatDataManager SERVER_INSTANCE = new ChatDataManager(true);
     private static final ChatDataManager CLIENT_INSTANCE = new ChatDataManager(false);
-    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturepals");
     public static int MAX_CHAR_PER_LINE = 20;
     public static int DISPLAY_NUM_LINES = 3;
     public static int MAX_CHAR_IN_USER_MESSAGE = 512;
@@ -118,7 +118,7 @@ public class ChatDataManager {
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(saveFile), StandardCharsets.UTF_8)) {
             GSON.toJson(this.entityChatDataMap, writer);
         } catch (Exception e) {
-            String errorMessage = "Error saving `chatdata.json`. No CreatureChat chat history was saved! " + e.getMessage();
+            String errorMessage = "Error saving `chatdata.json`. No CreaturePals chat history was saved! " + e.getMessage();
             LOGGER.error(errorMessage, e);
             ServerPackets.sendErrorToAllOps(server, errorMessage);
         }

@@ -31,7 +31,7 @@ import net.minecraft.world.entity.player.Player;
  * updating message details, and sending user messages.
  */
 public class ClientPackets {
-    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturepals");
     static HashMap<Integer, byte[]> receivedChunks = new HashMap<>();
 
     public static void sendGenerateGreeting(Entity entity) {
