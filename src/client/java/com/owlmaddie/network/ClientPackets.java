@@ -8,10 +8,14 @@ import com.google.gson.reflect.TypeToken;
 import com.owlmaddie.chat.ChatDataManager;
 import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
+import com.owlmaddie.network.C2S.AuthResponsePayload;
+import com.owlmaddie.network.S2C.AuthRequestPayload;
+import com.owlmaddie.player2.Player2StartupHandler;
 import com.owlmaddie.ui.BubbleRenderer;
 import com.owlmaddie.ui.PlayerMessageManager;
 import com.owlmaddie.utils.ClientEntityFinder;
 import com.owlmaddie.utils.Decompression;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -253,6 +257,24 @@ public class ClientPackets {
                 }
             });
         });
+
+        // Client-side packet handler: server requesting Player2 API key
+        ClientPlayNetworking.registerGlobalReceiver(AuthRequestPayload.PACKET_ID, (payload, context) -> {
+            UUID requestId = payload.requestId();
+            Minecraft client = context.client();
+            if (client != null) {
+                client.execute(() -> {
+                    String key = Player2StartupHandler.getApiKey();
+                    // If key is available via env/system but not persisted, persist it now
+                    if (key != null && !key.isEmpty()) {
+                        Player2StartupHandler.setApiKey(key);
+                    }
+                    // Respond to server with the key (or empty string if not found)
+                    ClientPlayNetworking.send(new AuthResponsePayload(requestId, key == null ? "" : key));
+                    LOGGER.info("Responded to server auth request {} with {}key.", requestId, (key == null || key.isEmpty()) ? "no " : "");
+                });
+            }
+        });
     }
 
     private static void playNearbyUISound(Minecraft client, Entity player, float maxVolume) {
@@ -268,4 +290,3 @@ public class ClientPackets {
         }
     }
 }
-

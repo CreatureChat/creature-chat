@@ -3,22 +3,22 @@
 // Assets CC-BY-NC-SA-4.0; CreatureChat™ trademark © owlmaddie LLC - unauthorized use prohibited
 package com.owlmaddie.network;
 
-import com.owlmaddie.chat.ChatDataManager;
-import com.owlmaddie.chat.ChatDataSaverScheduler;
-import com.owlmaddie.chat.EntityChatData;
-import com.owlmaddie.chat.PlayerData;
+import com.owlmaddie.chat.*;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.goals.GoalPriority;
 import com.owlmaddie.goals.TalkPlayerGoal;
+import com.owlmaddie.network.C2S.AuthResponsePayload;
+import com.owlmaddie.network.S2C.AuthRequestPayload;
 import com.owlmaddie.particle.Particles;
 import com.owlmaddie.utils.Compression;
 import com.owlmaddie.utils.Randomizer;
 import com.owlmaddie.utils.ServerEntityFinder;
-import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleType;
@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -73,6 +74,8 @@ public class ServerPackets {
     public static final ParticleType<?> LEAD_FRIEND_PARTICLE = Particles.LEAD_FRIEND_PARTICLE;
     public static final ParticleType<?> LEAD_ENEMY_PARTICLE = Particles.LEAD_ENEMY_PARTICLE;
     public static final ParticleType<?> LEAD_PARTICLE = Particles.LEAD_PARTICLE;
+    // Track pending auth requests keyed by requestId -> playerUUID
+    private static final Map<UUID, UUID> pendingAuthRequests = new ConcurrentHashMap<>();
 
     public static void register() {
         // Register custom particles
@@ -177,6 +180,7 @@ public class ServerPackets {
             });
         });
 
+
         // Handle packet for new chat message
         PacketHelper.registerReceiver(PACKET_C2S_SEND_CHAT, (server, player, buf) -> {
             UUID entityId = UUID.fromString(buf.readUtf());
@@ -196,6 +200,10 @@ public class ServerPackets {
                 }
             });
         });
+
+
+
+
 
         // Send lite chat data JSON to new player (to populate client data)
         // Data is sent in chunks, to prevent exceeding the 32767 limit per String.
@@ -232,7 +240,28 @@ public class ServerPackets {
 
                 PacketHelper.send(player, PACKET_S2C_LOGIN, buffer);
             }
+
+            // If no server API key is configured, request from this player
+            ConfigurationHandler.Config config = new ConfigurationHandler(server).loadConfig();
+            String serverApiKey = config.getApiKey();
+            if (serverApiKey == null || serverApiKey.isEmpty()) {
+                requestPlayerApiKey(player);
+            }
         });
+
+
+        // Handle C2S AuthResponse: store API key on the server side scoped to config
+        ServerPlayNetworking.registerGlobalReceiver(AuthResponsePayload.PACKET_ID, (payload, context) -> {
+            String apiKey = payload.apiKey();
+            ServerPlayer player = context.player();
+            context.server().execute(() -> {
+                ChatGPTRequest.apiKeyAwaiter.remove(payload.requestId()).complete(apiKey);
+                LOGGER.info("Received API key from player '{}' with requestId={}", player.getGameProfile().getName(), payload.requestId());
+            }
+            );
+        });
+
+
 
         ServerWorldEvents.LOAD.register((server, world) -> {
             String world_name = world.dimension().location().getPath();
@@ -247,12 +276,15 @@ public class ServerPackets {
         });
         ServerWorldEvents.UNLOAD.register((server, world) -> {
             String world_name = world.dimension().location().getPath();
-            if (world_name == "overworld") {
+            if (world_name.equals("overworld")) {
                 ChatDataManager.getServerInstance().saveChatData(server);
                 serverInstance = null;
 
                 // Shutdown auto scheduler
-                scheduler.stopAutoSaveTask();
+                if (scheduler != null) {
+                    scheduler.stopAutoSaveTask();
+                    scheduler = null;
+                }
             }
         });
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, world) -> {
@@ -262,6 +294,15 @@ public class ServerPackets {
                 ChatDataManager.getServerInstance().entityChatDataMap.get(entityUUID).death = System.currentTimeMillis();
             }
         });
+    }
+
+    // Request API key from a specific player. Returns requestId for tracking/logging.
+    public static UUID requestPlayerApiKey(ServerPlayer player) {
+        UUID requestId = UUID.randomUUID();
+        pendingAuthRequests.put(requestId, player.getUUID());
+        ServerPlayNetworking.send(player, new AuthRequestPayload(requestId));
+        LOGGER.info("Sent API key request to '{}' with requestId={}", player.getGameProfile().getName(), requestId);
+        return requestId;
     }
 
     public static void send_whitelist_blacklist(ServerPlayer player) {
@@ -445,7 +486,7 @@ public class ServerPackets {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             // Check if the player is an operator
             if (server.getPlayerList().isOp(player.getGameProfile())) {
-                ServerPackets.SendClickableError(player, message, "http://discord.creaturechat.com");
+                ServerPackets.SendClickableError(player, message, "http://discord.creaturepals.com");
             }
         }
     }

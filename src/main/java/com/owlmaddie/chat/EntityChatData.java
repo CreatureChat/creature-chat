@@ -11,13 +11,17 @@ import com.owlmaddie.goals.*;
 import com.owlmaddie.message.Behavior;
 import com.owlmaddie.message.MessageParser;
 import com.owlmaddie.message.ParsedMessage;
+import com.owlmaddie.network.S2C.AuthRequestPayload;
 import com.owlmaddie.network.ServerPackets;
 import com.owlmaddie.particle.ParticleEmitter;
 import com.owlmaddie.utils.*;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.network.protocol.game.ClientboundServerDataPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -48,7 +52,7 @@ import static com.owlmaddie.network.ServerPackets.*;
  * and the status of the current displayed message.
  */
 public class EntityChatData {
-    public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    public static final Logger LOGGER = LoggerFactory.getLogger("creaturepals");
     public String entityId;
     public String currentMessage;
     public int currentLineNumber;
@@ -289,9 +293,16 @@ public class EntityChatData {
         // Add PLAYER context information
         Map<String, String> contextData = getPlayerContext(player, userLanguage, config);
 
+
+
+
         // fetch HTTP response from ChatGPT
-        ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, previousMessages, false).thenAccept(output_message -> {
+        String output_message = ChatGPTRequest.startChat(config, promptText, contextData, previousMessages, false, player);
+        CompletableFuture.supplyAsync(() -> {
+
+        LOGGER.debug("JUST GOT MESSAGE" + output_message);
             try {
+                LOGGER.info("hello");
                 if (output_message != null) {
                     // Character Sheet: Remove system-character message from previous messages
                     previousMessages.clear();
@@ -327,6 +338,7 @@ public class EntityChatData {
                 errorMessage += "Help is available at player2.game/discord";
                 ServerPackets.SendClickableError(player, errorMessage, "https://player2.game/discord");
             }
+            return null;
         });
     }
 
@@ -360,8 +372,10 @@ public class EntityChatData {
         }
 
         // fetch HTTP response from ChatGPT
-        ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, previousMessages, false).thenAccept(output_message -> {
+        String output_message = ChatGPTRequest.startChat(config, promptText, contextData, previousMessages, false, player);
+         CompletableFuture.supplyAsync(() -> {
             try {
+                LOGGER.info(output_message);
                 if (output_message != null) {
                     // Chat Message: Parse message for behaviors
                     ParsedMessage result = MessageParser.parseMessage(output_message.replace("\n", " "));
@@ -608,6 +622,7 @@ public class EntityChatData {
                 errorMessage += "Help is available at player2.game/discord";
                 ServerPackets.SendClickableError(player, errorMessage, "https://player2.game/discord");
             }
+            return null;
         });
     }
 
