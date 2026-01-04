@@ -5,6 +5,7 @@ package com.owlmaddie.chat;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.owlmaddie.buildrec.BuildRecorder;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.controls.SpeedControls;
 import com.owlmaddie.goals.*;
@@ -591,6 +592,7 @@ public class EntityChatData {
                                 entity.level().playSound(null, entity.blockPosition(), SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.PLAYERS, 1f, 1f);
 
                             } else if (behavior.getName().equals("UNBUILD")) {
+                                BuildRecorder.cancelReplay(entity);
                                 EntityBehaviorManager.removeGoal(entity, BuildPlayerGoal.class);
 
                             } else if (behavior.getName().equals("FRIENDSHIP")) {

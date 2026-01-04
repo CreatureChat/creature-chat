@@ -201,6 +201,7 @@ public class BuildRecorder {
 
     @SuppressWarnings("unchecked")
     public static boolean startReplay(ServerPlayer player, Mob actor, String fileName, int speed) {
+        cancelReplay(actor);
         return startReplayInternal(player, fileName, (EntityType<? extends Mob>) actor.getType(), speed, actor);
     }
 
@@ -855,4 +856,3 @@ public class BuildRecorder {
     }
 
 }
-
