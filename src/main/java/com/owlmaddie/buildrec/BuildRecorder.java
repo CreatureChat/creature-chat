@@ -290,6 +290,24 @@ public class BuildRecorder {
         });
     }
 
+    public static void cancelReplay(Mob actor) {
+        Iterator<Replay> it = REPLAYS.iterator();
+        while (it.hasNext()) {
+            Replay r = it.next();
+            if (r.actor != actor) {
+                continue;
+            }
+            r.actor.setNoAi(false);
+            r.actor.setInvulnerable(false);
+            MISSING_RECIPES.remove(r.actor);
+            if (!r.preserveActor) {
+                r.actor.discard();
+            }
+            it.remove();
+            break;
+        }
+    }
+
     public static void cancelAllReplays() {
         Iterator<Replay> it = REPLAYS.iterator();
         while (it.hasNext()) {

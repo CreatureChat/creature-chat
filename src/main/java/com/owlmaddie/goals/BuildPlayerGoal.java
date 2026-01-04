@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Path;
@@ -88,7 +89,11 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
     @Override
     public void stop() {
         LOGGER.info("[BuildGoal] stop goal pause replay");
-        BuildRecorder.pauseReplay(this.entity);
+        if (completed || this.targetEntity == null || !this.targetEntity.isAlive()) {
+            BuildRecorder.cancelReplay(this.entity);
+        } else {
+            BuildRecorder.pauseReplay(this.entity);
+        }
     }
 
     @Override
@@ -99,7 +104,7 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
             if (!reachedPlayer) {
                 double distToPlayer = this.entity.distanceToSqr(this.targetEntity);
                 if (distToPlayer <= PLAYER_REACH_DIST_SQR) {
-                    buildPos = findGround(this.targetEntity.blockPosition());
+                    buildPos = findStartPos(BlockPos.containing(this.targetEntity.position()));
                     reachedPlayer = true;
                     LOGGER.info("[BuildGoal] reached player choose buildPos {}", buildPos);
                     this.entity.getNavigation().moveTo(buildPos.getX(), buildPos.getY() + 1, buildPos.getZ(), this.speed);
@@ -135,7 +140,7 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
             return;
         }
 
-        if (BuildRecorder.isReplaying(this.entity)) {
+            if (BuildRecorder.isReplaying(this.entity)) {
             if (!fetchingMaterials) {
                 if (aiPause) {
                     aiPause = false;
@@ -150,11 +155,13 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
 
             Map<String, Integer> recipe = BuildRecorder.getMissingRecipe(this.entity);
             if (recipe != null) {
+                if (!fetchingMaterials) {
+                    materialWaitTicks = 0;
+                }
                 fetchingMaterials = true;
                 double distToPlayer = this.entity.distanceToSqr(this.targetEntity);
                 if (distToPlayer > PLAYER_REACH_DIST_SQR && !controlsReleased) {
                     this.entity.getNavigation().moveTo(this.targetEntity, this.speed);
-                    materialWaitTicks = 0;
                 } else {
                     if (!controlsReleased) {
                         this.entity.getNavigation().stop();
@@ -181,18 +188,18 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
                             sentRecipe = true;
                         }
                     }
-                    if (!controlsReleased) {
-                        if (materialWaitTicks++ >= 80) {
-                            BuildRecorder.pauseReplay(this.entity);
-                            this.setFlags(EnumSet.noneOf(Flag.class));
-                            this.entity.getNavigation().moveTo(buildPos.getX(), buildPos.getY() + 1, buildPos.getZ(), this.speed);
-                            controlsReleased = true;
-                        }
-                    } else {
-                        double distToBuild = this.entity.distanceToSqr(buildPos.getX() + 0.5, buildPos.getY() + 1, buildPos.getZ() + 0.5);
-                        if (distToBuild > 36 && !this.entity.getNavigation().isInProgress()) {
-                            this.entity.getNavigation().moveTo(buildPos.getX(), buildPos.getY() + 1, buildPos.getZ(), this.speed);
-                        }
+                }
+                if (!controlsReleased) {
+                    if (materialWaitTicks++ >= 80) {
+                        BuildRecorder.pauseReplay(this.entity);
+                        this.setFlags(EnumSet.noneOf(Flag.class));
+                        this.entity.getNavigation().moveTo(buildPos.getX(), buildPos.getY() + 1, buildPos.getZ(), this.speed);
+                        controlsReleased = true;
+                    }
+                } else {
+                    double distToBuild = this.entity.distanceToSqr(buildPos.getX() + 0.5, buildPos.getY() + 1, buildPos.getZ() + 0.5);
+                    if (distToBuild > 36 && !this.entity.getNavigation().isInProgress()) {
+                        this.entity.getNavigation().moveTo(buildPos.getX(), buildPos.getY() + 1, buildPos.getZ(), this.speed);
                     }
                 }
                 return;
@@ -269,13 +276,17 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
 
     private BlockPos findStartPos(BlockPos target) {
         BlockPos ground = findGround(target);
-        if (this.entity.getNavigation().createPath(ground.getX(), ground.getY() + 1, ground.getZ(), 1) != null) {
+        if (isValidBuildPos(ground) &&
+                this.entity.getNavigation().createPath(ground.getX(), ground.getY() + 1, ground.getZ(), 1) != null) {
             return ground;
         }
         BlockPos best = null;
         double bestDist = Double.MAX_VALUE;
         for (BlockPos pos : BlockPos.betweenClosed(target.offset(-3, -1, -3), target.offset(3, 1, 3))) {
             BlockPos g = findGround(pos);
+            if (!isValidBuildPos(g)) {
+                continue;
+            }
             if (this.entity.getNavigation().createPath(g.getX(), g.getY() + 1, g.getZ(), 1) != null) {
                 double d = g.distSqr(target);
                 if (d < bestDist) {
@@ -284,15 +295,39 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
                 }
             }
         }
-        return best != null ? best : this.entity.blockPosition();
+        return best != null ? best : ground;
     }
 
     private BlockPos findGround(BlockPos pos) {
         Level level = this.entity.level();
         BlockPos ground = pos;
-        while (level.isEmptyBlock(ground) && ground.getY() > -64) {
+        while (ground.getY() > -64) {
+            if (isSolidGround(level, ground)) {
+                return ground;
+            }
             ground = ground.below();
         }
-        return ground;
+        return pos;
+    }
+
+    private boolean isSolidGround(Level level, BlockPos pos) {
+        var state = level.getBlockState(pos);
+        if (state.isAir()) {
+            return false;
+        }
+        if (!state.getFluidState().isEmpty()) {
+            return false;
+        }
+        return state.isCollisionShapeFullBlock(level, pos);
+    }
+
+    private boolean isValidBuildPos(BlockPos ground) {
+        int height = Mth.ceil(this.entity.getBbHeight());
+        for (int i = 1; i <= height; i++) {
+            if (!this.entity.level().isEmptyBlock(ground.above(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 }
