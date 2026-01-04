@@ -27,6 +27,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - Build skill increases after successful builds and syncs across clients
   - Build goal only begins after the builder reaches the player
   - Selecting builds logs skill, type, height tier, and chosen file
+  - Relaxed build goal proximity checks so builders don't have to overlap players before starting or finishing
 
 ### Changed
 - Convert PNG screenshots to JPEG, compress, and remove less useful ones (smaller jar)

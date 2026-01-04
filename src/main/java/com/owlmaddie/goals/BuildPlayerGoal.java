@@ -28,6 +28,7 @@ import java.util.Map;
  * replay as the goal starts and stops.
  */
 public class BuildPlayerGoal extends PlayerBaseGoal {
+    private static final double PLAYER_REACH_DIST_SQR = 25.0;
     private final Mob entity;
     private final String buildType;
     private final double speed;
@@ -97,7 +98,7 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
         if (!startedReplay) {
             if (!reachedPlayer) {
                 double distToPlayer = this.entity.distanceToSqr(this.targetEntity);
-                if (distToPlayer <= 1.0) {
+                if (distToPlayer <= PLAYER_REACH_DIST_SQR) {
                     buildPos = findGround(this.targetEntity.blockPosition());
                     reachedPlayer = true;
                     LOGGER.info("[BuildGoal] reached player choose buildPos {}", buildPos);
@@ -151,7 +152,7 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
             if (recipe != null) {
                 fetchingMaterials = true;
                 double distToPlayer = this.entity.distanceToSqr(this.targetEntity);
-                if (distToPlayer > 16 && !controlsReleased) {
+                if (distToPlayer > PLAYER_REACH_DIST_SQR && !controlsReleased) {
                     this.entity.getNavigation().moveTo(this.targetEntity, this.speed);
                     materialWaitTicks = 0;
                 } else {
@@ -251,7 +252,7 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
             this.entity.getNavigation().moveTo(player, this.speed);
         } else if (finishing && this.targetEntity instanceof ServerPlayer player) {
             LookControls.lookAtPlayer(player, this.entity);
-            if (this.entity.distanceTo(player) <= 5) {
+            if (this.entity.distanceToSqr(player) <= PLAYER_REACH_DIST_SQR) {
                 EntityChatData data = ChatDataManager.getServerInstance().getOrCreateChatData(this.entity.getStringUUID());
                 String type = (actualType == null || actualType.isEmpty()) ? "structure" : actualType;
                 String msg = "<you have successfully completed the \"" + type + "\" build>";
