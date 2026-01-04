@@ -17,20 +17,16 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - New datagen provider to create index of builds (and calculates build score)
   - New block palette to support builds in any version, and replays in any version
   - Add AFK protection during the build record (to stop long pauses recorded on inventory screen or AFK)
-
-## Unreleased
-
-### Added
 - Document SPDX header and changelog requirements in AGENTS.md for contributors
 - Build goal and behavior enabling entities to construct structures for players
-- Behavior tests now cover BUILD and UNBUILD behaviors with live LLM responses
-- Build replays pause when materials are missing, stop four blocks from players, and prompt for supplies with recipe details
-- Placeholder follow particle and sound play when a build starts
-- Missing-material requests now broadcast the remaining recipe to nearby players in plain chat
-- Unit tests ensure build selection covers all height tiers and skill levels
-- Build skill increases after successful builds and syncs across clients
-- Build goal only begins after the builder reaches the player
-- Selecting builds logs skill, type, height tier, and chosen file
+  - Behavior tests now cover BUILD and UNBUILD behaviors with live LLM responses
+  - Build replays pause when materials are missing, stop four blocks from players, and prompt for supplies with recipe details
+  - Placeholder follow particle and sound play when a build starts
+  - Missing-material requests now broadcast the remaining recipe to nearby players in plain chat
+  - Unit tests ensure build selection covers all height tiers and skill levels
+  - Build skill increases after successful builds and syncs across clients
+  - Build goal only begins after the builder reaches the player
+  - Selecting builds logs skill, type, height tier, and chosen file
 
 ### Changed
 - Convert PNG screenshots to JPEG, compress, and remove less useful ones (smaller jar)
@@ -40,6 +36,9 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Build goal waits to reach the player, starts from the ground at that spot, follows the player until then, and returns to thank them when finished
 - LEAD goal guides players to nearby structures, biomes, resources, tags, or points of interest and apologizes when none are found within 300 blocks
 - LEAD goal no longer uses random coordinates when it can't locate something
+
+### Fixed
+- Defer goal selector updates to end-of-tick to avoid null goal crashes after build completion
 
 ## [3.0.0] - 2025-08-27
 

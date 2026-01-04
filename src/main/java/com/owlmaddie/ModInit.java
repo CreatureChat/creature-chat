@@ -6,6 +6,7 @@ package com.owlmaddie;
 import com.owlmaddie.commands.CreatureChatCommands;
 import com.owlmaddie.commands.BuildCommands;
 import com.owlmaddie.buildrec.BuildRecorder;
+import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.inventory.ModMenus;
 import com.owlmaddie.network.ServerPackets;
 import net.fabricmc.api.ModInitializer;
@@ -31,6 +32,7 @@ public class ModInit implements ModInitializer {
                 CreatureChatCommands.register();
                 BuildCommands.register();
                 BuildRecorder.init();
+                EntityBehaviorManager.init();
 
                 // Register menus and events
                 ModMenus.register();
