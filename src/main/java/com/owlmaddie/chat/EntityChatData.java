@@ -586,11 +586,8 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, buildGoal, GoalPriority.BUILD_PLAYER);
-                                if (playerData.friendship >= 0) {
-                                    ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FOLLOW_FRIEND_PARTICLE, 0.5, 1);
-                                } else {
-                                    ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FOLLOW_ENEMY_PARTICLE, 0.5, 1);
-                                }
+                                ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) BUILD_PARTICLE, 0.5, 1);
+
                                 entity.level().playSound(null, entity.blockPosition(), SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.PLAYERS, 1f, 1f);
 
                             } else if (behavior.getName().equals("UNBUILD")) {

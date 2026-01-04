@@ -41,6 +41,7 @@ public class ClientInit implements ClientModInitializer {
         ParticleFactoryRegistry.getInstance().register(Particles.FOLLOW_FRIEND_PARTICLE, CreatureParticleFactory::new);
         ParticleFactoryRegistry.getInstance().register(Particles.FOLLOW_ENEMY_PARTICLE,  CreatureParticleFactory::new);
         ParticleFactoryRegistry.getInstance().register(Particles.PROTECT_PARTICLE,       CreatureParticleFactory::new);
+        ParticleFactoryRegistry.getInstance().register(Particles.BUILD_PARTICLE,         CreatureParticleFactory::new);
         ParticleFactoryRegistry.getInstance().register(Particles.LEAD_FRIEND_PARTICLE,   CreatureParticleFactory::new);
         ParticleFactoryRegistry.getInstance().register(Particles.LEAD_ENEMY_PARTICLE,    CreatureParticleFactory::new);
         ParticleFactoryRegistry.getInstance().register(Particles.LEAD_PARTICLE,          LeadParticleFactory::new);

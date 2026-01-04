@@ -21,7 +21,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Build goal and behavior enabling entities to construct structures for players
   - Behavior tests now cover BUILD and UNBUILD behaviors with live LLM responses
   - Build replays pause when materials are missing, stop four blocks from players, and prompt for supplies with recipe details
-  - Placeholder follow particle and sound play when a build starts
+  - New build particle when a build starts
   - Missing-material requests now broadcast the remaining recipe to nearby players in plain chat
   - Unit tests ensure build selection covers all height tiers and skill levels
   - Build skill increases after successful builds and syncs across clients
