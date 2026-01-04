@@ -29,6 +29,8 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - Selecting builds logs skill, type, height tier, and chosen file
   - Relaxed build goal proximity checks so builders don't have to overlap players before starting or finishing
   - Require full collision blocks when selecting the build start ground
+- Friendly mobs with chat data now pick up items thrown by friends into their chat inventory
+- Expanded friendly pickup reach and restored pickup sound for chat-data mobs
 
 ### Changed
 - Convert PNG screenshots to JPEG, compress, and remove less useful ones (smaller jar)
