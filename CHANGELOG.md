@@ -31,6 +31,7 @@ All notable changes to **CreatureChat™** are documented in this file. The form
   - Require full collision blocks when selecting the build start ground
 - Friendly mobs with chat data now pick up items thrown by friends into their chat inventory
 - Expanded friendly pickup reach and restored pickup sound for chat-data mobs
+- Debounced LLM message when friends pick up dropped items
 
 ### Changed
 - Convert PNG screenshots to JPEG, compress, and remove less useful ones (smaller jar)

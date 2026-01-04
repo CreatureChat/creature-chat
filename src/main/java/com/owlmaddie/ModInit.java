@@ -8,6 +8,7 @@ import com.owlmaddie.commands.BuildCommands;
 import com.owlmaddie.buildrec.BuildRecorder;
 import com.owlmaddie.goals.EntityBehaviorManager;
 import com.owlmaddie.inventory.ModMenus;
+import com.owlmaddie.inventory.PickupMessageBatcher;
 import com.owlmaddie.network.ServerPackets;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
@@ -33,6 +34,7 @@ public class ModInit implements ModInitializer {
                 BuildCommands.register();
                 BuildRecorder.init();
                 EntityBehaviorManager.init();
+                PickupMessageBatcher.init();
 
                 // Register menus and events
                 ModMenus.register();

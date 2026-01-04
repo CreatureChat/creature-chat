@@ -8,12 +8,12 @@ import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.inventory.ChatInventory;
 import com.owlmaddie.inventory.MobInventoryMenu;
+import com.owlmaddie.inventory.PickupMessageBatcher;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.world.entity.HasCustomInventoryScreen;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -127,7 +127,7 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
     }
 
     @Inject(method = "pickUpItem", at = @At("HEAD"), cancellable = true)
-    private void creaturechat$pickupFriendItem(ServerLevel level, ItemEntity itemEntity, CallbackInfo ci) {
+    private void creaturechat$pickupFriendItem(ItemEntity itemEntity, CallbackInfo ci) {
         Mob thisEntity = (Mob) (Object) this;
         if (thisEntity.level().isClientSide()) {
             return;
@@ -162,6 +162,7 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
         if (pickedUp > 0) {
             thisEntity.onItemPickup(itemEntity);
             thisEntity.take(itemEntity, pickedUp);
+            PickupMessageBatcher.recordPickup(thisEntity, throwerPlayer, stack, pickedUp);
         }
         if (remaining.isEmpty()) {
             itemEntity.discard();
