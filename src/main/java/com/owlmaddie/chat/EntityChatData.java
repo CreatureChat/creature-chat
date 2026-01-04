@@ -581,7 +581,11 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
 
                             } else if (behavior.getName().equals("BUILD")) {
-                                BuildPlayerGoal buildGoal = new BuildPlayerGoal(player, entity, entitySpeedMedium, behavior.getArgument());
+                                String buildType = behavior.getArgument();
+                                if (buildType != null && buildType.equalsIgnoreCase("random")) {
+                                    buildType = null;
+                                }
+                                BuildPlayerGoal buildGoal = new BuildPlayerGoal(player, entity, entitySpeedMedium, buildType);
                                 EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
