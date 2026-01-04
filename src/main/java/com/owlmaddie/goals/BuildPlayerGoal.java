@@ -17,6 +17,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.AABB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +30,8 @@ import java.util.Map;
  * replay as the goal starts and stops.
  */
 public class BuildPlayerGoal extends PlayerBaseGoal {
-    private static final double PLAYER_REACH_DIST_SQR = 25.0;
+    private static final double PLAYER_MESSAGE_DIST_SQR = 9.0;
+    private static final double START_CLOSE_DIST_SQR = 0.25;
     private final Mob entity;
     private final String buildType;
     private final double speed;
@@ -102,8 +104,7 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
 
         if (!startedReplay) {
             if (!reachedPlayer) {
-                double distToPlayer = this.entity.distanceToSqr(this.targetEntity);
-                if (distToPlayer <= PLAYER_REACH_DIST_SQR) {
+                if (isStartCloseToPlayer()) {
                     buildPos = findStartPos(BlockPos.containing(this.targetEntity.position()));
                     reachedPlayer = true;
                     LOGGER.info("[BuildGoal] reached player choose buildPos {}", buildPos);
@@ -160,7 +161,7 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
                 }
                 fetchingMaterials = true;
                 double distToPlayer = this.entity.distanceToSqr(this.targetEntity);
-                if (distToPlayer > PLAYER_REACH_DIST_SQR && !controlsReleased) {
+                if (distToPlayer > PLAYER_MESSAGE_DIST_SQR && !controlsReleased) {
                     this.entity.getNavigation().moveTo(this.targetEntity, this.speed);
                 } else {
                     if (!controlsReleased) {
@@ -259,7 +260,7 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
             this.entity.getNavigation().moveTo(player, this.speed);
         } else if (finishing && this.targetEntity instanceof ServerPlayer player) {
             LookControls.lookAtPlayer(player, this.entity);
-            if (this.entity.distanceToSqr(player) <= PLAYER_REACH_DIST_SQR) {
+            if (this.entity.distanceToSqr(player) <= PLAYER_MESSAGE_DIST_SQR) {
                 EntityChatData data = ChatDataManager.getServerInstance().getOrCreateChatData(this.entity.getStringUUID());
                 String type = (actualType == null || actualType.isEmpty()) ? "structure" : actualType;
                 String msg = "<you have successfully completed the \"" + type + "\" build>";
@@ -329,5 +330,20 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
             }
         }
         return true;
+    }
+
+    private boolean isStartCloseToPlayer() {
+        if (this.targetEntity == null) {
+            return false;
+        }
+        AABB a = this.entity.getBoundingBox();
+        AABB b = this.targetEntity.getBoundingBox();
+        if (a.intersects(b)) {
+            return true;
+        }
+        double dx = Math.max(0.0, Math.max(b.minX - a.maxX, a.minX - b.maxX));
+        double dy = Math.max(0.0, Math.max(b.minY - a.maxY, a.minY - b.maxY));
+        double dz = Math.max(0.0, Math.max(b.minZ - a.maxZ, a.minZ - b.maxZ));
+        return dx * dx + dy * dy + dz * dz <= START_CLOSE_DIST_SQR;
     }
 }
