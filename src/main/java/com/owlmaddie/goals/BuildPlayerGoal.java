@@ -77,7 +77,7 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
             LOGGER.info("[BuildGoal] start navigation toward player");
             reachedPlayer = false;
             buildPos = null;
-            this.entity.getNavigation().moveTo(this.targetEntity, this.speed);
+            moveTowardPlayer(false);
         } else {
             BlockPos cursor = BuildRecorder.getReplayCursor(this.entity);
             if (cursor != null) {
@@ -108,17 +108,17 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
                     buildPos = findStartPos(BlockPos.containing(this.targetEntity.position()));
                     reachedPlayer = true;
                     LOGGER.info("[BuildGoal] reached player choose buildPos {}", buildPos);
-                    this.entity.getNavigation().moveTo(buildPos.getX(), buildPos.getY() + 1, buildPos.getZ(), this.speed);
                 } else {
-                    this.entity.getNavigation().moveTo(this.targetEntity, this.speed);
+                    double distToPlayer = this.entity.distanceToSqr(this.targetEntity);
+                    moveTowardPlayer(distToPlayer <= 4.0);
                     return;
                 }
             }
 
-            double dist = this.entity.distanceToSqr(buildPos.getX() + 0.5, buildPos.getY() + 1, buildPos.getZ() + 0.5);
-            if (dist <= 1.0 || !this.entity.getNavigation().isInProgress()) {
-                // ensure the actor stands on the surface so replay bases aren't one block too low
-                this.entity.teleportTo(buildPos.getX() + 0.5, buildPos.getY() + 1, buildPos.getZ() + 0.5);
+            double distToPlayer = this.entity.distanceToSqr(this.targetEntity);
+            moveTowardPlayer(distToPlayer <= 4.0);
+            if (isStartCloseToPlayer()) {
+                this.entity.getNavigation().stop();
                 EntityChatData data = ChatDataManager.getServerInstance().getOrCreateChatData(this.entity.getStringUUID());
                 int tier = this.entity.getBbHeight() < 1 ? 1 : (this.entity.getBbHeight() < 2 ? 2 : 3);
                 String file = BuildRecorder.randomBuildFile(this.entity.getBbHeight(), buildType, data.buildLevel);
@@ -135,8 +135,6 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
                     completed = true;
                     LOGGER.info("[BuildGoal] failed to start replay type={}", buildType);
                 }
-            } else {
-                this.entity.getNavigation().moveTo(buildPos.getX(), buildPos.getY() + 1, buildPos.getZ(), this.speed);
             }
             return;
         }
@@ -261,6 +259,7 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
         } else if (finishing && this.targetEntity instanceof ServerPlayer player) {
             LookControls.lookAtPlayer(player, this.entity);
             if (this.entity.distanceToSqr(player) <= PLAYER_MESSAGE_DIST_SQR) {
+                this.entity.getNavigation().stop();
                 EntityChatData data = ChatDataManager.getServerInstance().getOrCreateChatData(this.entity.getStringUUID());
                 String type = (actualType == null || actualType.isEmpty()) ? "structure" : actualType;
                 String msg = "<you have successfully completed the \"" + type + "\" build>";
@@ -345,5 +344,27 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
         double dy = Math.max(0.0, Math.max(b.minY - a.maxY, a.minY - b.maxY));
         double dz = Math.max(0.0, Math.max(b.minZ - a.maxZ, a.minZ - b.maxZ));
         return dx * dx + dy * dy + dz * dz <= START_CLOSE_DIST_SQR;
+    }
+
+    private void moveTowardPlayer(boolean forceClose) {
+        if (this.targetEntity == null) {
+            return;
+        }
+        if (forceClose) {
+            this.entity.getNavigation().stop();
+            this.entity.getMoveControl().setWantedPosition(
+                    this.targetEntity.getX(),
+                    this.targetEntity.getY(),
+                    this.targetEntity.getZ(),
+                    this.speed
+            );
+        } else {
+            this.entity.getNavigation().moveTo(
+                    this.targetEntity.getX(),
+                    this.targetEntity.getY(),
+                    this.targetEntity.getZ(),
+                    this.speed
+            );
+        }
     }
 }
