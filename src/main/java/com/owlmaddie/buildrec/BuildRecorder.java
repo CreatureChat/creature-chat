@@ -71,6 +71,7 @@ public class BuildRecorder {
     private static final int MAX_IDLE_TICKS = 20; // 1 second
     private static List<BuildIndex> BUILD_INDEX;
     private static final Map<Mob, Map<String, Integer>> MISSING_RECIPES = new ConcurrentHashMap<>();
+    private static final Map<String, ReplayBounds> BOUNDS_CACHE = new ConcurrentHashMap<>();
 
     static {
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
@@ -164,6 +165,11 @@ public class BuildRecorder {
         BuildIndex pick = filtered.get(new Random().nextInt(filtered.size()));
         String path = pick.type + ("any".equalsIgnoreCase(pick.height) ? "" : "/" + pick.height) + "/" + pick.file;
         return path;
+    }
+
+    public static ReplayBounds getReplayBounds(String fileName) {
+        String actual = fileName.endsWith(".json.gz") ? fileName : fileName + ".json.gz";
+        return BOUNDS_CACHE.computeIfAbsent(actual, BuildRecorder::loadReplayBounds);
     }
 
     public static boolean start(ServerPlayer player, String type, String height, String name) {
@@ -276,6 +282,26 @@ public class BuildRecorder {
         return false;
     }
 
+    private static ReplayBounds loadReplayBounds(String fileName) {
+        Path file = buildRootDir().resolve(fileName);
+        if (!Files.exists(file)) {
+            LOGGER.info("[BuildRec] bounds missing file={}", file);
+            return null;
+        }
+        try {
+            BuildRecordIO.Loaded loaded = BuildRecordIO.read(file);
+            ReplayBounds bounds = ReplayBounds.fromActions(loaded.actions);
+            if (bounds == null) {
+                LOGGER.info("[BuildRec] bounds empty file={}", fileName);
+            }
+            return bounds;
+        } catch (IOException | JsonParseException e) {
+            LOGGER.error("[BuildRec] bounds failed to load {}", file, e);
+            return null;
+        }
+    }
+
+
     public static void pauseReplay(Mob actor) {
         REPLAYS.stream().filter(r -> r.actor == actor).forEach(r -> {
             r.paused = true;
@@ -286,6 +312,14 @@ public class BuildRecorder {
     public static void resumeReplay(Mob actor) {
         REPLAYS.stream().filter(r -> r.actor == actor).forEach(r -> {
             r.paused = false;
+            if (r.action != null) {
+                r.sx = r.actor.getX();
+                r.sy = r.actor.getY();
+                r.sz = r.actor.getZ();
+                r.syaw = r.actor.getYRot();
+                r.spitch = r.actor.getXRot();
+                r.progress = 0;
+            }
             r.actor.setNoAi(true);
             MISSING_RECIPES.remove(actor);
         });
@@ -852,6 +886,67 @@ public class BuildRecorder {
             this.baseX = p.getX();
             this.baseY = p.getY();
             this.baseZ = p.getZ();
+        }
+    }
+
+    public static class ReplayBounds {
+        public final int minX;
+        public final int minY;
+        public final int minZ;
+        public final int maxX;
+        public final int maxY;
+        public final int maxZ;
+
+        public final int sizeX;
+        public final int sizeY;
+        public final int sizeZ;
+
+        public ReplayBounds(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+            this.minX = minX;
+            this.minY = minY;
+            this.minZ = minZ;
+            this.maxX = maxX;
+            this.maxY = maxY;
+            this.maxZ = maxZ;
+            this.sizeX = maxX - minX + 1;
+            this.sizeY = maxY - minY + 1;
+            this.sizeZ = maxZ - minZ + 1;
+        }
+
+        private static ReplayBounds fromActions(List<Action> actions) {
+            boolean hasBounds = false;
+            int minX = 0, minY = 0, minZ = 0;
+            int maxX = 0, maxY = 0, maxZ = 0;
+            for (Action a : actions) {
+                int px = Mth.floor(a.px);
+                int py = Mth.floor(a.py);
+                int pz = Mth.floor(a.pz);
+                if (!hasBounds) {
+                    minX = maxX = px;
+                    minY = maxY = py;
+                    minZ = maxZ = pz;
+                    hasBounds = true;
+                } else {
+                    if (px < minX) minX = px;
+                    if (px > maxX) maxX = px;
+                    if (py < minY) minY = py;
+                    if (py > maxY) maxY = py;
+                    if (pz < minZ) minZ = pz;
+                    if (pz > maxZ) maxZ = pz;
+                }
+                if ("place".equals(a.action) || "break".equals(a.action) || "interact".equals(a.action)) {
+                    int bx = a.bx;
+                    int by = a.by;
+                    int bz = a.bz;
+                    if (bx < minX) minX = bx;
+                    if (bx > maxX) maxX = bx;
+                    if (by < minY) minY = by;
+                    if (by > maxY) maxY = by;
+                    if (bz < minZ) minZ = bz;
+                    if (bz > maxZ) maxZ = bz;
+                }
+            }
+            return hasBounds ? new ReplayBounds(minX, minY, minZ, maxX, maxY, maxZ) : null;
         }
     }
 
