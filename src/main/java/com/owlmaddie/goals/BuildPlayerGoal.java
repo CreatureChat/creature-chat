@@ -191,7 +191,7 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
             int tier = this.entity.getBbHeight() < 1 ? 1 : (this.entity.getBbHeight() < 2 ? 2 : 3);
             if (buildFile == null) {
                 buildFile = BuildRecorder.randomBuildFile(this.entity.getBbHeight(), buildType, data.buildLevel);
-                buildBounds = buildFile != null ? BuildRecorder.getReplayBounds(buildFile) : null;
+                buildBounds = buildFile != null ? BuildRecorder.getReplayBounds(buildFile, false) : null;
                 LOGGER.info("[BuildGoal] select build skill={} type={} heightTier={} file={}", data.buildLevel, buildType, tier, buildFile);
                 effectiveBounds = buildBounds != null ? expandBoundsForEntity(buildBounds) : null;
                 if (effectiveBounds != null) {

@@ -51,7 +51,7 @@ Include as many behaviors as needed at the end of the message. These are the ONL
 <ATTACK> Attack the player (if you are strong and brave). If the player threatens you, please output this behavior to attack the player and defend yourself.
 <PROTECT> Protect and defend ONLY the player when they are attacked (if you are strong and brave). Please output this behavior to keep the player alive and safe.
 <UNPROTECT> Stop protecting the player.
-<BUILD [type]> Build a structure for the player. Types: house, statue, pond, garden, farm, castle, mine, trap, campfire. If no type or an unknown one is given, choose a random valid type and output that exact type (never output "random").
+<BUILD [type]> Build a structure (house, statue, pond, garden, farm, castle, mine, trap, campfire); if type is missing or invalid, choose the closest valid type and never output "random".
 <UNBUILD> Stop building and cancel the current build. When missing materials for build, do not output this.
 
 Rules:
@@ -115,6 +115,9 @@ ENTITY: Gotcha... take care out there. <UNPROTECT>
 
 PLAYER: Build me a house
 ENTITY: On it! <BUILD house>
+
+PLAYER: Can you make me a shelter please?
+ENTITY: No problem! I will build your house now. <BUILD house>
 
 PLAYER: Stop building
 ENTITY: Okay, I’ll quit. <UNBUILD>

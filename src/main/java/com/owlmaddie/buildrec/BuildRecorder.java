@@ -69,6 +69,7 @@ public class BuildRecorder {
     private static final List<Replay> REPLAYS = new ArrayList<>();
     private static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
     private static final int MAX_IDLE_TICKS = 20; // 1 second
+    private static final String BUILD_INDEX_FILE = "index.json";
     private static List<BuildIndex> BUILD_INDEX;
     private static final Map<Mob, Map<String, Integer>> MISSING_RECIPES = new ConcurrentHashMap<>();
     private static final Map<String, ReplayBounds> BOUNDS_CACHE = new ConcurrentHashMap<>();
@@ -131,23 +132,15 @@ public class BuildRecorder {
 
     private static void loadBuildIndex() {
         if (BUILD_INDEX != null) return;
-        List<BuildIndex> list = new ArrayList<>();
-        FabricLoader.getInstance().getModContainer("creaturechat")
-                .flatMap(m -> m.findPath("assets/creaturechat/builds/index.json"))
-                .ifPresent(path -> {
-                    try (var reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-                        JsonObject root = BuildRecordIO.GSON.fromJson(reader, JsonObject.class);
-                        JsonArray arr = root.getAsJsonArray("builds");
-                        for (var el : arr) {
-                            JsonObject o = el.getAsJsonObject();
-                            list.add(new BuildIndex(o.get("type").getAsString(), o.get("height").getAsString(),
-                                    o.get("file").getAsString(), o.get("score").getAsInt()));
-                        }
-                    } catch (IOException | JsonParseException e) {
-                        LOGGER.error("[BuildRec] failed to read build index", e);
-                    }
-                });
-        BUILD_INDEX = list;
+        Path indexPath = buildRootDir().resolve(BUILD_INDEX_FILE);
+        if (Files.exists(indexPath)) {
+            List<BuildIndex> list = readBuildIndex(indexPath);
+            if (list != null) {
+                BUILD_INDEX = list;
+                return;
+            }
+        }
+        rebuildBuildIndex();
     }
 
     public static String randomBuildFile(double entityHeight, String type, int level) {
@@ -168,8 +161,26 @@ public class BuildRecorder {
     }
 
     public static ReplayBounds getReplayBounds(String fileName) {
+        return getReplayBounds(fileName, true);
+    }
+
+    public static ReplayBounds getReplayBounds(String fileName, boolean includeMovement) {
         String actual = fileName.endsWith(".json.gz") ? fileName : fileName + ".json.gz";
-        return BOUNDS_CACHE.computeIfAbsent(actual, BuildRecorder::loadReplayBounds);
+        String key = actual + (includeMovement ? "|move" : "|static");
+        return BOUNDS_CACHE.computeIfAbsent(key, ignored -> loadReplayBounds(actual, includeMovement));
+    }
+
+    public static List<String> getIndexedBuildIds() {
+        loadBuildIndex();
+        if (BUILD_INDEX == null || BUILD_INDEX.isEmpty()) {
+            return List.of();
+        }
+        LinkedHashSet<String> ids = new LinkedHashSet<>();
+        for (BuildIndex e : BUILD_INDEX) {
+            String path = e.type + ("any".equalsIgnoreCase(e.height) ? "" : "/" + e.height) + "/" + e.file;
+            ids.add(path.replaceFirst("\\.json\\.gz$", ""));
+        }
+        return new ArrayList<>(ids);
     }
 
     public static boolean start(ServerPlayer player, String type, String height, String name) {
@@ -212,14 +223,13 @@ public class BuildRecorder {
     }
 
     private static boolean startReplayInternal(ServerPlayer player, String fileName, EntityType<? extends Mob> entityType, int speed, Mob existingActor) {
-        Path dir = buildRootDir();
         String actual = fileName.endsWith(".json.gz") ? fileName : fileName + ".json.gz";
-        Path file = dir.resolve(actual);
+        Path file = resolveBuildFile(actual);
         LOGGER.info("[BuildRec] replay file={} entity={} speed={} player={}", actual,
                 entityType != null ? BuiltInRegistries.ENTITY_TYPE.getKey(entityType).toString() : "pig", speed,
                 player.getGameProfile().getName());
-        if (!Files.exists(file)) {
-            LOGGER.info("[BuildRec] replay missing file={}", file);
+        if (file == null || !Files.exists(file)) {
+            LOGGER.info("[BuildRec] replay missing file={}", actual);
             return false;
         }
         try {
@@ -282,15 +292,15 @@ public class BuildRecorder {
         return false;
     }
 
-    private static ReplayBounds loadReplayBounds(String fileName) {
-        Path file = buildRootDir().resolve(fileName);
-        if (!Files.exists(file)) {
-            LOGGER.info("[BuildRec] bounds missing file={}", file);
+    private static ReplayBounds loadReplayBounds(String fileName, boolean includeMovement) {
+        Path file = resolveBuildFile(fileName);
+        if (file == null || !Files.exists(file)) {
+            LOGGER.info("[BuildRec] bounds missing file={}", fileName);
             return null;
         }
         try {
             BuildRecordIO.Loaded loaded = BuildRecordIO.read(file);
-            ReplayBounds bounds = ReplayBounds.fromActions(loaded.actions);
+            ReplayBounds bounds = ReplayBounds.fromActions(loaded.actions, includeMovement);
             if (bounds == null) {
                 LOGGER.info("[BuildRec] bounds empty file={}", fileName);
             }
@@ -640,6 +650,16 @@ public class BuildRecorder {
         return dir;
     }
 
+    private static Path resolveBuildFile(String fileName) {
+        Path local = buildRootDir().resolve(fileName);
+        if (Files.exists(local)) {
+            return local;
+        }
+        return FabricLoader.getInstance().getModContainer("creaturechat")
+                .flatMap(m -> m.findPath("assets/creaturechat/builds/" + fileName))
+                .orElse(null);
+    }
+
     private static Path buildDir(String type, String height) {
         Path dir = buildRootDir().resolve(type);
         if (height != null && !height.equalsIgnoreCase("any")) {
@@ -844,6 +864,7 @@ public class BuildRecorder {
             }
             LOGGER.info("[BuildRec] save file={} actions={} additions={} destroys={}", fileName, actions.size(), additions, destroys);
             String rel = buildRootDir().relativize(file).toString().replace('\\', '/');
+            rebuildBuildIndex();
             int finalCount = finalBlocks.size();
             return new Summary(rel, actions.size(), additions, destroys, recipe, unique, sizeX, sizeY, sizeZ, finalCount);
         }
@@ -889,6 +910,136 @@ public class BuildRecorder {
         }
     }
 
+    private static void rebuildBuildIndex() {
+        Path indexPath = buildRootDir().resolve(BUILD_INDEX_FILE);
+        List<IndexEntry> entries = new ArrayList<>();
+        LinkedHashMap<String, IndexEntry> byKey = new LinkedHashMap<>();
+        collectBuildEntriesFromResources(byKey);
+        collectBuildEntriesFromLocal(byKey);
+        entries.addAll(byKey.values());
+        entries.sort(Comparator.comparingDouble(e -> e.raw));
+        int n = entries.size();
+        for (int i = 0; i < n; i++) {
+            entries.get(i).score = (int) Math.min(5, Math.floor((double) i * 5 / n) + 1);
+        }
+        List<BuildIndex> list = new ArrayList<>();
+        JsonArray arr = new JsonArray();
+        for (IndexEntry e : entries) {
+            list.add(new BuildIndex(e.type, e.height, e.file, e.score));
+            JsonObject o = new JsonObject();
+            o.addProperty("type", e.type);
+            o.addProperty("height", e.height);
+            o.addProperty("file", e.file);
+            JsonObject recipe = new JsonObject();
+            for (Map.Entry<String, Integer> r : e.recipe.entrySet()) {
+                recipe.addProperty(r.getKey(), r.getValue());
+            }
+            o.add("recipe", recipe);
+            o.addProperty("score", e.score);
+            arr.add(o);
+        }
+        JsonObject root = new JsonObject();
+        root.add("builds", arr);
+        try (BufferedWriter w = Files.newBufferedWriter(indexPath, StandardCharsets.UTF_8)) {
+            BuildRecordIO.GSON.toJson(root, w);
+        } catch (IOException e) {
+            LOGGER.error("[BuildRec] failed to write build index {}", indexPath, e);
+        }
+        BUILD_INDEX = list;
+        LOGGER.info("[BuildRec] rebuilt build index entries={} file={}", entries.size(), indexPath);
+    }
+
+    private static void collectBuildEntriesFromLocal(Map<String, IndexEntry> entries) {
+        Path root = buildRootDir();
+        collectBuildEntries(root, entries, true);
+    }
+
+    private static void collectBuildEntriesFromResources(Map<String, IndexEntry> entries) {
+        FabricLoader.getInstance().getModContainer("creaturechat")
+                .flatMap(m -> m.findPath("assets/creaturechat/builds"))
+                .ifPresent(path -> collectBuildEntries(path, entries, false));
+    }
+
+    private static void collectBuildEntries(Path root, Map<String, IndexEntry> entries, boolean preferLocal) {
+        try {
+            Files.walk(root)
+                    .filter(p -> p.toString().endsWith(".json.gz"))
+                    .forEach(p -> addBuildEntry(root, p, entries, preferLocal));
+        } catch (IOException ignored) {
+        }
+    }
+
+    private static void addBuildEntry(Path root, Path file, Map<String, IndexEntry> entries, boolean preferLocal) {
+        try {
+            BuildRecordIO.Loaded loaded = BuildRecordIO.read(file);
+            Path rel = root.relativize(file);
+            if (rel.getNameCount() < 2) {
+                return;
+            }
+            IndexEntry e = new IndexEntry();
+            e.file = rel.getFileName().toString();
+            e.type = rel.getName(0).toString();
+            e.height = rel.getNameCount() > 2 ? rel.getName(1).toString() : "any";
+            e.recipe = loaded.meta.recipe != null ? loaded.meta.recipe : new LinkedHashMap<>();
+            e.raw = rawScore(loaded);
+            String key = e.type + "/" + e.height + "/" + e.file;
+            if (preferLocal || !entries.containsKey(key)) {
+                entries.put(key, e);
+            }
+        } catch (IOException | RuntimeException ignored) {
+        }
+    }
+
+    private static double rawScore(BuildRecordIO.Loaded loaded) {
+        BuildRecordIO.Meta meta = loaded.meta;
+        Map<String, Integer> recipe = meta.recipe != null ? meta.recipe : Map.of();
+        int unique = recipe.size();
+        int total = recipe.values().stream().mapToInt(Integer::intValue).sum();
+        int steps = loaded.actions.size();
+        int duration = loaded.actions.stream().mapToInt(a -> a.dt).sum();
+        int rarity = recipe.entrySet().stream().mapToInt(e -> {
+            String name = e.getKey();
+            int base = 1;
+            if (name.contains("diamond") || name.contains("netherite")) base = 4;
+            else if (name.contains("gold") || name.contains("emerald")) base = 3;
+            else if (name.contains("iron") || name.contains("copper")) base = 2;
+            return base * e.getValue();
+        }).sum();
+        return unique * 5 + total + steps + (duration / 20.0) + rarity * 3;
+    }
+
+    private static List<BuildIndex> readBuildIndex(Path path) {
+        try (var reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+            JsonObject root = BuildRecordIO.GSON.fromJson(reader, JsonObject.class);
+            JsonArray arr = root != null ? root.getAsJsonArray("builds") : null;
+            if (arr == null) {
+                return null;
+            }
+            List<BuildIndex> list = new ArrayList<>();
+            for (var el : arr) {
+                JsonObject o = el.getAsJsonObject();
+                if (!o.has("type") || !o.has("height") || !o.has("file") || !o.has("score")) {
+                    continue;
+                }
+                list.add(new BuildIndex(o.get("type").getAsString(), o.get("height").getAsString(),
+                        o.get("file").getAsString(), o.get("score").getAsInt()));
+            }
+            return list;
+        } catch (IOException | JsonParseException e) {
+            LOGGER.error("[BuildRec] failed to read build index {}", path, e);
+            return null;
+        }
+    }
+
+    private static class IndexEntry {
+        String type;
+        String height;
+        String file;
+        Map<String, Integer> recipe = new LinkedHashMap<>();
+        double raw;
+        int score;
+    }
+
     public static class ReplayBounds {
         public final int minX;
         public final int minY;
@@ -913,37 +1064,46 @@ public class BuildRecorder {
             this.sizeZ = maxZ - minZ + 1;
         }
 
-        private static ReplayBounds fromActions(List<Action> actions) {
+        private static ReplayBounds fromActions(List<Action> actions, boolean includeMovement) {
             boolean hasBounds = false;
             int minX = 0, minY = 0, minZ = 0;
             int maxX = 0, maxY = 0, maxZ = 0;
             for (Action a : actions) {
-                int px = Mth.floor(a.px);
-                int py = Mth.floor(a.py);
-                int pz = Mth.floor(a.pz);
-                if (!hasBounds) {
-                    minX = maxX = px;
-                    minY = maxY = py;
-                    minZ = maxZ = pz;
-                    hasBounds = true;
-                } else {
-                    if (px < minX) minX = px;
-                    if (px > maxX) maxX = px;
-                    if (py < minY) minY = py;
-                    if (py > maxY) maxY = py;
-                    if (pz < minZ) minZ = pz;
-                    if (pz > maxZ) maxZ = pz;
+                if (includeMovement) {
+                    int px = Mth.floor(a.px);
+                    int py = Mth.floor(a.py);
+                    int pz = Mth.floor(a.pz);
+                    if (!hasBounds) {
+                        minX = maxX = px;
+                        minY = maxY = py;
+                        minZ = maxZ = pz;
+                        hasBounds = true;
+                    } else {
+                        if (px < minX) minX = px;
+                        if (px > maxX) maxX = px;
+                        if (py < minY) minY = py;
+                        if (py > maxY) maxY = py;
+                        if (pz < minZ) minZ = pz;
+                        if (pz > maxZ) maxZ = pz;
+                    }
                 }
                 if ("place".equals(a.action) || "break".equals(a.action) || "interact".equals(a.action)) {
                     int bx = a.bx;
                     int by = a.by;
                     int bz = a.bz;
-                    if (bx < minX) minX = bx;
-                    if (bx > maxX) maxX = bx;
-                    if (by < minY) minY = by;
-                    if (by > maxY) maxY = by;
-                    if (bz < minZ) minZ = bz;
-                    if (bz > maxZ) maxZ = bz;
+                    if (!hasBounds) {
+                        minX = maxX = bx;
+                        minY = maxY = by;
+                        minZ = maxZ = bz;
+                        hasBounds = true;
+                    } else {
+                        if (bx < minX) minX = bx;
+                        if (bx > maxX) maxX = bx;
+                        if (by < minY) minY = by;
+                        if (by > maxY) maxY = by;
+                        if (bz < minZ) minZ = bz;
+                        if (bz > maxZ) maxZ = bz;
+                    }
                 }
             }
             return hasBounds ? new ReplayBounds(minX, minY, minZ, maxX, maxY, maxZ) : null;

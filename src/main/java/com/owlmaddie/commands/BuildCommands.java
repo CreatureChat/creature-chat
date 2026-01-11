@@ -12,7 +12,6 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.owlmaddie.buildrec.BuildRecorder;
 import com.owlmaddie.buildrec.BuildRecorder.Summary;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -28,13 +27,10 @@ import net.minecraft.world.entity.MobCategory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Commands to record and replay builds.
@@ -109,6 +105,8 @@ public class BuildCommands {
         int spd = speed;
         ServerPlayer player = context.getSource().getPlayerOrException();
         String id = StringArgumentType.getString(context, "id").replace('\\', '/');
+        BuildRecorder.ReplayBounds moveBounds = BuildRecorder.getReplayBounds(id, true);
+        BuildRecorder.ReplayBounds staticBounds = BuildRecorder.getReplayBounds(id, false);
         EntityType<? extends Mob> type = null;
         if (entityId != null && !"player".equals(entityId.getPath())) {
             EntityType<?> raw = BuiltInRegistries.ENTITY_TYPE.getOptional(entityId).orElse(null);
@@ -123,6 +121,20 @@ public class BuildCommands {
                 : entityId.toString());
         LOGGER.info("[BuildRec] command replay player={} file={} entity={} speed={}",
                 player.getGameProfile().getName(), id, entityStr, spd);
+        if (moveBounds != null) {
+            LOGGER.info("[BuildRec] replay bounds file={} includeMovement=true min=({}, {}, {}) max=({}, {}, {}) size=({}, {}, {})",
+                    id, moveBounds.minX, moveBounds.minY, moveBounds.minZ, moveBounds.maxX, moveBounds.maxY, moveBounds.maxZ,
+                    moveBounds.sizeX, moveBounds.sizeY, moveBounds.sizeZ);
+        } else {
+            LOGGER.info("[BuildRec] replay bounds file={} includeMovement=true not found", id);
+        }
+        if (staticBounds != null) {
+            LOGGER.info("[BuildRec] replay bounds file={} includeMovement=false min=({}, {}, {}) max=({}, {}, {}) size=({}, {}, {})",
+                    id, staticBounds.minX, staticBounds.minY, staticBounds.minZ, staticBounds.maxX, staticBounds.maxY, staticBounds.maxZ,
+                    staticBounds.sizeX, staticBounds.sizeY, staticBounds.sizeZ);
+        } else {
+            LOGGER.info("[BuildRec] replay bounds file={} includeMovement=false not found", id);
+        }
         if (BuildRecorder.startReplay(player, id, type, spd)) {
             final int fs = spd;
             final String fid = id;
@@ -134,15 +146,8 @@ public class BuildCommands {
     }
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
-        Path dir = FabricLoader.getInstance().getConfigDir().resolve("creaturechat").resolve("builds");
-        try (Stream<Path> stream = Files.walk(dir)) {
-            stream.filter(Files::isRegularFile)
-                    .map(p -> dir.relativize(p)
-                            .toString()
-                            .replaceFirst("\\.json\\.gz$", "")
-                            .replace('\\', '/'))
-                    .forEach(id -> builder.suggest("\"" + id + "\""));
-        } catch (Exception ignored) {
+        for (String id : BuildRecorder.getIndexedBuildIds()) {
+            builder.suggest("\"" + id + "\"");
         }
         return builder.buildFuture();
     }
@@ -169,4 +174,3 @@ public class BuildCommands {
                 || entityType == EntityType.SNOW_GOLEM;
     }
 }
-

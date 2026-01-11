@@ -41,6 +41,9 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Build goal waits to reach the player, starts from the ground at that spot, follows the player until then, and returns to thank them when finished
 - LEAD goal guides players to nearby structures, biomes, resources, tags, or points of interest and apologizes when none are found within 300 blocks
 - LEAD goal no longer uses random coordinates when it can't locate something
+- Build replay command logs replay bounds with and without player movement
+- Build index now rebuilds at runtime from bundled and local builds
+- Build goal bounds now ignore player movement
 
 ### Fixed
 - Defer goal selector updates to end-of-tick to avoid null goal crashes after build completion
