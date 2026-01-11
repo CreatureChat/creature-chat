@@ -54,9 +54,12 @@ public class BehaviorTests {
             "Come with me please",
             "Quickly, please join me on an adventure");
     List<String> leadMessages = Arrays.asList(
-            "Take me to a secret forrest",
-            "Where is the strong hold?",
-            "Can you help me find the location of the secret artifact?");
+            "Please take me to a jungle",
+            "Where is the nearest village?",
+            "Lead me to a slime chunk",
+            "Can you guide me to the moon?",
+            "Can you show me your home?",
+            "Please take me to the badlands");
     List<String> attackMessages = Arrays.asList(
             "<attacked you directly with Stone Axe>",
             "<attacked you indirectly with Arrow>",
@@ -65,6 +68,14 @@ public class BehaviorTests {
             "Please protect me",
             "Please keep me safe friend",
             "Don't let them hurt me please");
+    List<String> buildMessages = Arrays.asList(
+            "Can you build a house for me?",
+            "Please make a garden here",
+            "Let's put up a small hut");
+    List<String> unBuildMessages = Arrays.asList(
+            "stop building",
+            "please cancel the build",
+            "you can quit building now");
     List<String> unFleeMessages = Arrays.asList(
             "I'm so sorry, please stop running away",
             "Stop fleeing immediately",
@@ -118,7 +129,7 @@ public class BehaviorTests {
             config.setModel(API_MODEL);
         }
         // Verify API key is set correctly
-        assertNotNull(API_KEY, NO_API_KEY);
+        Assumptions.assumeTrue(API_KEY != null && !API_KEY.isEmpty(), NO_API_KEY);
 
         // Load system chat prompt
         systemChatContents = readFileContents(systemChatPath);
@@ -144,14 +155,16 @@ public class BehaviorTests {
     @Test
     public void leadBrave() {
         for (String message : leadMessages) {
-            testPromptForBehavior(bravePath, List.of(message), "LEAD", "FOLLOW");
+            ParsedMessage result = testPromptForBehavior(bravePath, List.of(message), "LEAD", "FOLLOW");
+            assertTrue(result.getBehaviors().stream().anyMatch(b -> "LEAD".equals(b.getName()) && b.getArgument() != null && !b.getArgument().isEmpty()));
         }
     }
 
     @Test
     public void leadNervous() {
         for (String message : leadMessages) {
-            testPromptForBehavior(nervousPath, List.of(message), "LEAD", "FOLLOW");
+            ParsedMessage result = testPromptForBehavior(nervousPath, List.of(message), "LEAD", "FOLLOW");
+            assertTrue(result.getBehaviors().stream().anyMatch(b -> "LEAD".equals(b.getName()) && b.getArgument() != null && !b.getArgument().isEmpty()));
         }
     }
 
@@ -191,10 +204,38 @@ public class BehaviorTests {
     }
 
     @Test
+    public void buildBrave() {
+        for (String message : buildMessages) {
+            testPromptForBehavior(bravePath, List.of(message), "BUILD", null);
+        }
+    }
+
+    @Test
+    public void buildNervous() {
+        for (String message : buildMessages) {
+            testPromptForBehavior(nervousPath, List.of(message), "BUILD", null);
+        }
+    }
+
+    @Test
+    public void unBuildBrave() {
+        for (String message : unBuildMessages) {
+            testPromptForBehavior(bravePath, List.of(message), "UNBUILD", null);
+        }
+    }
+
+    @Test
+    public void unBuildNervous() {
+        for (String message : unBuildMessages) {
+            testPromptForBehavior(nervousPath, List.of(message), "UNBUILD", null);
+        }
+    }
+
+    @Test
     public void friendshipUpNervous() {
         for (String message : friendshipUpMessages) {
             ParsedMessage result = testPromptForBehavior(nervousPath, List.of(message), "FRIENDSHIP+", null);
-            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() > 0));
+            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgumentAsInt() > 0));
         }
     }
 
@@ -202,7 +243,7 @@ public class BehaviorTests {
     public void friendshipUpBrave() {
         for (String message : friendshipUpMessages) {
             ParsedMessage result = testPromptForBehavior(bravePath, List.of(message), "FRIENDSHIP+", null);
-            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() > 0));
+            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgumentAsInt() > 0));
         }
     }
 
@@ -210,8 +251,14 @@ public class BehaviorTests {
     public void friendshipDownNervous() {
         for (String message : friendshipDownMessages) {
             ParsedMessage result = testPromptForBehavior(nervousPath, List.of(message), "FRIENDSHIP-", null);
-            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgument() < 0));
+            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) && b.getArgumentAsInt() < 0));
         }
+    }
+
+    @Test
+    public void missingItemsDoesNotUnbuild() {
+        String message = "The build is paused because I'm missing materials. Next item needed: dirt. Missing items to finish: 3 dirt, 2 stone. In your reply, ask the player for these items and confirm you'll continue building once they arrive.";
+        testPromptForBehavior(bravePath, List.of(message), null, "UNBUILD");
     }
 
     public ParsedMessage testPromptForBehavior(Path chatDataPath, List<String> messages, String goodBehavior, String badBehavior) {
@@ -259,12 +306,14 @@ public class BehaviorTests {
                     outputData.get(Key).put(config.getModel(), result.getCleanedMessage());
 
                     // Check for the presence of good behavior
-                    if (goodBehavior != null && goodBehavior.contains("FRIENDSHIP")) {
-                        boolean isPositive = goodBehavior.equals("FRIENDSHIP+");
-                        assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) &&
-                                ((isPositive && b.getArgument() > 0) || (!isPositive && b.getArgument() < 0))));
-                    } else {
-                        assertTrue(result.getBehaviors().stream().anyMatch(b -> goodBehavior.equals(b.getName())));
+                    if (goodBehavior != null) {
+                        if (goodBehavior.contains("FRIENDSHIP")) {
+                            boolean isPositive = goodBehavior.equals("FRIENDSHIP+");
+                            assertTrue(result.getBehaviors().stream().anyMatch(b -> "FRIENDSHIP".equals(b.getName()) &&
+                                    ((isPositive && b.getArgumentAsInt() > 0) || (!isPositive && b.getArgumentAsInt() < 0))));
+                        } else {
+                            assertTrue(result.getBehaviors().stream().anyMatch(b -> goodBehavior.equals(b.getName())));
+                        }
                     }
 
                     // Check for the absence of bad behavior if badBehavior is not empty

@@ -79,6 +79,7 @@ public class ServerPackets {
     public static final ParticleType<?> FLEE_PARTICLE = Particles.FLEE_PARTICLE;
     public static final ParticleType<?> FOLLOW_FRIEND_PARTICLE = Particles.FOLLOW_FRIEND_PARTICLE;
     public static final ParticleType<?> FOLLOW_ENEMY_PARTICLE = Particles.FOLLOW_ENEMY_PARTICLE;
+    public static final ParticleType<?> BUILD_PARTICLE = Particles.BUILD_PARTICLE;
     public static final ParticleType<?> PROTECT_PARTICLE = Particles.PROTECT_PARTICLE;
     public static final ParticleType<?> LEAD_FRIEND_PARTICLE = Particles.LEAD_FRIEND_PARTICLE;
     public static final ParticleType<?> LEAD_ENEMY_PARTICLE = Particles.LEAD_ENEMY_PARTICLE;
@@ -94,6 +95,7 @@ public class ServerPackets {
         Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "flee"), FLEE_PARTICLE);
         Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "follow_enemy"), FOLLOW_ENEMY_PARTICLE);
         Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "follow_friend"), FOLLOW_FRIEND_PARTICLE);
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "build"), BUILD_PARTICLE);
         Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "protect"), PROTECT_PARTICLE);
         Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "lead_enemy"), LEAD_ENEMY_PARTICLE);
         Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation("creaturechat", "lead_friend"), LEAD_FRIEND_PARTICLE);
@@ -453,6 +455,7 @@ public class ServerPackets {
                     buffer.writeInt(chatData.currentLineNumber);
                     buffer.writeUtf(chatData.status.toString());
                     buffer.writeUtf(chatData.sender.toString());
+                    buffer.writeInt(chatData.buildLevel);
                     writePlayerDataMap(buffer, chatData.players);
 
                     // Send message to player

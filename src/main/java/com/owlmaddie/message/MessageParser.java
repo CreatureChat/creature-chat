@@ -22,16 +22,16 @@ public class MessageParser {
         LOGGER.debug("Parsing message: {}", input);
         StringBuilder cleanedMessage = new StringBuilder();
         List<Behavior> behaviors = new ArrayList<>();
-        Pattern pattern = Pattern.compile("[<*](FOLLOW|LEAD|FLEE|ATTACK|PROTECT|FRIENDSHIP|UNFOLLOW|UNLEAD|UNPROTECT|UNFLEE)[:\\s]*(\\s*[+-]?\\d+)?[>*]", Pattern.CASE_INSENSITIVE);
+        Pattern pattern = Pattern.compile("[<*](FOLLOW|LEAD|FLEE|ATTACK|PROTECT|FRIENDSHIP|UNFOLLOW|UNLEAD|UNPROTECT|UNFLEE|BUILD|UNBUILD)[:\\s]*(\\s*[\\w:#-+]+)?[>*]", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(input);
 
         while (matcher.find()) {
             String behaviorName = matcher.group(1);
-            Integer argument = null;
+            String argument = null;
             if (matcher.group(2) != null) {
-                argument = Integer.valueOf(matcher.group(2));
+                argument = matcher.group(2).trim();
             }
-            behaviors.add(new Behavior(behaviorName, argument));
+            behaviors.add(new Behavior(behaviorName.toUpperCase(), argument));
             LOGGER.debug("Found behavior: {} with argument: {}", behaviorName, argument);
 
             matcher.appendReplacement(cleanedMessage, "");

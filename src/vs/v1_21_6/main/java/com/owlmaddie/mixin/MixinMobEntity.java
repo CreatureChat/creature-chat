@@ -8,11 +8,14 @@ import com.owlmaddie.chat.EntityChatData;
 import com.owlmaddie.chat.PlayerData;
 import com.owlmaddie.inventory.ChatInventory;
 import com.owlmaddie.inventory.MobInventoryMenu;
+import com.owlmaddie.inventory.PickupMessageBatcher;
 import com.owlmaddie.network.ServerPackets;
 import net.minecraft.world.entity.HasCustomInventoryScreen;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.Vec3i;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
@@ -21,6 +24,8 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -31,6 +36,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The {@code MixinMobEntity} mixin class exposes the goalSelector field from the MobEntity class.
@@ -38,6 +45,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Mob.class)
 public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
     private final SimpleContainer creaturechat$inventory = new SimpleContainer(15);
 
     @Override
@@ -118,6 +126,77 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
             };
             serverPlayer.openMenu(provider);
             cir.setReturnValue(InteractionResult.SUCCESS);
+        }
+    }
+
+    @Inject(method = "pickUpItem", at = @At("HEAD"), cancellable = true)
+    private void creaturechat$pickupFriendItem(ServerLevel level, ItemEntity itemEntity, CallbackInfo ci) {
+        Mob thisEntity = (Mob) (Object) this;
+        EntityChatData chatData = ChatDataManager.getServerInstance().entityChatDataMap.get(thisEntity.getStringUUID());
+        if (chatData == null || chatData.status == ChatDataManager.ChatStatus.NONE) {
+            return;
+        }
+
+        Entity owner = itemEntity.getOwner();
+        if (!(owner instanceof Player throwerPlayer)) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("[CreatureChat] pickup ignored: no player owner for {}", thisEntity.getType());
+            }
+            ci.cancel();
+            return;
+        }
+
+        PlayerData playerData = chatData.getPlayerData(throwerPlayer.getDisplayName().getString());
+        if (playerData.friendship <= 0) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("[CreatureChat] pickup ignored: {} not friends with {}", throwerPlayer.getDisplayName().getString(), thisEntity.getType());
+            }
+            ci.cancel();
+            return;
+        }
+
+        ItemStack stack = itemEntity.getItem();
+        if (stack.isEmpty()) {
+            ci.cancel();
+            return;
+        }
+
+        ItemStack remaining = stack.copy();
+        creaturechat$insertIntoInventory(remaining);
+        int pickedUp = stack.getCount() - remaining.getCount();
+        if (pickedUp > 0) {
+            thisEntity.onItemPickup(itemEntity);
+            thisEntity.take(itemEntity, pickedUp);
+            PickupMessageBatcher.recordPickup(thisEntity, throwerPlayer, stack, pickedUp);
+        }
+        if (remaining.isEmpty()) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("[CreatureChat] pickup success: {} took {}x{}", thisEntity.getType(), stack.getCount(), stack.getItem());
+            }
+            itemEntity.discard();
+        } else {
+            itemEntity.setItem(remaining);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("[CreatureChat] pickup partial: {} stored {}x{}, left {}",
+                        thisEntity.getType(), stack.getCount() - remaining.getCount(), stack.getItem(), remaining.getCount());
+            }
+        }
+
+        ci.cancel();
+    }
+
+    @Inject(method = "getPickupReach", at = @At("RETURN"), cancellable = true)
+    private void creaturechat$expandPickupReach(CallbackInfoReturnable<Vec3i> cir) {
+        Vec3i reach = cir.getReturnValue();
+        cir.setReturnValue(new Vec3i(reach.getX() + 1, reach.getY() + 1, reach.getZ() + 1));
+    }
+
+    @Inject(method = "canPickUpLoot", at = @At("HEAD"), cancellable = true)
+    private void creaturechat$allowFriendLoot(CallbackInfoReturnable<Boolean> cir) {
+        Mob thisEntity = (Mob) (Object) this;
+        EntityChatData chatData = ChatDataManager.getServerInstance().entityChatDataMap.get(thisEntity.getStringUUID());
+        if (chatData != null && chatData.status != ChatDataManager.ChatStatus.NONE) {
+            cir.setReturnValue(true);
         }
     }
 
@@ -216,5 +295,60 @@ public class MixinMobEntity implements ChatInventory, HasCustomInventoryScreen {
                 player.startRiding(thisEntity, true);
             }
         }
+    }
+
+    private void creaturechat$insertIntoInventory(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return;
+        }
+
+        int size = creaturechat$inventory.getContainerSize();
+        int mainHandSlot = creaturechat$getMainHandSlot(size);
+        int offHandSlot = mainHandSlot + 1;
+
+        for (int i = 0; i < size; i++) {
+            if (i == mainHandSlot || i == offHandSlot) {
+                continue;
+            }
+            ItemStack existing = creaturechat$inventory.getItem(i);
+            if (existing.isEmpty()) {
+                continue;
+            }
+            if (!ItemStack.isSameItemSameComponents(existing, stack)) {
+                continue;
+            }
+            int max = Math.min(existing.getMaxStackSize(), creaturechat$inventory.getMaxStackSize());
+            int space = max - existing.getCount();
+            if (space <= 0) {
+                continue;
+            }
+            int moved = Math.min(space, stack.getCount());
+            existing.grow(moved);
+            stack.shrink(moved);
+            creaturechat$inventory.setItem(i, existing);
+            if (stack.isEmpty()) {
+                return;
+            }
+        }
+
+        for (int i = 0; i < size; i++) {
+            if (i == mainHandSlot || i == offHandSlot) {
+                continue;
+            }
+            ItemStack existing = creaturechat$inventory.getItem(i);
+            if (!existing.isEmpty()) {
+                continue;
+            }
+            int moved = Math.min(stack.getCount(), Math.min(stack.getMaxStackSize(), creaturechat$inventory.getMaxStackSize()));
+            creaturechat$inventory.setItem(i, stack.split(moved));
+            if (stack.isEmpty()) {
+                return;
+            }
+        }
+    }
+
+    private static int creaturechat$getMainHandSlot(int size) {
+        int rows = (size + 4) / 5;
+        return Math.max(0, rows - 1) * 5;
     }
 }

@@ -4,6 +4,8 @@
 package com.owlmaddie.goals;
 
 import com.owlmaddie.network.ServerPackets;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.function.Predicate;
@@ -11,6 +13,9 @@ import java.util.function.Predicate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -23,6 +28,25 @@ import net.minecraft.world.entity.ai.goal.WrappedGoal;
  */
 public class EntityBehaviorManager {
     public static final Logger LOGGER = LoggerFactory.getLogger("creaturechat");
+    private static final Queue<Runnable> PENDING_TASKS = new ConcurrentLinkedQueue<>();
+    private static boolean initialized = false;
+
+    public static void init() {
+        if (initialized) {
+            return;
+        }
+        initialized = true;
+        ServerTickEvents.END_SERVER_TICK.register(server -> {
+            Runnable task;
+            while ((task = PENDING_TASKS.poll()) != null) {
+                try {
+                    task.run();
+                } catch (Exception e) {
+                    LOGGER.error("Goal selector update failed", e);
+                }
+            }
+        });
+    }
 
     public static void addGoal(Mob entity, Goal goal, GoalPriority priority) {
         if (!(entity.level() instanceof ServerLevel)) {
@@ -30,7 +54,7 @@ public class EntityBehaviorManager {
             return;
         }
 
-        ServerPackets.serverInstance.execute(() -> {
+        queueGoalUpdate(() -> {
             GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
 
             // First clear any existing goals of the same type to avoid duplicates
@@ -58,7 +82,7 @@ public class EntityBehaviorManager {
     }
 
     public static void removeGoal(Mob entity, Class<? extends Goal> goalClass) {
-        ServerPackets.serverInstance.execute(() -> {
+        queueGoalUpdate(() -> {
             GoalSelector goalSelector = GoalUtils.getGoalSelector(entity);
             // First clear any existing goals of the same type to avoid duplicates
             clearAndRemove(g -> goalClass.equals(g.getClass()), goalSelector);
@@ -69,6 +93,7 @@ public class EntityBehaviorManager {
     public static void moveConflictingGoals(GoalSelector goalSelector, GoalPriority newGoalPriority) {
         // Collect all prioritized goals currently in the selector.
         List<WrappedGoal> sortedGoals = goalSelector.getAvailableGoals().stream()
+                .filter(Objects::nonNull)
                 .sorted(Comparator.comparingInt(WrappedGoal::getPriority))
                 .collect(Collectors.toList());
 
@@ -81,16 +106,33 @@ public class EntityBehaviorManager {
             int shiftPriority = newGoalPriority.getPriority();
             for (WrappedGoal pg : sortedGoals) {
                 if (pg.getPriority() >= shiftPriority) {
-                    // Remove the goal and increment its priority.
-                    goalSelector.removeGoal(pg.getGoal());
-                    goalSelector.addGoal(shiftPriority + 1, pg.getGoal());
-                    shiftPriority++;  // Update the shift priority for the next possible conflict.
+                    Goal g = pg.getGoal();
+                    if (g != null) {
+                        // Remove the goal and increment its priority.
+                        goalSelector.removeGoal(g);
+                        goalSelector.addGoal(shiftPriority + 1, g);
+                        shiftPriority++;  // Update the shift priority for the next possible conflict.
+                    }
                 }
             }
 
             LOGGER.debug("Moved conflicting goals starting from priority {}", newGoalPriority);
         } else {
             LOGGER.debug("No conflicting goal at priority {}, no action taken.", newGoalPriority);
+        }
+    }
+
+    private static void queueGoalUpdate(Runnable task) {
+        MinecraftServer server = ServerPackets.serverInstance;
+        if (server == null) {
+            task.run();
+            return;
+        }
+        if (server.isSameThread()) {
+            // Defer updates to avoid mutating goal selector mid-tick.
+            PENDING_TASKS.add(task);
+        } else {
+            server.execute(() -> PENDING_TASKS.add(task));
         }
     }
 }

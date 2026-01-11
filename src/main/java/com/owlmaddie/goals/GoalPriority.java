@@ -14,7 +14,8 @@ public enum GoalPriority {
     LEAD_PLAYER(3),
     FOLLOW_PLAYER(3),
     FLEE_PLAYER(3),
-    ATTACK_PLAYER(3);
+    ATTACK_PLAYER(3),
+    BUILD_PLAYER(4);
 
     private final int priority;
 

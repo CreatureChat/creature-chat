@@ -6,13 +6,60 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 
 ## Unreleased
 
-### Added
+## Added
+- New build recording command
+  - Record, Save, and Replay builds (placing, destroying, interacting with blocks + player poses)
+  - Spawns any entity type to replay build
+  - Replay speeds can be adjusted (any integer, but defaults to 1X - the original speed)
+  - Replay adjusts eye height (line of sight) so entities look at the same place as the player
+  - Record / Stop commands toggle (depending on if recording or not)
+  - Build types and folders are automatically managed now (type and build height: i.e. 1 block tall builds (bee) vs 3 block tall builds (enderman))
+  - New datagen provider to create index of builds (and calculates build score)
+  - New block palette to support builds in any version, and replays in any version
+  - Add AFK protection during the build record (to stop long pauses recorded on inventory screen or AFK)
 - Document SPDX header and changelog requirements in AGENTS.md for contributors
+- Build goal and behavior enabling entities to construct structures for players
+  - Behavior tests now cover BUILD and UNBUILD behaviors with live LLM responses
+  - Build replays pause when materials are missing, stop four blocks from players, and prompt for supplies with recipe details
+  - New build particle when a build starts
+  - Missing-material requests now broadcast the remaining recipe to nearby players in plain chat
+  - Unit tests ensure build selection covers all height tiers and skill levels
+  - Build skill increases after successful builds and syncs across clients
+  - Build goal only begins after the builder reaches the player
+  - Selecting builds logs skill, type, height tier, and chosen file
+  - Relaxed build goal proximity checks so builders don't have to overlap players before starting or finishing
+  - Require full collision blocks when selecting the build start ground
+- Friendly mobs with chat data now pick up items thrown by friends into their chat inventory
+- Expanded friendly pickup reach and restored pickup sound for chat-data mobs
+- Debounced LLM message when friends pick up dropped items
 
 ### Changed
 - Convert PNG screenshots to JPEG, compress, and remove less useful ones (smaller jar)
 - Compressed all textures from 32-bit color to 4-bit indexed color, reduced size massively.
+- Build goal now uses build replays, keeps FOLLOW and PROTECT goals active, and system prompts describe build skill and types.
+- Build goal completion message is generated through the LLM when a structure finishes
+- Build goal waits to reach the player, starts from the ground at that spot, follows the player until then, and returns to thank them when finished
+- LEAD goal guides players to nearby structures, biomes, resources, tags, or points of interest and apologizes when none are found within 300 blocks
+- LEAD goal no longer uses random coordinates when it can't locate something
+- Build replay command logs replay bounds with and without player movement
+- Build index now rebuilds at runtime from bundled and local builds
+- Build goal bounds now ignore player movement
+- Build replays rotate to the nearest cardinal based on player facing, with rotated bounds
+- Rebuild build index when the config copy is empty or invalid
+- Log build index match counts when selecting a replay file
+- Build index scoring now spreads levels within each type and logs per-type summaries
+- Build index now rebuilds on mod init every time
+- Build selection relaxes height/skill filters when a valid type has no matches
+- Expand build selection tests for fallback and unknown types
+- Tests now fall back to a local config path when Fabric config dir is unavailable
+- Missing-material alerts no longer send a separate system chat broadcast
+- Build replays no longer randomize variants on existing actors
+- Build replay no longer pauses every 2 seconds during active building
 
+### Fixed
+- Defer goal selector updates to end-of-tick to avoid null goal crashes after build completion
+- Rotate block states when replaying builds so block facings match the chosen orientation
+- Index rebuild now falls back to classpath builds when FabricLoader is unavailable (tests)
 
 ## [3.0.0] - 2025-08-27
 

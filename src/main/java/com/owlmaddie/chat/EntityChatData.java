@@ -5,6 +5,7 @@ package com.owlmaddie.chat;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.owlmaddie.buildrec.BuildRecorder;
 import com.owlmaddie.commands.ConfigurationHandler;
 import com.owlmaddie.controls.SpeedControls;
 import com.owlmaddie.goals.*;
@@ -30,6 +31,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -89,6 +91,7 @@ public class EntityChatData {
     public Long born;
     public Long death;
     public transient AutoMessageBucket autoBucket;
+    public int buildLevel;
 
     @SerializedName("playerId")
     @Expose(serialize = false)
@@ -113,10 +116,20 @@ public class EntityChatData {
         this.previousMessages = new ArrayList<>();
         this.born = System.currentTimeMillis();;
         this.autoBucket = null;
+        this.buildLevel = getRandomBuildLevel();
 
         // Old, unused migrated properties
         this.legacyPlayerId = null;
         this.legacyFriendship = null;
+    }
+
+    private static int getRandomBuildLevel() {
+        int n = new Random().nextInt(600);
+        if (n < 2) return 5;      // 1/300
+        if (n < 5) return 4;      // 1/200
+        if (n < 11) return 3;     // 1/100
+        if (n < 41) return 2;     // 5/100
+        return 1;
     }
 
     // Post-deserialization initialization
@@ -126,6 +139,9 @@ public class EntityChatData {
         }
         if (this.legacyPlayerId != null && !this.legacyPlayerId.isEmpty()) {
             this.migrateData();
+        }
+        if (this.buildLevel <= 0) {
+            this.buildLevel = 1;
         }
     }
 
@@ -295,6 +311,7 @@ public class EntityChatData {
         } else {
             contextData.put("entity_friendship", String.valueOf(0));
         }
+        contextData.put("entity_build_level", String.valueOf(this.buildLevel));
 
         return contextData;
     }
@@ -319,6 +336,7 @@ public class EntityChatData {
 
         // Add PLAYER context information
         Map<String, String> contextData = getPlayerContext(player, userLanguage, config);
+        contextData.remove("entity_build_level");
 
         // fetch HTTP response from ChatGPT
         ChatGPTRequest.fetchMessageFromChatGPT(config, promptText, contextData, previousMessages, false).thenAccept(output_message -> {
@@ -467,6 +485,7 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, BuildPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, fleeGoal, GoalPriority.FLEE_PLAYER);
                                 ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FLEE_PARTICLE, 0.5, 1);
                                 playerData.fleeing = true;
@@ -489,6 +508,7 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, BuildPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, attackGoal, GoalPriority.ATTACK_PLAYER);
                                 ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) FLEE_PARTICLE, 0.5, 1);
                                 playerData.attacking = true;
@@ -502,6 +522,7 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, TalkPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, BuildPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, protectGoal, GoalPriority.PROTECT_PLAYER);
                                 if (playerData.attacking) {
                                     AdvancementHelper.calmTheStorm(player);
@@ -525,10 +546,25 @@ public class EntityChatData {
                                 EntityBehaviorManager.removeGoal(entity, ProtectPlayerGoal.class);
 
                             } else if (behavior.getName().equals("LEAD")) {
-                                LeadPlayerGoal leadGoal = new LeadPlayerGoal(player, entity, entitySpeedMedium);
+                                LeadTarget target = LeadTargetParser.parse(behavior.getArgument()).orElse(null);
+                                if (target == null || !(entity.level() instanceof ServerLevel serverLevel)) {
+                                    LOGGER.info("LEAD target argument '{}' could not be parsed", behavior.getArgument());
+                                    sendLeadFailureMessage(entity, player, behavior.getArgument(), systemPrompt);
+                                    return;
+                                }
+                                Vec3 destination = LeadTargetLocator.locate(serverLevel, entity.blockPosition(), target, 300);
+                                if (destination == null) {
+                                    LOGGER.info("LEAD target '{}' not found within radius", behavior.getArgument());
+                                    sendLeadFailureMessage(entity, player, behavior.getArgument(), systemPrompt);
+                                    return;
+                                }
+                                LOGGER.info("LEAD target '{}' located at ({}, {}, {})", behavior.getArgument(),
+                                        destination.x, destination.y, destination.z);
+                                LeadPlayerGoal leadGoal = new LeadPlayerGoal(player, entity, entitySpeedMedium, destination);
                                 EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
                                 EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, BuildPlayerGoal.class);
                                 EntityBehaviorManager.addGoal(entity, leadGoal, GoalPriority.LEAD_PLAYER);
                                 if (playerData.attacking) {
                                     AdvancementHelper.calmTheStorm(player);
@@ -544,8 +580,28 @@ public class EntityChatData {
                             } else if (behavior.getName().equals("UNLEAD")) {
                                 EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
 
+                            } else if (behavior.getName().equals("BUILD")) {
+                                String buildType = behavior.getArgument();
+                                if (buildType != null && buildType.equalsIgnoreCase("random")) {
+                                    buildType = null;
+                                }
+                                BuildPlayerGoal buildGoal = new BuildPlayerGoal(player, entity, entitySpeedMedium, buildType);
+                                EntityBehaviorManager.removeGoal(entity, FollowPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, FleePlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, AttackPlayerGoal.class);
+                                EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
+                                EntityBehaviorManager.addGoal(entity, buildGoal, GoalPriority.BUILD_PLAYER);
+                                ParticleEmitter.emitCreatureParticle((ServerLevel) entity.level(), entity, (ParticleOptions) BUILD_PARTICLE, 0.5, 1);
+
+                                entity.level().playSound(null, entity.blockPosition(), SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.PLAYERS, 1f, 1f);
+
+                            } else if (behavior.getName().equals("UNBUILD")) {
+                                BuildRecorder.cancelReplay(entity);
+                                EntityBehaviorManager.removeGoal(entity, BuildPlayerGoal.class);
+
                             } else if (behavior.getName().equals("FRIENDSHIP")) {
-                                int new_friendship = Math.max(-3, Math.min(3, behavior.getArgument()));
+                                int argVal = behavior.getArgumentAsInt() != null ? behavior.getArgumentAsInt() : 0;
+                                int new_friendship = Math.max(-3, Math.min(3, argVal));
                                 int old_friendship = playerData.friendship;
 
                                 // Does friendship improve?
@@ -851,5 +907,22 @@ public class EntityChatData {
 
         // Broadcast to all players
         ServerPackets.BroadcastEntityMessage(this);
+    }
+
+    private void sendLeadFailureMessage(Mob entity, ServerPlayer player, String arg, String systemPrompt) {
+        String targetName = (arg != null && !arg.isEmpty()) ? arg : "that";
+        ConfigurationHandler.Config cfg = new ConfigurationHandler(ServerPackets.serverInstance).loadConfig();
+        String systemPromptText = ChatPrompt.loadPromptFromResource(ServerPackets.serverInstance.getResourceManager(), "system-chat");
+        Map<String, String> ctx = getPlayerContext(player, "N/A", cfg);
+        List<ChatMessage> history = new ArrayList<>(previousMessages);
+        history.add(new ChatMessage("The player asked me to lead them to " + targetName +
+                " but I can't find that nearby. Apologize and say you'll stop leading.",
+                ChatDataManager.ChatSender.USER, player.getDisplayName().getString()));
+        ChatGPTRequest.fetchMessageFromChatGPT(cfg, systemPromptText, ctx, history, false).thenAccept(msg -> {
+            if (msg != null) {
+                addMessage(msg, ChatDataManager.ChatSender.ASSISTANT, player, systemPrompt);
+            }
+        });
+        EntityBehaviorManager.removeGoal(entity, LeadPlayerGoal.class);
     }
 }

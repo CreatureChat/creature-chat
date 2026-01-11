@@ -12,6 +12,7 @@ public class CreatureChatDataGenerator implements DataGeneratorEntrypoint {
         FabricDataGenerator.Pack pack = fabricDataGenerator.createPack();
         pack.addProvider(CreatureChatLootTableProvider::new);
         pack.addProvider(CreatureChatAdvancementProvider::new);
+        pack.addProvider(BuildIndexProvider::new);
         pack.addProvider(CreatureChatLangProvider::new);
     }
 }

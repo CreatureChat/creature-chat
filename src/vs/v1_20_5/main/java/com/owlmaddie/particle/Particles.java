@@ -20,6 +20,7 @@ public class Particles {
     public static final SimpleParticleType FLEE_PARTICLE          = FabricParticleTypes.simple();
     public static final SimpleParticleType FOLLOW_FRIEND_PARTICLE = FabricParticleTypes.simple();
     public static final SimpleParticleType FOLLOW_ENEMY_PARTICLE  = FabricParticleTypes.simple();
+    public static final SimpleParticleType BUILD_PARTICLE         = FabricParticleTypes.simple();
     public static final SimpleParticleType PROTECT_PARTICLE       = FabricParticleTypes.simple();
     public static final SimpleParticleType LEAD_FRIEND_PARTICLE   = FabricParticleTypes.simple();
     public static final SimpleParticleType LEAD_ENEMY_PARTICLE    = FabricParticleTypes.simple();
