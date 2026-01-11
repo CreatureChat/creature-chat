@@ -34,6 +34,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
@@ -161,13 +162,32 @@ public class BuildRecorder {
     }
 
     public static ReplayBounds getReplayBounds(String fileName) {
-        return getReplayBounds(fileName, true);
+        return getReplayBounds(fileName, true, 0);
     }
 
     public static ReplayBounds getReplayBounds(String fileName, boolean includeMovement) {
+        return getReplayBounds(fileName, includeMovement, 0);
+    }
+
+    public static ReplayBounds getReplayBounds(String fileName, boolean includeMovement, int rotationSteps) {
         String actual = fileName.endsWith(".json.gz") ? fileName : fileName + ".json.gz";
-        String key = actual + (includeMovement ? "|move" : "|static");
-        return BOUNDS_CACHE.computeIfAbsent(key, ignored -> loadReplayBounds(actual, includeMovement));
+        String key = actual + (includeMovement ? "|move" : "|static") + "|rot=" + rotationSteps;
+        return BOUNDS_CACHE.computeIfAbsent(key, ignored -> loadReplayBounds(actual, includeMovement, rotationSteps));
+    }
+
+    public static int getReplayRotationSteps(String fileName, float playerYaw) {
+        String actual = fileName.endsWith(".json.gz") ? fileName : fileName + ".json.gz";
+        Path file = resolveBuildFile(actual);
+        if (file == null || !Files.exists(file)) {
+            return 0;
+        }
+        try {
+            BuildRecordIO.Loaded loaded = BuildRecordIO.read(file);
+            return rotationStepsForReplay(loaded.actions, playerYaw);
+        } catch (IOException | JsonParseException e) {
+            LOGGER.error("[BuildRec] rotation failed to load {}", actual, e);
+            return 0;
+        }
     }
 
     public static List<String> getIndexedBuildIds() {
@@ -234,7 +254,8 @@ public class BuildRecorder {
         }
         try {
             BuildRecordIO.Loaded loaded = BuildRecordIO.read(file);
-            List<Action> actions = loaded.actions;
+            int rotationSteps = rotationStepsForReplay(loaded.actions, player.getYRot());
+            List<Action> actions = rotateActions(loaded.actions, rotationSteps);
             if (actions.isEmpty()) {
                 LOGGER.info("[BuildRec] replay file={} has no actions", file);
                 return false;
@@ -243,12 +264,17 @@ public class BuildRecorder {
             double recEye = meta.eyeHeight > 0 ? meta.eyeHeight : player.getEyeHeight();
             double recWidth = meta.bbWidth;
             double recHeight = meta.bbHeight;
+            Rotation rotation = rotationForSteps(rotationSteps);
             List<BlockState> palette = new ArrayList<>();
             var lookup = player.level().registryAccess().lookupOrThrow(Registries.BLOCK);
             for (String s : meta.palette) {
                 try {
                     var res = BlockStateParser.parseForBlock(lookup, new StringReader(s), false);
-                    palette.add(res.blockState());
+                    BlockState state = res.blockState();
+                    if (rotation != Rotation.NONE) {
+                        state = state.rotate(rotation);
+                    }
+                    palette.add(state);
                 } catch (CommandSyntaxException e) {
                     LOGGER.error("[BuildRec] invalid block state {}", s, e);
                     palette.add(Blocks.AIR.defaultBlockState());
@@ -292,7 +318,7 @@ public class BuildRecorder {
         return false;
     }
 
-    private static ReplayBounds loadReplayBounds(String fileName, boolean includeMovement) {
+    private static ReplayBounds loadReplayBounds(String fileName, boolean includeMovement, int rotationSteps) {
         Path file = resolveBuildFile(fileName);
         if (file == null || !Files.exists(file)) {
             LOGGER.info("[BuildRec] bounds missing file={}", fileName);
@@ -300,7 +326,8 @@ public class BuildRecorder {
         }
         try {
             BuildRecordIO.Loaded loaded = BuildRecordIO.read(file);
-            ReplayBounds bounds = ReplayBounds.fromActions(loaded.actions, includeMovement);
+            List<Action> actions = rotateActions(loaded.actions, rotationSteps);
+            ReplayBounds bounds = ReplayBounds.fromActions(actions, includeMovement);
             if (bounds == null) {
                 LOGGER.info("[BuildRec] bounds empty file={}", fileName);
             }
@@ -308,6 +335,93 @@ public class BuildRecorder {
         } catch (IOException | JsonParseException e) {
             LOGGER.error("[BuildRec] bounds failed to load {}", file, e);
             return null;
+        }
+    }
+
+    private static int rotationStepsForReplay(List<Action> actions, float playerYaw) {
+        if (actions == null || actions.isEmpty()) {
+            return 0;
+        }
+        int recordSteps = snapYawToCardinalSteps(actions.get(0).yaw);
+        int playerSteps = snapYawToCardinalSteps(playerYaw);
+        return Math.floorMod(playerSteps - recordSteps, 4);
+    }
+
+    private static Rotation rotationForSteps(int rotationSteps) {
+        return switch (Math.floorMod(rotationSteps, 4)) {
+            case 1 -> Rotation.CLOCKWISE_90;
+            case 2 -> Rotation.CLOCKWISE_180;
+            case 3 -> Rotation.COUNTERCLOCKWISE_90;
+            default -> Rotation.NONE;
+        };
+    }
+
+    private static int snapYawToCardinalSteps(float yaw) {
+        float normalized = Mth.wrapDegrees(yaw);
+        int steps = Math.round(normalized / 90f);
+        return Math.floorMod(steps, 4);
+    }
+
+    private static List<Action> rotateActions(List<Action> actions, int rotationSteps) {
+        if (rotationSteps == 0 || actions == null || actions.isEmpty()) {
+            return actions;
+        }
+        List<Action> rotated = new ArrayList<>(actions.size());
+        for (Action a : actions) {
+            rotated.add(rotateAction(a, rotationSteps));
+        }
+        return rotated;
+    }
+
+    private static Action rotateAction(Action action, int rotationSteps) {
+        Action out = new Action();
+        out.action = action.action;
+        out.blockId = action.blockId;
+        out.by = action.by;
+        out.dt = action.dt;
+        out.py = action.py;
+        out.pitch = action.pitch;
+        double[] p = rotateXZ(action.px, action.pz, rotationSteps);
+        out.px = p[0];
+        out.pz = p[1];
+        int[] b = rotateXZ(action.bx, action.bz, rotationSteps);
+        out.bx = b[0];
+        out.bz = b[1];
+        out.yaw = Mth.wrapDegrees(action.yaw + rotationSteps * 90f);
+        return out;
+    }
+
+    private static double[] rotateXZ(double x, double z, int rotationSteps) {
+        switch (Math.floorMod(rotationSteps, 4)) {
+            case 1 -> {
+                return new double[]{-z, x};
+            }
+            case 2 -> {
+                return new double[]{-x, -z};
+            }
+            case 3 -> {
+                return new double[]{z, -x};
+            }
+            default -> {
+                return new double[]{x, z};
+            }
+        }
+    }
+
+    private static int[] rotateXZ(int x, int z, int rotationSteps) {
+        switch (Math.floorMod(rotationSteps, 4)) {
+            case 1 -> {
+                return new int[]{-z, x};
+            }
+            case 2 -> {
+                return new int[]{-x, -z};
+            }
+            case 3 -> {
+                return new int[]{z, -x};
+            }
+            default -> {
+                return new int[]{x, z};
+            }
         }
     }
 

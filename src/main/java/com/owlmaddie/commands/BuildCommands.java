@@ -105,8 +105,9 @@ public class BuildCommands {
         int spd = speed;
         ServerPlayer player = context.getSource().getPlayerOrException();
         String id = StringArgumentType.getString(context, "id").replace('\\', '/');
-        BuildRecorder.ReplayBounds moveBounds = BuildRecorder.getReplayBounds(id, true);
-        BuildRecorder.ReplayBounds staticBounds = BuildRecorder.getReplayBounds(id, false);
+        int rotationSteps = BuildRecorder.getReplayRotationSteps(id, player.getYRot());
+        BuildRecorder.ReplayBounds moveBounds = BuildRecorder.getReplayBounds(id, true, rotationSteps);
+        BuildRecorder.ReplayBounds staticBounds = BuildRecorder.getReplayBounds(id, false, rotationSteps);
         EntityType<? extends Mob> type = null;
         if (entityId != null && !"player".equals(entityId.getPath())) {
             EntityType<?> raw = BuiltInRegistries.ENTITY_TYPE.getOptional(entityId).orElse(null);

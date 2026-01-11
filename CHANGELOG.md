@@ -44,9 +44,11 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Build replay command logs replay bounds with and without player movement
 - Build index now rebuilds at runtime from bundled and local builds
 - Build goal bounds now ignore player movement
+- Build replays rotate to the nearest cardinal based on player facing, with rotated bounds
 
 ### Fixed
 - Defer goal selector updates to end-of-tick to avoid null goal crashes after build completion
+- Rotate block states when replaying builds so block facings match the chosen orientation
 
 ## [3.0.0] - 2025-08-27
 
