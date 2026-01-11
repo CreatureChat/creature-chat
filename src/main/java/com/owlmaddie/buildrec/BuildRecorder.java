@@ -51,6 +51,9 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.net.URI;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPOutputStream;
@@ -110,7 +113,7 @@ public class BuildRecorder {
     }
 
     public static void init() {
-        // Ensure static initializer runs
+        rebuildBuildIndex();
     }
 
     private static class BuildIndex {
@@ -136,10 +139,11 @@ public class BuildRecorder {
         Path indexPath = buildRootDir().resolve(BUILD_INDEX_FILE);
         if (Files.exists(indexPath)) {
             List<BuildIndex> list = readBuildIndex(indexPath);
-            if (list != null) {
+            if (list != null && !list.isEmpty()) {
                 BUILD_INDEX = list;
                 return;
             }
+            LOGGER.info("[BuildRec] rebuild build index from {} (empty or invalid)", indexPath);
         }
         rebuildBuildIndex();
     }
@@ -148,15 +152,38 @@ public class BuildRecorder {
         loadBuildIndex();
         int tier = heightTier(entityHeight);
         String t = (type == null || type.isEmpty() || "unknown".equalsIgnoreCase(type)) ? null : type.toLowerCase();
-        List<BuildIndex> filtered = new ArrayList<>();
+        List<BuildIndex> typeFiltered = new ArrayList<>();
+        List<BuildIndex> heightFiltered = new ArrayList<>();
+        List<BuildIndex> levelFiltered = new ArrayList<>();
+        int total = BUILD_INDEX != null ? BUILD_INDEX.size() : 0;
+        int typeCount = 0;
+        int heightCount = 0;
+        int levelCount = 0;
         for (BuildIndex e : BUILD_INDEX) {
             if (t != null && !e.type.equalsIgnoreCase(t)) continue;
+            typeCount++;
+            typeFiltered.add(e);
             if (!"any".equalsIgnoreCase(e.height) && Integer.parseInt(e.height) < tier) continue;
+            heightCount++;
+            heightFiltered.add(e);
             if (e.score > level) continue;
-            filtered.add(e);
+            levelCount++;
+            levelFiltered.add(e);
         }
-        if (filtered.isEmpty()) return null;
-        BuildIndex pick = filtered.get(new Random().nextInt(filtered.size()));
+        LOGGER.info("[BuildRec] build index total={} typeMatch={} heightMatch={} levelMatch={} type={} heightTier={} level={}",
+                total, typeCount, heightCount, levelCount, t, tier, level);
+        if (typeCount == 0) {
+            return null;
+        }
+        List<BuildIndex> candidates;
+        if (!levelFiltered.isEmpty()) {
+            candidates = levelFiltered;
+        } else if (!heightFiltered.isEmpty()) {
+            candidates = heightFiltered;
+        } else {
+            candidates = typeFiltered;
+        }
+        BuildIndex pick = candidates.get(new Random().nextInt(candidates.size()));
         String path = pick.type + ("any".equalsIgnoreCase(pick.height) ? "" : "/" + pick.height) + "/" + pick.file;
         return path;
     }
@@ -756,7 +783,13 @@ public class BuildRecorder {
     }
 
     private static Path buildRootDir() {
-        Path dir = FabricLoader.getInstance().getConfigDir().resolve("creaturechat").resolve("builds");
+        Path dir;
+        try {
+            dir = FabricLoader.getInstance().getConfigDir().resolve("creaturechat").resolve("builds");
+        } catch (Exception e) {
+            // Unit tests may run without a Fabric config dir.
+            dir = Paths.get("build", "test-config", "creaturechat", "builds");
+        }
         try {
             Files.createDirectories(dir);
         } catch (IOException ignored) {
@@ -1031,10 +1064,16 @@ public class BuildRecorder {
         collectBuildEntriesFromResources(byKey);
         collectBuildEntriesFromLocal(byKey);
         entries.addAll(byKey.values());
-        entries.sort(Comparator.comparingDouble(e -> e.raw));
-        int n = entries.size();
-        for (int i = 0; i < n; i++) {
-            entries.get(i).score = (int) Math.min(5, Math.floor((double) i * 5 / n) + 1);
+        Map<String, List<IndexEntry>> byType = new TreeMap<>();
+        for (IndexEntry e : entries) {
+            byType.computeIfAbsent(e.type, k -> new ArrayList<>()).add(e);
+        }
+        for (List<IndexEntry> typeEntries : byType.values()) {
+            typeEntries.sort(Comparator.comparingDouble(e -> e.raw));
+            int n = typeEntries.size();
+            for (int i = 0; i < n; i++) {
+                typeEntries.get(i).score = (int) Math.min(5, Math.floor((double) i * 5 / n) + 1);
+            }
         }
         List<BuildIndex> list = new ArrayList<>();
         JsonArray arr = new JsonArray();
@@ -1061,6 +1100,19 @@ public class BuildRecorder {
         }
         BUILD_INDEX = list;
         LOGGER.info("[BuildRec] rebuilt build index entries={} file={}", entries.size(), indexPath);
+        logBuildIndexSummary(byType);
+    }
+
+    private static void logBuildIndexSummary(Map<String, List<IndexEntry>> byType) {
+        for (Map.Entry<String, List<IndexEntry>> entry : byType.entrySet()) {
+            int[] counts = new int[5];
+            for (IndexEntry e : entry.getValue()) {
+                int idx = Math.min(5, Math.max(1, e.score)) - 1;
+                counts[idx]++;
+            }
+            String summary = "1:" + counts[0] + ",2:" + counts[1] + ",3:" + counts[2] + ",4:" + counts[3] + ",5:" + counts[4];
+            LOGGER.info("[BuildRec] build index summary type={} levels={} total={}", entry.getKey(), summary, entry.getValue().size());
+        }
     }
 
     private static void collectBuildEntriesFromLocal(Map<String, IndexEntry> entries) {
@@ -1069,9 +1121,30 @@ public class BuildRecorder {
     }
 
     private static void collectBuildEntriesFromResources(Map<String, IndexEntry> entries) {
-        FabricLoader.getInstance().getModContainer("creaturechat")
-                .flatMap(m -> m.findPath("assets/creaturechat/builds"))
-                .ifPresent(path -> collectBuildEntries(path, entries, false));
+        try {
+            final boolean[] collected = {false};
+            FabricLoader.getInstance().getModContainer("creaturechat")
+                    .flatMap(m -> m.findPath("assets/creaturechat/builds"))
+                    .ifPresent(path -> {
+                        collected[0] = true;
+                        collectBuildEntries(path, entries, false);
+                    });
+            if (collected[0]) {
+                return;
+            }
+        } catch (Exception ignored) {
+        }
+        URL url = BuildRecorder.class.getClassLoader().getResource("assets/creaturechat/builds");
+        if (url == null) {
+            return;
+        }
+        try {
+            URI uri = url.toURI();
+            if ("file".equalsIgnoreCase(uri.getScheme())) {
+                collectBuildEntries(Paths.get(uri), entries, false);
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     private static void collectBuildEntries(Path root, Map<String, IndexEntry> entries, boolean preferLocal) {

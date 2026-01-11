@@ -292,15 +292,6 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
                     String limited = BuildRecorder.recipeToString(recipe, 2);
                     String msg = "Next item needed: " + nextItem.replace('_', ' ') + ". Build paused - missing inventory items: " + limited + ". In your reply, ask the player for these items and confirm you'll continue building once they arrive.";
                     if (queueMessage(msg)) {
-                        if (this.entity.level() instanceof ServerLevel level) {
-                            String broadcast = BuildRecorder.recipeToDisplayString(recipe, 2);
-                            Component text = Component.literal(broadcast).withStyle(ChatFormatting.WHITE);
-                            for (ServerPlayer p : level.players()) {
-                                if (p.distanceToSqr(this.entity) <= 1024) {
-                                    p.displayClientMessage(text, false);
-                                }
-                            }
-                        }
                         sentRecipe = true;
                     }
                     return;

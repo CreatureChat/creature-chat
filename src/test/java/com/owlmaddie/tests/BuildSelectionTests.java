@@ -47,4 +47,16 @@ public class BuildSelectionTests {
             assertNotNull(file, "missing garden build for level=" + level);
         }
     }
+
+    @Test
+    public void unknownTypeReturnsNull() {
+        String file = BuildRecorder.randomBuildFile(1.0, "moat", 1);
+        assertNull(file, "unexpected build returned for unknown type");
+    }
+
+    @Test
+    public void validTypeFallbackIgnoresSkillFilter() {
+        String file = BuildRecorder.randomBuildFile(1.0, "house", 0);
+        assertNotNull(file, "missing house build when skill filter is too strict");
+    }
 }

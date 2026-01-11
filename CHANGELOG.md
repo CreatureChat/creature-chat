@@ -45,10 +45,19 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Build index now rebuilds at runtime from bundled and local builds
 - Build goal bounds now ignore player movement
 - Build replays rotate to the nearest cardinal based on player facing, with rotated bounds
+- Rebuild build index when the config copy is empty or invalid
+- Log build index match counts when selecting a replay file
+- Build index scoring now spreads levels within each type and logs per-type summaries
+- Build index now rebuilds on mod init every time
+- Build selection relaxes height/skill filters when a valid type has no matches
+- Expand build selection tests for fallback and unknown types
+- Tests now fall back to a local config path when Fabric config dir is unavailable
+- Missing-material alerts no longer send a separate system chat broadcast
 
 ### Fixed
 - Defer goal selector updates to end-of-tick to avoid null goal crashes after build completion
 - Rotate block states when replaying builds so block facings match the chosen orientation
+- Index rebuild now falls back to classpath builds when FabricLoader is unavailable (tests)
 
 ## [3.0.0] - 2025-08-27
 
