@@ -321,8 +321,8 @@ public class BuildRecorder {
                     return false;
                 }
             }
-            MobHelper.initSpawn(actor, level);
             if (!preserve) {
+                MobHelper.initSpawn(actor, level);
                 actor.teleportTo(player.getX(), player.getY(), player.getZ());
                 actor.setYRot(player.getYRot());
                 float sp = adjustPitch(level, player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot(), recEye, actor.getEyeHeight(), actor);

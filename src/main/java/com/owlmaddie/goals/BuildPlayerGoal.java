@@ -263,11 +263,6 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
                 if (aiPause) {
                     aiPause = false;
                     BuildRecorder.resumeReplay(this.entity);
-                } else if (++aiCheckTicks >= 40) {
-                    aiCheckTicks = 0;
-                    aiPause = true;
-                    BuildRecorder.pauseReplay(this.entity);
-                    return;
                 }
             }
 
@@ -297,17 +292,10 @@ public class BuildPlayerGoal extends PlayerBaseGoal {
                     return;
                 }
                 if (!controlsReleased) {
-                    if (materialWaitTicks++ >= 80) {
-                        BuildRecorder.pauseReplay(this.entity);
-                        this.setFlags(EnumSet.noneOf(Flag.class));
-                        this.entity.getNavigation().moveTo(buildPos.getX(), buildPos.getY() + 1, buildPos.getZ(), this.speed);
-                        controlsReleased = true;
-                    }
-                } else {
-                    double distToBuild = this.entity.distanceToSqr(buildPos.getX() + 0.5, buildPos.getY() + 1, buildPos.getZ() + 0.5);
-                    if (distToBuild > 36 && !this.entity.getNavigation().isInProgress()) {
-                        this.entity.getNavigation().moveTo(buildPos.getX(), buildPos.getY() + 1, buildPos.getZ(), this.speed);
-                    }
+                    BuildRecorder.pauseReplay(this.entity);
+                    this.setFlags(EnumSet.noneOf(Flag.class));
+                    this.entity.getNavigation().stop();
+                    controlsReleased = true;
                 }
                 return;
             } else if (fetchingMaterials) {

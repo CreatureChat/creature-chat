@@ -53,6 +53,8 @@ All notable changes to **CreatureChat™** are documented in this file. The form
 - Expand build selection tests for fallback and unknown types
 - Tests now fall back to a local config path when Fabric config dir is unavailable
 - Missing-material alerts no longer send a separate system chat broadcast
+- Build replays no longer randomize variants on existing actors
+- Build replay no longer pauses every 2 seconds during active building
 
 ### Fixed
 - Defer goal selector updates to end-of-tick to avoid null goal crashes after build completion
